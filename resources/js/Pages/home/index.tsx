@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar"
 import { PageProps } from "@/types"
-import { usePage } from "@inertiajs/react"
+import { router, usePage } from "@inertiajs/react"
 import { EyeClosedIcon, EyeIcon, SettingsIcon } from "lucide-react"
 import { useState } from "react"
 
@@ -27,7 +27,7 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <button>
+                    <button onClick={() => router.visit(route('profile.edit'))}>
                         <SettingsIcon className="h-6 w-6 text-gray-600" />
                     </button>
                 </div>
