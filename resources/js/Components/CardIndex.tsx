@@ -18,7 +18,7 @@ export default function CardIndex({
             <div className="flex flex-col items-start p-3">
                 <h1 className="font-semibold text-lg">{currency}</h1>
                 <div className="flex items-center gap-5">
-                    <p className="leading-none">{eyesOpen ? balance : "••••••••"}</p>
+                    <p className="leading-none">{eyesOpen ? balance.toLocaleString('id-ID') : "••••••••"}</p>
                     <button onClick={() => setEyesOpen(!eyesOpen)}>
                         {eyesOpen ? (
                             <EyeIcon className="h-4 w-4 text-gray-600" />
