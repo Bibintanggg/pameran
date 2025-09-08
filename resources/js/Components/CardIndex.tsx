@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { EyeIcon, EyeClosedIcon } from "lucide-react";
-
+import { EyeIcon, EyeClosedIcon} from "lucide-react";
 interface CardIndexProps {
     currency: string;
     balance: string | number;
