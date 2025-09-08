@@ -1,3 +1,5 @@
+import Cards from "@/Components/AddCards"
+import CardIndex from "@/Components/CardIndex"
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar"
 import { PageProps } from "@/types"
 import { router, usePage } from "@inertiajs/react"
@@ -37,12 +39,18 @@ export default function Home() {
                     <p className="text-xl text-gray-500">Wallet balance</p>
 
                     <div className='flex items-center gap-10'>
-                    <p className="text-4xl font-semibold">Rp. 100.000,00</p>
-                    <button onClick={() => setEyesOpen(!EyesOpen)}>
-                        {EyesOpen ? <EyeIcon className="h-6 w-6 text-gray-600" onClick={() => setEyesOpen(false)} /> 
-                        : 
-                        <EyeClosedIcon className="h-6 w-6 text-gray-600" onClick={() => setEyesOpen(true)} />}
-                    </button>
+                        <p className="text-5xl font-semibold">{EyesOpen ? "Rp.100.000,00" : "••••••••"}</p>
+                        <button onClick={() => setEyesOpen(!EyesOpen)}>
+                            {EyesOpen ? <EyeIcon className="h-6 w-6 text-gray-600" onClick={() => setEyesOpen(false)} />
+                                :
+                                <EyeClosedIcon className="h-6 w-6 text-gray-600" onClick={() => setEyesOpen(true)} />}
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Cards label={'Cards'} />
+
+                        <CardIndex currency="IDR" balance={15000} eyesOpen={EyesOpen}/>
                     </div>
                 </div>
             </div>
