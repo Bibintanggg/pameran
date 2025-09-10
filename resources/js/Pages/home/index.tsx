@@ -1,4 +1,5 @@
 import Cards from "@/Components/AddCards"
+import AddIncome from "@/Components/AddIncome"
 import BottomNavbar from "@/Components/BottomNavbar"
 import CardBalance from "@/Components/CardBalance"
 import CardIndex from "@/Components/CardIndex"
@@ -20,6 +21,7 @@ import { useState } from "react"
 export default function Home() {
     const { auth } = usePage<PageProps>().props
     const [EyesOpen, setEyesOpen] = useState(false)
+    // const [button]
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -99,10 +101,7 @@ export default function Home() {
                             </div>
 
                             <div className="flex items-center justify-center gap-6 text-white font-semibold relative z-10">
-                                <button className="flex flex-col items-center">
-                                    <PlusSquareIcon size={32} />
-                                    <p className="text-sm">Add income</p>
-                                </button>
+                                <AddIncome label="Add Income" />
                                 <button className="flex flex-col items-center">
                                     <MinusSquare size={32} />
                                     <p className="text-sm">Add expense</p>
