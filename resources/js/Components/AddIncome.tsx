@@ -37,7 +37,8 @@ export default function AddIncome({
     label
 }: IncomeProps) {
     const [date, setDate] = React.useState<Date>()
-
+    const [asset, setAsset] = React.useState<string>("")
+    const [category, setCategory] = React.useState<string>("")
     return (
         <div className="">
             <div className="flex items-center justify-center flex-col">
@@ -100,14 +101,14 @@ export default function AddIncome({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                            Select Your Asset
+                                            {asset || "Select Your Asset"}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         {/* <DropdownMenuLabel>Select Your Asset</DropdownMenuLabel> */}
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem>Cash</DropdownMenuItem>
-                                            <DropdownMenuItem>Transfer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setAsset("Cash")}>Cash</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setAsset("Transfer")}>Transfer</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -117,15 +118,15 @@ export default function AddIncome({
                                 <p className="w-24">Category</p>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="flex-1 text-black/50 flex">
-                                            Select Your Category Income
+                                        <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
+                                            {category || "Select Your Category Income"}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem>Salary</DropdownMenuItem>
-                                            <DropdownMenuItem>Allowance</DropdownMenuItem>
-                                            <DropdownMenuItem>Bonus</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setCategory("Salary")}>Salary</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setCategory("Allowance")}>Allowance</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setCategory("Bonus")}>Bonus</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

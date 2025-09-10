@@ -1,4 +1,5 @@
 import Cards from "@/Components/AddCards"
+import AddExpense from "@/Components/AddExpense"
 import AddIncome from "@/Components/AddIncome"
 import BottomNavbar from "@/Components/BottomNavbar"
 import CardBalance from "@/Components/CardBalance"
@@ -32,7 +33,7 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
                             <Avatar>
-                                <AvatarImage src="https://github.com/shadcn.png"  />
+                                <AvatarImage src="https://github.com/shadcn.png" />
                                 <AvatarFallback>CN</AvatarFallback>
                             </Avatar>
 
@@ -102,10 +103,8 @@ export default function Home() {
 
                             <div className="flex items-center justify-center gap-6 text-white font-semibold relative z-10">
                                 <AddIncome label="Add Income" />
-                                <button className="flex flex-col items-center">
-                                    <MinusSquare size={32} />
-                                    <p className="text-sm">Add expense</p>
-                                </button>
+                                <AddExpense label="Add Expense" />
+
                                 <button className="flex flex-col items-center">
                                     <ChevronsRightLeftIcon size={32} />
                                     <p className="text-sm">Convert</p>
