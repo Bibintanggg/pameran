@@ -55,7 +55,7 @@ export default function Cards({ label }: CardsProps) {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent className="w-56" align="start">
 
-                                            <DropdownMenuLabel>Select Your Currency</DropdownMenuLabel>
+                                            {/* <DropdownMenuLabel>Select Your Currency</DropdownMenuLabel> */}
                                             <DropdownMenuGroup>
                                                 <DropdownMenuItem>
                                                     IDR - Indonesian Rupiah
