@@ -6,7 +6,7 @@ export default function BottomNavbar() {
 
     const data = [
         { icon: <Home className="w-6 h-6" />, path: "/home" },
-        { icon: <BarChart3 className="w-6 h-6" />, path: "/profile" },
+        { icon: <BarChart3 className="w-6 h-6" />, path: "/activity" },
         { icon: <PlusSquare className="w-6 h-6" />, path: "/tambah" },
         { icon: <CreditCard className="w-6 h-6" />, path: "/transaksi" },
         { icon: <Settings className="w-6 h-6" />, path: "/settings" },
