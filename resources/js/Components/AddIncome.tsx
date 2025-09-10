@@ -131,6 +131,16 @@ export default function AddIncome({
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
+
+                            <div className="flex items-center justify-between">
+                                <button className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
+                                    Back
+                                </button>
+
+                                <button className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
+                                    Save changes
+                                </button>
+                                </div>
                         </form>
 
                     </DialogContent>

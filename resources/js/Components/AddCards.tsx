@@ -17,12 +17,15 @@ import {
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu"
 import { Button } from "./ui/button"
+import React from "react"
 
 interface CardsProps {
     label: string
 }
 
 export default function Cards({ label }: CardsProps) {
+    const [wallet, setWallet] = React.useState<string>("")
+
     return (
         <div className="mt-5">
             <div className="w-40 h-16 bg-[#808080]/10 rounded-lg flex items-center justify-between px-4">
@@ -51,19 +54,21 @@ export default function Cards({ label }: CardsProps) {
                                     <p>Select Currency</p>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="w-full text-black/50 flex">Select Your Currency</Button>
+                                            <Button variant="outline" className="w-full text-black/50 flex justify-start">
+                                            {wallet || "Select Your Currency"}
+                                            </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent className="w-56" align="start">
 
                                             {/* <DropdownMenuLabel>Select Your Currency</DropdownMenuLabel> */}
                                             <DropdownMenuGroup>
-                                                <DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setWallet("IDR - Indonesian Rupiah")}>
                                                     IDR - Indonesian Rupiah
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setWallet("THB - Baht Thailand")}>
                                                     THB - Baht Thailand
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setWallet("USD - Dollar AS ")}>
                                                     USD - Dollar AS
                                                 </DropdownMenuItem>
                                             </DropdownMenuGroup>

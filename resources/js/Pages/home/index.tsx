@@ -1,4 +1,5 @@
 import Cards from "@/Components/AddCards"
+import AddConvert from "@/Components/AddConvert"
 import AddExpense from "@/Components/AddExpense"
 import AddIncome from "@/Components/AddIncome"
 import BottomNavbar from "@/Components/BottomNavbar"
@@ -104,11 +105,7 @@ export default function Home() {
                             <div className="flex items-center justify-center gap-6 text-white font-semibold relative z-10">
                                 <AddIncome label="Add Income" />
                                 <AddExpense label="Add Expense" />
-
-                                <button className="flex flex-col items-center">
-                                    <ChevronsRightLeftIcon size={32} />
-                                    <p className="text-sm">Convert</p>
-                                </button>
+                                <AddConvert label="Convert" />
                             </div>
                         </div>
                     </div>
