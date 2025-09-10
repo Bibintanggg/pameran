@@ -53,7 +53,7 @@ export default function AddIncome({
                         <DialogHeader>
                             <DialogTitle className="text-start">Add Income</DialogTitle>
                             <DialogDescription className="text-start">
-                                Fill in the details below to create a new card, then click Save when you're done.
+                                Add your income details here, then click Save when finished.
                             </DialogDescription>
                         </DialogHeader>
 
