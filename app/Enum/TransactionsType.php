@@ -2,7 +2,7 @@
 
 namespace App\Enum;
 
-enum TransactionType: int
+enum TransactionsType: int
 {
     case INCOME = 1;
     case EXPENSE = 2;

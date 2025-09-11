@@ -17,10 +17,11 @@ return new class extends Migration
             $table->integer('type');
             $table->foreignId('from_cards_id')->nullable()->constrained('cards')->onDelete('cascade');
             $table->foreignId('to_cards_id')->nullable()->constrained('cards')->onDelete('cascade');
-            $table->decimal('amount');
+            $table->decimal('amount', 18, 2);
             $table->integer('asset');
-            $table->decimal('rate')->nullable();
+            $table->decimal('rate', 18, 6)->nullable();
             $table->string('notes')->nullable();
+            $table->date('transaction_date');
             $table->integer('category')->nullable();
             $table->timestamps();
         });

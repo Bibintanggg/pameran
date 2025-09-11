@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enum\Asset;
 use App\Enum\Category;
-use App\Enum\TransactionType;
+use App\Enum\TransactionsType;
 use Illuminate\Database\Eloquent\Model;
 
 class Transactions extends Model
@@ -20,13 +20,15 @@ class Transactions extends Model
         'rate',
         'notes',
         'asset',
+        'transaction_date',
         'category'
     ];
 
     protected $casts = [
-        'type' => TransactionType::class,
+        'type' => TransactionsType::class,
         'category' => Category::class,
-        'asset' => Asset::class
+        'asset' => Asset::class,
+        'transaction_date' => 'date'
     ];
 
     public function user()
@@ -37,5 +39,15 @@ class Transactions extends Model
     public function cards()
     {
         return $this->belongsTo(Cards::class);
+    }
+
+    public function fromCard()
+    {
+        return $this->belongsTo(Cards::class, 'from_cards_id');
+    }
+
+    public function toCard()
+    {
+        return $this->belongsTo(Cards::class, 'to_cards_id');
     }
 }

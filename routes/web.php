@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TransactionsController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -14,16 +15,19 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/home', function () {
-    return Inertia::render('home/index');
-})->middleware(['auth', 'verified'])->name('home');
+Route::get('/home', [TransactionsController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('home.index');
+
+Route::post('/transactions', [TransactionsController::class, 'storeIncome'])
+    ->middleware(['auth', 'verified'])
+    ->name('transactions.storeincome');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
 Route::get('/activity', function() {
     return Inertia::render('activity/index');
 })->middleware(['auth', 'verified'])->name('activity');

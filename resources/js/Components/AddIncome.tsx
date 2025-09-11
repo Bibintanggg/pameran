@@ -27,18 +27,42 @@ import { PlusIcon, PlusSquareIcon } from "lucide-react"
 import { ChevronDownIcon } from "lucide-react"
 import { Calendar as CalendarIcon } from "lucide-react"
 import React from "react"
+import { useForm } from "@inertiajs/react"
 
 interface IncomeProps {
     label: string
+    activeCardId: number
 }
 
 
 export default function AddIncome({
-    label
+    label,
+    activeCardId
 }: IncomeProps) {
     const [date, setDate] = React.useState<Date>()
     const [asset, setAsset] = React.useState<string>("")
     const [category, setCategory] = React.useState<string>("")
+    const [amount, setAmount] = React.useState<number>(0)
+    const [notes, setNotes] = React.useState<string>("")
+
+    const {data, setData, post, processing, errors, reset} = useForm({
+        'transaction_date': '',
+        'amount': '',
+        'notes': '',
+        'asset': '',
+        'category': '',
+        'type': 1,
+        'card_id': activeCardId
+    })
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route('transactions.storeincome'), {
+            ...data, 
+            onSuccess: () => reset()
+        })
+    }
+
     return (
         <div className="">
             <div className="flex items-center justify-center flex-col">
@@ -58,7 +82,7 @@ export default function AddIncome({
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form className="space-y-3">
+                        <form className="space-y-3" onSubmit={handleSubmit}>
                             <div className="flex items-center gap-4">
                                 <p className="w-24">Date</p>
                                 <Popover>
@@ -69,11 +93,17 @@ export default function AddIncome({
                                             className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
                                         >
                                             <CalendarIcon />
-                                            <span>Pick a date</span>
+                                            <span>{date ? date.toDateString() : "Pick a date"}</span>
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={date} onSelect={setDate} />
+                                        <Calendar 
+                                        mode="single" 
+                                        selected={date} 
+                                        onSelect={(d) => {
+                                            setDate(d),
+                                            setData("transaction_date", d ? d.toISOString().split("T")[0] : "")
+                                        }} />
                                     </PopoverContent>
                                 </Popover>
                             </div>
@@ -83,6 +113,8 @@ export default function AddIncome({
                                 <input
                                     type="number"
                                     placeholder="example. 100000"
+                                    value={data.amount}
+                                    onChange={(e) => setData("amount", e.target.value)}
                                     className="flex-1 border border-black/10 rounded-lg p-2 placeholder:text-sm"
                                 />
                             </div>
@@ -91,6 +123,8 @@ export default function AddIncome({
                                 <p className="w-24">Notes</p>
                                 <input
                                     type="text"
+                                    value={data.notes}
+                                    onChange={(e) => setData("notes", e.target.value)}
                                     placeholder="Optional"
                                     className="flex-1 border border-black/10 rounded-lg p-2 placeholder:justify-start placeholder:text-sm"
                                 />
@@ -101,14 +135,14 @@ export default function AddIncome({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                            {asset || "Select Your Asset"}
+                                            {data.asset === "1" ? "Cash" : data.asset === "2" ? "Transfer" : "Select Your Asset"}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         {/* <DropdownMenuLabel>Select Your Asset</DropdownMenuLabel> */}
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setAsset("Cash")}>Cash</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setAsset("Transfer")}>Transfer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", "1")}>Cash</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", "2")}>Transfer</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -119,14 +153,14 @@ export default function AddIncome({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                            {category || "Select Your Category Income"}
+                                            {data.category || "Select Your Category Income"}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setCategory("Salary")}>Salary</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Allowance")}>Allowance</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Bonus")}>Bonus</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", '1')}>Salary</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", '2')}>Allowance</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", '3')}>Bonus</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -137,7 +171,7 @@ export default function AddIncome({
                                     Back
                                 </button>
 
-                                <button className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
+                                <button type="submit" className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
                                     Save changes
                                 </button>
                                 </div>

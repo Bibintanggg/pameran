@@ -11,6 +11,8 @@ class Cards extends Model
     protected $table = 'cards';
 
     protected $fillable = [
+        // 'card_id',
+        'user_id',
         'currency',
         'card_number',
         'balance'
@@ -23,6 +25,16 @@ class Cards extends Model
     public function transactions()
     {
         return $this->hasMany(Transactions::class);
+    }
+
+    public function transactionsForm()
+    {
+        return $this->hasMany(Transactions::class, 'from_cards_id');
+    }
+
+    public function transactionsTo()
+    {
+        return $this->hasMany(Transactions::class, 'to_cards_id');
     }
 
     public function user()
