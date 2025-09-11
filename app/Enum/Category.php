@@ -31,4 +31,24 @@ enum Category: int
         };
     }
 
+    public function options(): array
+    {
+        return [
+            self::SALLARY->value => self::SALLARY->label(),
+            self::ALLOWANCE->value => self::ALLOWANCE->label(),
+            self::BONUS->value => self::BONUS->label(),
+            self::FOOD_DRINKS->value => self::FOOD_DRINKS->label(),
+            self::TRANSPORTATION->value => self::TRANSPORTATION->label(),
+            self::GROCERIES->value => self::GROCERIES->label(),
+            self::HEALTH->value => self::HEALTH->label(),
+            self::SHOPPING->value => self::SHOPPING->label(),
+            self::SAVINGS_INVESTMENTS->value => self::SAVINGS_INVESTMENTS->label(),
+            self::TRAVEL->value => self::TRAVEL->label()
+        ];
+    }
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }

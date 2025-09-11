@@ -20,6 +20,11 @@ class Cards extends Model
         'currency' => Currency::class
     ];
 
+    public function transactions()
+    {
+        return $this->hasMany(Transactions::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
