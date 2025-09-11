@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('from_cards_id')->nullable()->constrained('cards')->onDelete('cascade');
             $table->foreignId('to_cards_id')->nullable()->constrained('cards')->onDelete('cascade');
             $table->decimal('amount');
+            $table->integer('asset');
             $table->decimal('rate')->nullable();
             $table->string('notes')->nullable();
             $table->integer('category')->nullable();
