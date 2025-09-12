@@ -18,6 +18,7 @@ import {
 } from "@/Components/ui/dropdown-menu"
 import { Button } from "./ui/button"
 import React from "react"
+import { useForm } from "@inertiajs/react"
 
 interface CardsProps {
     label: string
@@ -25,6 +26,30 @@ interface CardsProps {
 
 export default function Cards({ label }: CardsProps) {
     const [wallet, setWallet] = React.useState<string>("")
+    const {data, setData, post, processing, errors, reset} = useForm({
+        'currency': 0,
+        'name': '',
+        'card_number': '',
+        'balance': ''
+    })
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        post(route('cards.store'), {
+            onSuccess: () => {
+                reset()
+            }
+        })
+    }
+
+    //helper
+    const getCurrencyLabel = (value: number) => {
+        switch(value) {
+            case 1 : return 'Rupiah'
+            case 2 : return 'THB - Baht Thailand'
+            case 3 : return 'USD - Dollar AS'
+        }
+    }
 
     return (
         <div className="mt-5">
@@ -49,26 +74,26 @@ export default function Cards({ label }: CardsProps) {
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <form className="space-y-3">
+                            <form className="space-y-3" onSubmit={handleSubmit}>
                                 <div className="flex items-center gap-5">
                                     <p>Select Currency</p>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="outline" className="w-full text-black/50 flex justify-start">
-                                            {wallet || "Select Your Currency"}
+                                            {getCurrencyLabel(data.currency)}
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent className="w-56" align="start">
 
                                             {/* <DropdownMenuLabel>Select Your Currency</DropdownMenuLabel> */}
                                             <DropdownMenuGroup>
-                                                <DropdownMenuItem onClick={() => setWallet("IDR - Indonesian Rupiah")}>
+                                                <DropdownMenuItem onClick={() => setData("currency", 1)}>
                                                     IDR - Indonesian Rupiah
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setWallet("THB - Baht Thailand")}>
+                                                <DropdownMenuItem onClick={() => setData("currency", 2)}>
                                                     THB - Baht Thailand
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setWallet("USD - Dollar AS ")}>
+                                                <DropdownMenuItem onClick={() => setData("currency", 3)}>
                                                     USD - Dollar AS
                                                 </DropdownMenuItem>
                                             </DropdownMenuGroup>
@@ -79,6 +104,8 @@ export default function Cards({ label }: CardsProps) {
                                     <p>Card Name</p>
                                     <input
                                         type="text"
+                                        value={data.name}
+                                        onChange={(e) => setData("name", e.target.value)}
                                         placeholder={`example. IDR, THB, etc`}
                                         className="w-full border border-black/10 rounded p-2"
                                     />
@@ -88,6 +115,8 @@ export default function Cards({ label }: CardsProps) {
                                     <p>Card Number</p>
                                     <input
                                         type="number"
+                                        value={data.card_number}
+                                        onChange={(e) => setData('card_number', e.target.value)}
                                         placeholder={`example. 6203... (min 10digit)`}
                                         className="w-full border border-black/10 rounded p-2"
                                     />
@@ -98,8 +127,10 @@ export default function Cards({ label }: CardsProps) {
                                     Back
                                 </button>
 
-                                <button className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
-                                    Save changes
+                                <button
+                                type="submit"
+                                className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
+                                    {processing ? "Saving..." : "Saving changes"}
                                 </button>
                                 </div>
                             </form>

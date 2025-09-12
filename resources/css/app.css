@@ -66,3 +66,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+.scrollbar-hide-x {
+  -ms-overflow-style: none; /* IE & Edge lama */
+  scrollbar-width: none;    /* Firefox */
+}
+
+.scrollbar-hide-x::-webkit-scrollbar {
+  height: 0px; /* Buat scrollbar horizontal */
+}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CardsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TransactionsController;
 use Illuminate\Foundation\Application;
@@ -15,13 +16,17 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/home', [TransactionsController::class, 'index'])
+Route::get('/home', [CardsController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('home.index');
 
 Route::post('/transactions', [TransactionsController::class, 'storeIncome'])
     ->middleware(['auth', 'verified'])
     ->name('transactions.storeincome');
+
+Route::post('/add-cards', [CardsController::class, 'store'])
+    ->middleware(['auth', 'verified'])
+    ->name('cards.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

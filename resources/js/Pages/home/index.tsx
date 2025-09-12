@@ -21,10 +21,20 @@ import {
 import { useState } from "react"
 
 export default function Home() {
-    const { auth } = usePage<PageProps>().props
+    const { auth, cards, transactions } = usePage().props as unknown as {
+        auth: any;
+        cards: { id: number; name: string; balance: number; currency: number }[];
+        transactions: any[];
+    };
+
+
     const [EyesOpen, setEyesOpen] = useState(false)
-    const [activeCardId, setActiveCardId] = useState(1)
+    const [activeCardId, setActiveCardId] = useState<number>(
+        (cards && cards.length > 0) ? cards[0].id : 0
+    )
     // const [button]
+    console.log('Data cards di Home:', cards); //debug
+    console.log('Cards length:', cards?.length);
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -66,9 +76,28 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <div className="mt-4 flex items-center gap-3">
+                    <div className="mt-4 flex items-center gap-3 overflow-x-auto
+                    scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                         <Cards label={"Cards"} />
-                        <CardIndex currency="IDR" balance={15000} eyesOpen={EyesOpen} />
+
+                        {cards && cards.length > 0 ? (
+                            cards.map((card) => (
+                                <button
+                                    key={card.id}
+                                    onClick={() => setActiveCardId(card.id)}
+                                    className={`transition rounded-lg ${activeCardId === card.id ? "" : ""
+                                        }`}
+                                >
+                                    <CardIndex
+                                        currency={card.name}
+                                        balance={card.balance}
+                                        eyesOpen={EyesOpen}
+                                    />
+                                </button>
+                            ))
+                        ) : (
+                            <p className="text-gray-500">Belum ada kartu</p>
+                        )}
                     </div>
 
                     <div className="mt-8">
@@ -104,7 +133,7 @@ export default function Home() {
                             </div>
 
                             <div className="flex items-center justify-center gap-6 text-white font-semibold relative z-10">
-                                <AddIncome label="Add Income" activeCardId={activeCardId}/>
+                                <AddIncome label="Add Income" activeCardId={activeCardId} />
                                 <AddExpense label="Add Expense" />
                                 <AddConvert label="Convert" />
                             </div>
