@@ -18,8 +18,7 @@ class TransactionsController extends Controller
      */
     public function index()
     {
-        //
-        $transactions = Transactions::with('cards')
+        $transactions = Transactions::with(['fromCard', 'toCard'])
             ->where('user_id', Auth::id())
             ->latest()
             ->get();
@@ -39,40 +38,52 @@ class TransactionsController extends Controller
 
     public function storeIncome(Request $request)
     {
+        // Hapus dd() untuk production
+        // dd($request->all());
+
+        // $allData = $request->all();
+        //     if (!isset($allData['to_cards_id'])) {
+        //         // Ambil dari activeCardId yang dikirim dari frontend
+        //         $allData['to_cards_id'] = $request->input('activeCardId') ?? 1; // fallback ke 1
+        //     }
+
         $validated = $request->validate([
             'transaction_date' => 'required|date',
             'amount' => 'required|numeric|min:1',
             'notes' => 'nullable|string',
             'asset' => 'required|integer',
-            'category' => 'nullable|integer',
-            'type' => ['required ','integer', Rule::in(TransactionsType::values())],
-            'card_id' => 'required|exists:cards,id',
+            'category' => 'required|integer',
+            'type' => ['required','integer', Rule::in(TransactionsType::values())],
+            'to_cards_id' => 'required|exists:cards,id',
         ]);
 
-        
         if ($validated['type'] === TransactionsType::INCOME->value) {
             if (!in_array($validated['category'], [Category::SALLARY->value, Category::ALLOWANCE->value, Category::BONUS->value])) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
+
+            // Buat transaksi
             Transactions::create([
                 'user_id' => Auth::id(),
-                'type' => 1,
-                'to_card_id' => $validated['card_id'],
+                'type' => $validated['type'],
+                'to_cards_id' => $validated['to_cards_id'],
                 'amount' => $validated['amount'],
                 'asset' => $validated['asset'],
                 'category' => $validated['category'],
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? "",
                 'transaction_date' => $validated['transaction_date'],
             ]);
-            
-            // dd($validated);
 
-            $card = Cards::find($validated['card_id']);
-            $card->balance += $validated['amount'];
-            $card->save();
+            $card = Cards::find($validated['to_cards_id']); // Gunakan to_cards_id
+            if ($card) {
+                $card->balance += $validated['amount'];
+                $card->save();
+            }
 
-            return redirect()->route('home.index')->with('succes', 'Transaksi ditambah');
+            return redirect()->route('home.index')->with('success', 'Transaksi berhasil ditambahkan'); // ✅ Perbaiki typo 'succes' -> 'success'
         }
+
+        return back()->withErrors(['type' => 'Invalid transaction type']);
     }
 
     /**

@@ -13,6 +13,7 @@ class Transactions extends Model
     protected $table = 'transactions';
 
     protected $fillable = [
+        'user_id',
         'type',
         'from_cards_id',
         'to_cards_id',
@@ -28,7 +29,9 @@ class Transactions extends Model
         'type' => TransactionsType::class,
         'category' => Category::class,
         'asset' => Asset::class,
-        'transaction_date' => 'date'
+        'transaction_date' => 'date',
+        'amount' => 'decimal:2',
+        'rate' => 'decimal:6'
     ];
 
     public function user()

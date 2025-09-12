@@ -23,6 +23,7 @@ import { useState } from "react"
 export default function Home() {
     const { auth } = usePage<PageProps>().props
     const [EyesOpen, setEyesOpen] = useState(false)
+    const [activeCardId, setActiveCardId] = useState(1)
     // const [button]
 
     return (
@@ -103,7 +104,7 @@ export default function Home() {
                             </div>
 
                             <div className="flex items-center justify-center gap-6 text-white font-semibold relative z-10">
-                                <AddIncome label="Add Income" />
+                                <AddIncome label="Add Income" activeCardId={activeCardId}/>
                                 <AddExpense label="Add Expense" />
                                 <AddConvert label="Convert" />
                             </div>

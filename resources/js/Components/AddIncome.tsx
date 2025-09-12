@@ -34,39 +34,82 @@ interface IncomeProps {
     activeCardId: number
 }
 
-
 export default function AddIncome({
     label,
     activeCardId
 }: IncomeProps) {
     const [date, setDate] = React.useState<Date>()
-    const [asset, setAsset] = React.useState<string>("")
-    const [category, setCategory] = React.useState<string>("")
-    const [amount, setAmount] = React.useState<number>(0)
-    const [notes, setNotes] = React.useState<string>("")
+    const [isOpen, setIsOpen] = React.useState(false) //  Tambah state untuk dialog
 
-    const {data, setData, post, processing, errors, reset} = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         'transaction_date': '',
-        'amount': '',
+        'amount': 0,
         'notes': '',
-        'asset': '',
-        'category': '',
+        'asset': 0,
+        'category': 0,
         'type': 1,
-        'card_id': activeCardId
+        'to_cards_id': activeCardId
     })
+
+    React.useEffect(() => {
+        setData("to_cards_id", activeCardId)
+    }, [activeCardId])
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // ✅ Validasi frontend sebelum submit
+        if (!data.transaction_date) {
+            alert('Please select a date');
+            return;
+        }
+        if (!data.amount || data.amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+        if (!data.asset) {
+            alert('Please select an asset');
+            return;
+        }
+        if (!data.category) {
+            alert('Please select a category');
+            return;
+        }
+
         post(route('transactions.storeincome'), {
-            ...data, 
-            onSuccess: () => reset()
+            onSuccess: () => {
+                reset();
+                setDate(undefined); // Reset date state
+                setIsOpen(false); //  Close dialog
+            },
+            onError: (errors) => {
+                console.log('Validation errors:', errors); //  Debug errors
+            }
         })
+    }
+
+    // Helper functions untuk display labels
+    const getAssetLabel = (value: number) => {
+        switch(value) {
+            case 1: return "Cash";
+            case 2: return "Transfer";
+            default: return "Select Your Asset";
+        }
+    }
+
+    const getCategoryLabel = (value: number) => {
+        switch(value) {
+            case 1: return "Salary";
+            case 2: return "Allowance";
+            case 3: return "Bonus";
+            default: return "Select Your Category Income";
+        }
     }
 
     return (
         <div className="">
             <div className="flex items-center justify-center flex-col">
-                <Dialog>
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <button className="flex flex-col items-center">
                             <PlusSquareIcon opacity={54} size={32} />
@@ -84,7 +127,7 @@ export default function AddIncome({
 
                         <form className="space-y-3" onSubmit={handleSubmit}>
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Date</p>
+                                <p className="w-24">Date *</p>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -97,26 +140,34 @@ export default function AddIncome({
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
-                                        <Calendar 
-                                        mode="single" 
-                                        selected={date} 
-                                        onSelect={(d) => {
-                                            setDate(d),
-                                            setData("transaction_date", d ? d.toISOString().split("T")[0] : "")
-                                        }} />
+                                        <Calendar
+                                            mode="single"
+                                            selected={date}
+                                            onSelect={(d) => {
+                                                setDate(d);
+                                                setData("transaction_date", d ? d.toISOString().split("T")[0] : "");
+                                            }}
+                                        />
                                     </PopoverContent>
                                 </Popover>
+                                {errors.transaction_date && (
+                                    <span className="text-red-500 text-sm">{errors.transaction_date}</span>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Amount</p>
+                                <p className="w-24">Amount *</p>
                                 <input
                                     type="number"
                                     placeholder="example. 100000"
-                                    value={data.amount}
-                                    onChange={(e) => setData("amount", e.target.value)}
+                                    value={data.amount || ''} //  Handle 0 value
+                                    onChange={(e) => setData("amount", Number(e.target.value))}
                                     className="flex-1 border border-black/10 rounded-lg p-2 placeholder:text-sm"
+                                    min="1"
                                 />
+                                {errors.amount && (
+                                    <span className="text-red-500 text-sm">{errors.amount}</span>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -131,50 +182,63 @@ export default function AddIncome({
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Asset</p>
+                                <p className="w-24">Asset *</p>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                            {data.asset === "1" ? "Cash" : data.asset === "2" ? "Transfer" : "Select Your Asset"}
+                                            {getAssetLabel(data.asset)} {/* Gunakan helper function */}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
-                                        {/* <DropdownMenuLabel>Select Your Asset</DropdownMenuLabel> */}
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setData("asset", "1")}>Cash</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("asset", "2")}>Transfer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 1)}>Cash</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 2)}>Transfer</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                                {errors.asset && (
+                                    <span className="text-red-500 text-sm">{errors.asset}</span>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Category</p>
+                                <p className="w-24">Category *</p>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                            {data.category || "Select Your Category Income"}
+                                            {getCategoryLabel(data.category)} {/*  Gunakan helper function */}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setData("category", '1')}>Salary</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", '2')}>Allowance</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", '3')}>Bonus</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 1)}>Salary</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 2)}>Allowance</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 3)}>Bonus</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                                {errors.category && (
+                                    <span className="text-red-500 text-sm">{errors.category}</span>
+                                )}
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <button className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
-                                    Back
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="w-20 bg-red-600 text-white py-2 rounded-lg"
+                                >
+                                    Cancel
                                 </button>
 
-                                <button type="submit" className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
-                                    Save changes
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-40 bg-slate-900 text-white py-2 rounded-lg disabled:opacity-50"
+                                >
+                                    {processing ? 'Saving...' : 'Save changes'}
                                 </button>
-                                </div>
+                            </div>
                         </form>
 
                     </DialogContent>
