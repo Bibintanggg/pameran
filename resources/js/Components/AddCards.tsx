@@ -76,6 +76,15 @@ export default function Cards({ label }: CardsProps) {
                                     </DropdownMenu>
                                 </div>
                                 <div className="flex items-center gap-8">
+                                    <p>Card Name</p>
+                                    <input
+                                        type="text"
+                                        placeholder={`example. IDR, THB, etc`}
+                                        className="w-full border border-black/10 rounded p-2"
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-8">
                                     <p>Card Number</p>
                                     <input
                                         type="number"

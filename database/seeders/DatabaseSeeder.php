@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Cards;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -18,6 +19,14 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'phone_number' => "082313132",
             'email' => 'test@example.com',
+        ]);
+
+        Cards::create([
+            'user_id' => 1,
+            'name' => 'IDR Card',
+            'currency' => 1,
+            'card_number' => null,
+            'balance' => 0,
         ]);
     }
 }

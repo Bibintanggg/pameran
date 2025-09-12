@@ -14,6 +14,7 @@ class Cards extends Model
         // 'card_id',
         'user_id',
         'currency',
+        'name',
         'card_number',
         'balance'
     ];

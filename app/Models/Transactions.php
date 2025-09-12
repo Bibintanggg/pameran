@@ -26,9 +26,6 @@ class Transactions extends Model
     ];
 
     protected $casts = [
-        'type' => TransactionsType::class,
-        'category' => Category::class,
-        'asset' => Asset::class,
         'transaction_date' => 'date',
         'amount' => 'decimal:2',
         'rate' => 'decimal:6'
