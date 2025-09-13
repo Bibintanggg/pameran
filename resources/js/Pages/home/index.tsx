@@ -22,12 +22,23 @@ import { useState } from "react"
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 
 export default function Home() {
-    const { auth, cards, transactions } = usePage().props as unknown as {
+    const { auth, cards, transactions, totalIncome, totalExpense, incomeRateHigh, incomeRateLow, expenseRateHigh, expenseRateLow } = usePage().props as unknown as {
         auth: any;
-        cards: { id: number; name: string; balance: number; currency: number }[];
-        transactions: any[];
-    };
+        cards: {
+            id: number;
+            name: string;
+            balance: number;
+            currency: number
 
+        }[];
+        transactions: any[];
+        totalIncome: number;
+        totalExpense: number;
+        incomeRateHigh: number;
+        incomeRateLow: number;
+        expenseRateHigh: number;
+        expenseRateLow: number;
+    };
 
     const [EyesOpen, setEyesOpen] = useState(false)
     const [activeCardId, setActiveCardId] = useState<number>(
@@ -38,7 +49,6 @@ export default function Home() {
     console.log('Data cards di Home:', cards); //debug
     console.log('Cards length:', cards?.length);
 
-    // Use the active card's balance or sum all cards' balance if you want total
     const balance = activeCard ? activeCard.balance : 0;
 
     return (
@@ -123,22 +133,24 @@ export default function Home() {
                             <div className="flex items-center justify-between relative z-10 gap-4">
                                 <div className="flex-1">
                                     <CardBalance
-                                        currency="RP"
+                                        currency={currencyMap[activeCard?.currency ?? 1]}
                                         type="Income"
                                         icon={<LogInIcon />}
-                                        rate={85}
-                                        balance={10000}
-                                        rateLow={0}
+                                        rate={incomeRateHigh}   // rateHigh untuk income
+                                        rateLow={incomeRateLow}
+                                        balance={totalIncome ?? 0}
+                                    // rateLow={0}
                                     />
                                 </div>
                                 <div className="flex-1">
                                     <CardBalance
-                                        currency="RP"
+                                        currency={currencyMap[activeCard?.currency ?? 1]}
                                         type="Expense"
                                         icon={<LogInIcon />}
-                                        rate={0}
-                                        balance={85000}
-                                        rateLow={15}
+                                        rate={expenseRateHigh}
+                                        rateLow={expenseRateLow}
+                                        balance={totalExpense ?? 0}
+                                    // rateLow={15}
                                     />
                                 </div>
                             </div>

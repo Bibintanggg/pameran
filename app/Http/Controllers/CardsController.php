@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enum\Currency;
+use App\Enum\TransactionsType;
 use App\Models\Cards;
 use App\Models\Transactions;
 use Illuminate\Validation\Rule;
@@ -17,26 +18,39 @@ class CardsController extends Controller
      */
     public function index()
     {
-        $transactions = Transactions::with('cards')
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->get();
-
+        $userId = Auth::id();
         $cards = Cards::where('user_id', Auth::id())->get();
 
+         $currentIncome = Transactions::where('user_id', $userId)
+        ->where('type', TransactionsType::INCOME->value)
+        ->whereDate('created_at', now()->toDateString())
+        ->sum('amount');
+
+    $currentExpense = Transactions::where('user_id', $userId)
+        ->where('type', TransactionsType::EXPENSE->value)
+        ->whereDate('created_at', now()->toDateString())
+        ->sum('amount');
+
+    $total = $currentIncome + $currentExpense;
+
+    $incomeRateHigh = $total > 0 ? round(($currentIncome / $total) * 100, 2) : 0;
+    $incomeRateLow  = $total > 0 ? round(($currentExpense / $total) * 100, 2) : 0;
+
+    $expenseRateHigh = $incomeRateLow; 
+    $expenseRateLow  = $incomeRateHigh;
+
         return Inertia::render('home/index', [
-            'auth' => [
-                'user' => Auth::user(),
-            ],
-            'transactions' => $transactions,
-            'cards' => $cards,
+           'cards'         => $cards,
+        'totalIncome'      => $currentIncome,
+        'totalExpense'     => $currentExpense,
+        'incomeRateHigh'   => $incomeRateHigh,
+        'incomeRateLow'    => $incomeRateLow,
+        'expenseRateHigh'  => $expenseRateHigh,
+        'expenseRateLow'   => $expenseRateLow,
         ]);
     }
 
-    public function indexBalance() 
-    {
-        
-    }
+
 
     /**
      * Show the form for creating a new resource.

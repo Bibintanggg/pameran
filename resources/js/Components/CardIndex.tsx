@@ -24,7 +24,7 @@ export default function CardIndex({ id, currency, balance }: CardIndexProps) {
     const [eyesOpen, setEyesOpen] = useState(false);
 
     const handleDelete = () => {
-        router.delete(route("cards.destroy", {card: id}));
+        router.delete(route("cards.destroy", { card: id }));
     };
 
     return (
@@ -34,31 +34,31 @@ export default function CardIndex({ id, currency, balance }: CardIndexProps) {
                     <h1 className="font-semibold text-lg">{currency}</h1>
 
                     <AlertDialog>
-  <AlertDialogTrigger asChild>
-    <button className="hover:bg-black/5 transition-all duration-300 ease-in-out rounded-full w-5 h-5 flex items-center justify-center">
-      <TrashIcon size={15} color={"red"} />
-    </button>
-  </AlertDialogTrigger>
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>Hapus kartu ini?</AlertDialogTitle>
-      <AlertDialogDescription>
-        Aksi ini tidak bisa dibatalkan. Kartu dan datanya akan dihapus permanen.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel>Batal</AlertDialogCancel>
-      <AlertDialogAction asChild>
-        <button
-          onClick={handleDelete}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-        >
-          Hapus
-        </button>
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <button className="hover:bg-black/5 transition-all duration-300 ease-in-out rounded-full w-5 h-5 flex items-center justify-center">
+                                <TrashIcon size={15} color={"red"} />
+                            </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Hapus kartu ini?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Aksi ini tidak bisa dibatalkan. Kartu dan datanya akan dihapus permanen.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction asChild>
+                                    <button
+                                        onClick={handleDelete}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                    >
+                                        Hapus
+                                    </button>
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
 
                 </div>
 

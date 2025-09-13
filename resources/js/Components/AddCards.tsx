@@ -27,7 +27,7 @@ interface CardsProps {
 export default function Cards({ label }: CardsProps) {
     const [wallet, setWallet] = React.useState<string>("")
     const {data, setData, post, processing, errors, reset} = useForm({
-        'currency': 0,
+        'currency': 1,
         'name': '',
         'card_number': '',
         'balance': ''

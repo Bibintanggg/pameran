@@ -53,16 +53,16 @@ class TransactionsController extends Controller
             'notes' => 'nullable|string',
             'asset' => 'required|integer',
             'category' => 'required|integer',
-            'type' => ['required','integer', Rule::in(TransactionsType::values())],
+            'type' => ['required', 'integer', Rule::in(TransactionsType::values())],
             'to_cards_id' => 'required|exists:cards,id',
         ]);
 
         if ($validated['type'] === TransactionsType::INCOME->value) {
             if (!in_array($validated['category'], [
-                Category::SALLARY->value, 
-                Category::ALLOWANCE->value, 
+                Category::SALLARY->value,
+                Category::ALLOWANCE->value,
                 Category::BONUS->value
-                ])) {
+            ])) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
 
@@ -84,7 +84,7 @@ class TransactionsController extends Controller
                 $card->save();
             }
 
-            return redirect()->route('home.index')->with('success', 'Transaksi berhasil ditambahkan'); 
+            return redirect()->route('home.index')->with('success', 'Transaksi berhasil ditambahkan');
         }
         return back()->withErrors(['type' => 'Invalid transaction type']);
     }
@@ -97,11 +97,11 @@ class TransactionsController extends Controller
             'notes' => 'nullable|string',
             'asset' => 'required|integer',
             'category' => 'required|integer',
-            'type' => ['required','integer', Rule::in(TransactionsType::values())],
+            'type' => ['required', 'integer', Rule::in(TransactionsType::values())],
             'to_cards_id' => 'required|exists:cards,id'
         ]);
 
-            // dd($data);
+        // dd($data);
         if ($data['type'] === TransactionsType::EXPENSE->value) {
             if (!in_array($data['category'], [
                 Category::FOOD_DRINKS->value,
@@ -111,7 +111,7 @@ class TransactionsController extends Controller
                 Category::SHOPPING->value,
                 Category::SAVINGS_INVESTMENTS->value,
                 Category::TRAVEL->value,
-                ])) {
+            ])) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
 
@@ -128,8 +128,16 @@ class TransactionsController extends Controller
 
             $card = Cards::find($data['to_cards_id']); // Gunakan to_cards_id
             if ($card) {
-                $card->balance -= $data['amount'];
-                $card->save();
+                if ($card) {
+                    if ($card->balance < $data['amount']) {
+                        return back()->withErrors([
+                            'amount' => 'The balance is insufficient to perform this transaction.',
+                        ]);
+                    }
+
+                    $card->balance -= $data['amount'];
+                    $card->save();
+                }
             }
 
 

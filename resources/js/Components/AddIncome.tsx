@@ -39,7 +39,7 @@ export default function AddIncome({
     activeCardId
 }: IncomeProps) {
     const [date, setDate] = React.useState<Date>()
-    const [isOpen, setIsOpen] = React.useState(false) //  Tambah state untuk dialog
+    const [isOpen, setIsOpen] = React.useState(false)
 
     const { data, setData, post, processing, errors, reset } = useForm({
         'transaction_date': '',
@@ -90,7 +90,7 @@ export default function AddIncome({
 
     // Helper functions untuk display labels
     const getAssetLabel = (value: number) => {
-        switch(value) {
+        switch (value) {
             case 1: return "Cash";
             case 2: return "Transfer";
             default: return "Select Your Asset";
@@ -98,7 +98,7 @@ export default function AddIncome({
     }
 
     const getCategoryLabel = (value: number) => {
-        switch(value) {
+        switch (value) {
             case 1: return "Salary";
             case 2: return "Allowance";
             case 3: return "Bonus";
@@ -150,9 +150,6 @@ export default function AddIncome({
                                         />
                                     </PopoverContent>
                                 </Popover>
-                                {errors.transaction_date && (
-                                    <span className="text-red-500 text-sm">{errors.transaction_date}</span>
-                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -165,9 +162,6 @@ export default function AddIncome({
                                     className="flex-1 border border-black/10 rounded-lg p-2 placeholder:text-sm"
                                     min="1"
                                 />
-                                {errors.amount && (
-                                    <span className="text-red-500 text-sm">{errors.amount}</span>
-                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -196,9 +190,6 @@ export default function AddIncome({
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                {errors.asset && (
-                                    <span className="text-red-500 text-sm">{errors.asset}</span>
-                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -217,9 +208,32 @@ export default function AddIncome({
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                {errors.category && (
-                                    <span className="text-red-500 text-sm">{errors.category}</span>
-                                )}
+                            </div>
+
+                            <div className="flex flex-col items-start">
+                                <p>
+                                    {errors.category && (
+                                        <span className="text-red-500 text-sm">{errors.category}</span>
+                                    )}
+                                </p>
+
+                                <p>
+                                    {errors.transaction_date && (
+                                        <span className="text-red-500 text-sm">{errors.transaction_date}</span>
+                                    )}
+                                </p>
+
+                                <p>
+                                    {errors.amount && (
+                                        <span className="text-red-500 text-sm">{errors.amount}</span>
+                                    )}
+                                </p>
+
+                                <p>
+                                    {errors.asset && (
+                                        <span className="text-red-500 text-sm">{errors.asset}</span>
+                                    )}
+                                </p>
                             </div>
 
                             <div className="flex items-center justify-between">

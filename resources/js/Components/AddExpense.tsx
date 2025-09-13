@@ -42,6 +42,7 @@ export default function AddExpense({
     const [date, setDate] = React.useState<Date>()
     const [asset, setAsset] = React.useState<string>("")
     const [category, setCategory] = React.useState<string>("")
+    const [isOpen, setIsOpen] = React.useState(false)
 
     const {data, setData, post, processing, errors, reset} = useForm({
         'transaction_date': '',
@@ -57,6 +58,8 @@ export default function AddExpense({
         e.preventDefault();
         post(route('transactions.store-expense'), {
             onSuccess: () => {
+                setDate(undefined); 
+                setIsOpen(false)
                 reset();
             }
         })
@@ -87,7 +90,7 @@ export default function AddExpense({
     return (
         <div className="">
             <div className="flex items-center justify-center flex-col">
-                <Dialog>
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <button className="flex flex-col items-center">
                             <PlusSquareIcon opacity={54} size={32} />
@@ -104,7 +107,8 @@ export default function AddExpense({
                         </DialogHeader>
 
                         <form className="space-y-3" onSubmit={handleSubmit}>
-                            <div className="flex items-center gap-4">
+                            <div className="flex gap-4 flex-col">
+                                <div className="flex items-center gap-4">
                                 <p className="w-24">Date*</p>
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -127,9 +131,7 @@ export default function AddExpense({
                                         }} />
                                     </PopoverContent>
                                 </Popover>
-                                {errors.transaction_date && (
-                                    <span className="text-red-500 text-sm">{errors.transaction_date}</span>
-                                )}
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -141,9 +143,6 @@ export default function AddExpense({
                                     placeholder="example. 100000"
                                     className="flex-1 border border-black/10 rounded-lg p-2 placeholder:text-sm"
                                 />
-                                {errors.amount && (
-                                    <span className="text-red-500 text-sm">{errors.amount}</span>
-                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -198,13 +197,30 @@ export default function AddExpense({
                                 </DropdownMenu>
                             </div>
 
+                            <div>
+                                <p>{errors.amount && (
+                                    <span className="text-red-500 text-sm">{errors.amount}</span>
+                                )}
+                                </p>
+
+                                <p>
+                                    {errors.transaction_date && (
+                                    <span className="text-red-500 text-sm">{errors.transaction_date}</span>
+                                )}
+                                </p>
+                            </div>
+
                             <div className="flex items-center justify-between">
-                                <button type="button" className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
+                                <button 
+                                type="button" 
+                                onClick={() => setIsOpen(false)}
+                                className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
                                     Back
                                 </button>
 
                                 <button 
                                 type="submit" 
+                                disabled={processing}
                                 className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
                                     {processing ? "Savings..." : "Save changes"}
                                 </button>
