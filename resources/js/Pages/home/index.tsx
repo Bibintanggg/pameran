@@ -19,6 +19,7 @@ import {
     ChevronRight,
 } from "lucide-react"
 import { useState } from "react"
+import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 
 export default function Home() {
     const { auth, cards, transactions } = usePage().props as unknown as {
@@ -32,9 +33,13 @@ export default function Home() {
     const [activeCardId, setActiveCardId] = useState<number>(
         (cards && cards.length > 0) ? cards[0].id : 0
     )
+    const activeCard = cards.find((card) => card.id === activeCardId)
     // const [button]
     console.log('Data cards di Home:', cards); //debug
     console.log('Cards length:', cards?.length);
+
+    // Use the active card's balance or sum all cards' balance if you want total
+    const balance = activeCard ? activeCard.balance : 0;
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -64,7 +69,12 @@ export default function Home() {
                         <p className="text-base text-gray-500">Wallet balance</p>
                         <div className="flex items-center gap-4">
                             <p className="text-4xl font-semibold">
-                                {EyesOpen ? "Rp.100.000,00" : "••••••••"}
+                                {EyesOpen
+                                    ? formatCurrency(
+                                        activeCard?.balance ?? 0,
+                                        currencyMap[activeCard?.currency ?? 1] // default IDR
+                                    )
+                                    : "••••••••"}
                             </p>
                             <button onClick={() => setEyesOpen(!EyesOpen)}>
                                 {EyesOpen ? (
@@ -135,7 +145,7 @@ export default function Home() {
 
                             <div className="flex items-center justify-center gap-6 text-white font-semibold relative z-10">
                                 <AddIncome label="Add Income" activeCardId={activeCardId} />
-                                <AddExpense label="Add Expense" activeCardId={activeCardId}/>
+                                <AddExpense label="Add Expense" activeCardId={activeCardId} />
                                 <AddConvert label="Convert" />
                             </div>
                         </div>

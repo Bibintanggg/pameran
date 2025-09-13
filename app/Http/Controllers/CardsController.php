@@ -33,6 +33,11 @@ class CardsController extends Controller
         ]);
     }
 
+    public function indexBalance() 
+    {
+        
+    }
+
     /**
      * Show the form for creating a new resource.
      */
