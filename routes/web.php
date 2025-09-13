@@ -20,9 +20,13 @@ Route::get('/home', [CardsController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('home.index');
 
-Route::post('/transactions', [TransactionsController::class, 'storeIncome'])
+Route::post('/transactions/income', [TransactionsController::class, 'storeIncome'])
     ->middleware(['auth', 'verified'])
     ->name('transactions.storeincome');
+
+Route::post('/transactions/expense', [TransactionsController::class, 'storeExpense'])
+    ->middleware(['auth', 'verified'])
+    ->name('transactions.store-expense');
 
 Route::post('/add-cards', [CardsController::class, 'store'])
     ->middleware(['auth', 'verified'])

@@ -27,18 +27,63 @@ import { PlusIcon, PlusSquareIcon } from "lucide-react"
 import { ChevronDownIcon } from "lucide-react"
 import { Calendar as CalendarIcon } from "lucide-react"
 import React from "react"
+import { useForm } from "@inertiajs/react"
 
 interface ExpenseProps {
-    label: string
+    label: string,
+    activeCardId: number
 }
 
 
 export default function AddExpense({
-    label
+    label,
+    activeCardId
 }: ExpenseProps) {
     const [date, setDate] = React.useState<Date>()
     const [asset, setAsset] = React.useState<string>("")
     const [category, setCategory] = React.useState<string>("")
+
+    const {data, setData, post, processing, errors, reset} = useForm({
+        'transaction_date': '',
+        'amount': 0,
+        'notes': '',
+        'asset': 0,
+        'category': 0,
+        'type': 2, // expense
+        'to_cards_id': activeCardId
+    })
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route('transactions.store-expense'), {
+            onSuccess: () => {
+                reset();
+            }
+        })
+    }
+
+    //helper
+    const getAssetLabel = (value: number) => {
+            switch(value) {
+                case 1: return "Cash";
+                case 2: return "Transfer";
+                default: return "Select Your Asset";
+            }
+        }
+    
+    const getCategoryLabel = (value: number) => {
+        switch(value) {
+            case 4 : return "Food & Drinks"
+            case 5 : return "Transportation"
+            case 6 : return "Groceries"
+            case 7 : return "Health"
+            case 8 : return "Shopping"
+            case 9 : return "Savings & Investments"
+            case 10 : return "Travel"
+            default: return  "Pick your category"
+        }
+    }
+
     return (
         <div className="">
             <div className="flex items-center justify-center flex-col">
@@ -58,7 +103,7 @@ export default function AddExpense({
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form className="space-y-3">
+                        <form className="space-y-3" onSubmit={handleSubmit}>
                             <div className="flex items-center gap-4">
                                 <p className="w-24">Date</p>
                                 <Popover>
@@ -69,28 +114,44 @@ export default function AddExpense({
                                             className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
                                         >
                                             <CalendarIcon />
-                                            <span>Pick a date</span>
+                                            <span>{date ? date.toDateString() : "Pick a date"}</span>
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={date} onSelect={setDate} />
+                                        <Calendar 
+                                        mode="single" 
+                                        selected={date} 
+                                        onSelect={(d) => {
+                                            setDate(d)
+                                            setData('transaction_date', d ? d.toISOString().split("T")[0] : "")
+                                        }} />
                                     </PopoverContent>
                                 </Popover>
+                                {errors.transaction_date && (
+                                    <span className="text-red-500 text-sm">{errors.transaction_date}</span>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
                                 <p className="w-24">Amount</p>
                                 <input
                                     type="number"
+                                    value={data.amount || ''}
+                                    onChange={(e) => setData("amount", Number(e.target.value))}
                                     placeholder="example. 100000"
                                     className="flex-1 border border-black/10 rounded-lg p-2 placeholder:text-sm"
                                 />
+                                {errors.amount && (
+                                    <span className="text-red-500 text-sm">{errors.amount}</span>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-4">
                                 <p className="w-24">Notes</p>
                                 <input
                                     type="text"
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
                                     placeholder="Optional"
                                     className="flex-1 border border-black/10 rounded-lg p-2 placeholder:justify-start placeholder:text-sm"
                                 />
@@ -101,14 +162,14 @@ export default function AddExpense({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                            {asset || "Select Your Asset"}
+                                            {getAssetLabel(data.asset)}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         {/* <DropdownMenuLabel>Select Your Asset</DropdownMenuLabel> */}
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setAsset("Cash")}>Cash</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setAsset("Transfer")}>Transfer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 1)}>Cash</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 2)}>Transfer</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -119,31 +180,33 @@ export default function AddExpense({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                            {category || "Select Your Category Expense"}
+                                            {getCategoryLabel(data.category)}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setCategory("Food & Drinks")}>Food & Drinks</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Transportation")}>Transportation</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Groceries")}>Groceries</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Health")}>Health</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Shopping")}>Shopping</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Savings & Investments")}>Savings & Investments</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Travel")}>Travel</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setCategory("Others")}>Others</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 4)}>Food & Drinks</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 5)}>Transportation</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 6)}>Groceries</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 7)}>Health</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 8)}>Shopping</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 9)}>Savings & Investments</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 10)}>Travel</DropdownMenuItem>
+                                            {/* <DropdownMenuItem onClick={() => setData("category")}>Others</DropdownMenuItem> */}
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <button className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
+                                <button type="button" className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
                                     Back
                                 </button>
 
-                                <button className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
-                                    Save changes
+                                <button 
+                                type="submit" 
+                                className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
+                                    {processing ? "Savings..." : "Save changes"}
                                 </button>
                                 </div>
                         </form>

@@ -134,7 +134,7 @@ export default function Home() {
 
                             <div className="flex items-center justify-center gap-6 text-white font-semibold relative z-10">
                                 <AddIncome label="Add Income" activeCardId={activeCardId} />
-                                <AddExpense label="Add Expense" />
+                                <AddExpense label="Add Expense" activeCardId={activeCardId}/>
                                 <AddConvert label="Convert" />
                             </div>
                         </div>
@@ -148,7 +148,6 @@ export default function Home() {
                                 <ChevronRight />
                             </button>
                         </div>
-
                     </div>
                 </div>
             </div>

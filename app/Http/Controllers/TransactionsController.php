@@ -58,7 +58,11 @@ class TransactionsController extends Controller
         ]);
 
         if ($validated['type'] === TransactionsType::INCOME->value) {
-            if (!in_array($validated['category'], [Category::SALLARY->value, Category::ALLOWANCE->value, Category::BONUS->value])) {
+            if (!in_array($validated['category'], [
+                Category::SALLARY->value, 
+                Category::ALLOWANCE->value, 
+                Category::BONUS->value
+                ])) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
 
@@ -80,9 +84,57 @@ class TransactionsController extends Controller
                 $card->save();
             }
 
-            return redirect()->route('home.index')->with('success', 'Transaksi berhasil ditambahkan'); // ✅ Perbaiki typo 'succes' -> 'success'
+            return redirect()->route('home.index')->with('success', 'Transaksi berhasil ditambahkan'); 
         }
+        return back()->withErrors(['type' => 'Invalid transaction type']);
+    }
 
+    public function storeExpense(Request $request)
+    {
+        $data = $request->validate([
+            'transaction_date' => 'required|date',
+            'amount' => 'required|numeric|min:1',
+            'notes' => 'nullable|string',
+            'asset' => 'required|integer',
+            'category' => 'required|integer',
+            'type' => ['required','integer', Rule::in(TransactionsType::values())],
+            'to_cards_id' => 'required|exists:cards,id'
+        ]);
+
+            // dd($data);
+        if ($data['type'] === TransactionsType::EXPENSE->value) {
+            if (!in_array($data['category'], [
+                Category::FOOD_DRINKS->value,
+                Category::TRANSPORTATION->value,
+                Category::GROCERIES->value,
+                Category::HEALTH->value,
+                Category::SHOPPING->value,
+                Category::SAVINGS_INVESTMENTS->value,
+                Category::TRAVEL->value,
+                ])) {
+                return back()->withErrors(['category' => 'Invalid income category']);
+            }
+
+            Transactions::create([
+                'user_id' => Auth::id(),
+                'type' => $data['type'],
+                'to_cards_id' => $data['to_cards_id'],
+                'amount' => $data['amount'],
+                'asset' => $data['asset'],
+                'category' => $data['category'],
+                'notes' => $data['notes'] ?? "",
+                'transaction_date' => $data['transaction_date'],
+            ]);
+
+            $card = Cards::find($data['to_cards_id']); // Gunakan to_cards_id
+            if ($card) {
+                $card->balance -= $data['amount'];
+                $card->save();
+            }
+
+
+            return redirect()->route('home.index')->with('success', 'Transaksi berhasil ditambahkan');
+        };
         return back()->withErrors(['type' => 'Invalid transaction type']);
     }
 
