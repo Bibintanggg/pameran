@@ -32,6 +32,11 @@ Route::post('/add-cards', [CardsController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('cards.store');
 
+Route::delete('/cards/{card}', [CardsController::class, 'destroy'])
+    ->middleware(['auth', 'verified'])
+    ->name('cards.destroy');
+
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

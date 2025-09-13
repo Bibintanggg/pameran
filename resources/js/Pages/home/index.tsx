@@ -89,6 +89,7 @@ export default function Home() {
                                         }`}
                                 >
                                     <CardIndex
+                                        id={card.id}
                                         currency={card.name}
                                         balance={card.balance}
                                         eyesOpen={EyesOpen}

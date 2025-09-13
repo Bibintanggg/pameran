@@ -105,7 +105,7 @@ export default function AddExpense({
 
                         <form className="space-y-3" onSubmit={handleSubmit}>
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Date</p>
+                                <p className="w-24">Date*</p>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -133,7 +133,7 @@ export default function AddExpense({
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Amount</p>
+                                <p className="w-24">Amount*</p>
                                 <input
                                     type="number"
                                     value={data.amount || ''}
@@ -158,7 +158,7 @@ export default function AddExpense({
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Asset</p>
+                                <p className="w-24">Asset*</p>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
@@ -176,7 +176,7 @@ export default function AddExpense({
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <p className="w-24">Category</p>
+                                <p className="w-24">Category*</p>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="flex-1 text-black/50 flex justify-start">

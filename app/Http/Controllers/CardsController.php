@@ -18,19 +18,19 @@ class CardsController extends Controller
     public function index()
     {
         $transactions = Transactions::with('cards')
-        ->where('user_id', Auth::id())
-        ->latest()
-        ->get();
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->get();
 
-    $cards = Cards::where('user_id', Auth::id())->get();
+        $cards = Cards::where('user_id', Auth::id())->get();
 
-    return Inertia::render('home/index', [
-        'auth' => [
-            'user' => Auth::user(),
-        ],
-        'transactions' => $transactions,
-        'cards' => $cards,
-    ]);
+        return Inertia::render('home/index', [
+            'auth' => [
+                'user' => Auth::user(),
+            ],
+            'transactions' => $transactions,
+            'cards' => $cards,
+        ]);
     }
 
     /**
@@ -93,6 +93,12 @@ class CardsController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $card = Cards::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $card->delete();
+
+        return redirect()->route('home.index')->with('success', 'Card berhasil dihapus');
     }
 }

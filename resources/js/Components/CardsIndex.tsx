@@ -21,6 +21,7 @@ export default function CardsIndex({ cards }: Props) {
             {cards.map((card) => (
                 <CardIndex
                     key={card.id}
+                    id={card.id}
                     currency={card.currency.toString()}
                     balance={card.balance}
                     eyesOpen={true} // or set to false as needed
