@@ -19,7 +19,9 @@ import {
     ChevronRight,
 } from "lucide-react"
 import { useState } from "react"
+import { Transaction } from "@/types/transaction"
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
+import TransactionsList from "@/Components/TransactionsList"
 
 export default function Home() {
     const { auth, cards, transactions, totalIncome, totalExpense, incomeRateHigh, incomeRateLow, expenseRateHigh, expenseRateLow } = usePage().props as unknown as {
@@ -31,7 +33,7 @@ export default function Home() {
             currency: number
 
         }[];
-        transactions: any[];
+        transactions: Transaction[];
         totalIncome: number;
         totalExpense: number;
         incomeRateHigh: number;
@@ -163,7 +165,7 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <div className="mt-8">
+                    <div className="mt-8 overflow-y-auto">
                         <div className="flex items-center justify-between">
                             <h1 className="text-lg font-medium">Recent Activity</h1>
                             <button className="flex items-center gap-2 text-sm text-blue-500">
@@ -171,6 +173,8 @@ export default function Home() {
                                 <ChevronRight />
                             </button>
                         </div>
+
+                        <TransactionsList transactions={transactions} />
                     </div>
                 </div>
             </div>

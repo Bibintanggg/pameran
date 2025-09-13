@@ -1,8 +1,14 @@
-type Transaction = {
-    id: string;
+export interface Transaction {
+    id: number;
+    user_name: string;
+    type: number;
+    type_label: string;
     amount: number;
-    category: string;
-    date: string;
-    description?: string;
-    type: 'income' | 'expense' | 'convert'
+    formatted_amount: string;
+    notes: string;
+    asset: number;
+    asset_label: string;
+    category: number;
+    category_label: string;
+    transaction_date: string;
 }

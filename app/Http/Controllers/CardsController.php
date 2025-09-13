@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\Asset;
+use App\Enum\Category;
 use App\Enum\Currency;
 use App\Enum\TransactionsType;
 use App\Models\Cards;
@@ -21,32 +23,54 @@ class CardsController extends Controller
         $userId = Auth::id();
         $cards = Cards::where('user_id', Auth::id())->get();
 
-         $currentIncome = Transactions::where('user_id', $userId)
-        ->where('type', TransactionsType::INCOME->value)
-        ->whereDate('created_at', now()->toDateString())
-        ->sum('amount');
+        $transactions = Transactions::where('user_id', $userId)
+            ->latest()
+            ->get()
+            ->map(function ($data) {
+                return [
+                    'id'               => $data->id,
+                    'user_name'        => Auth::user()->name,
+                    'type'             => $data->type,
+                    'type_label'       => TransactionsType::from($data->type)->label(),
+                    'amount'           => $data->amount,
+                    'formatted_amount' => 'Rp ' . number_format($data->amount, 0, ',', '.'),
+                    'notes'            => $data->notes,
+                    'asset'            => $data->asset,
+                    'asset_label'      => Asset::from($data->asset)->label(),
+                    'category'         => $data->category,
+                    'category_label'   => Category::from($data->category)->label(),
+                    'transaction_date' => $data->created_at->format('d F Y'),
+                ];
+            });
 
-    $currentExpense = Transactions::where('user_id', $userId)
-        ->where('type', TransactionsType::EXPENSE->value)
-        ->whereDate('created_at', now()->toDateString())
-        ->sum('amount');
+        $currentIncome = Transactions::where('user_id', $userId)
+            ->where('type', TransactionsType::INCOME->value)
+            ->whereDate('created_at', now()->toDateString())
+            ->sum('amount');
 
-    $total = $currentIncome + $currentExpense;
+        $currentExpense = Transactions::where('user_id', $userId)
+            ->where('type', TransactionsType::EXPENSE->value)
+            ->whereDate('created_at', now()->toDateString())
+            ->sum('amount');
 
-    $incomeRateHigh = $total > 0 ? round(($currentIncome / $total) * 100, 2) : 0;
-    $incomeRateLow  = $total > 0 ? round(($currentExpense / $total) * 100, 2) : 0;
+        $total = $currentIncome + $currentExpense;
 
-    $expenseRateHigh = $incomeRateLow; 
-    $expenseRateLow  = $incomeRateHigh;
+        $incomeRateHigh = $total > 0 ? round(($currentIncome / $total) * 100, 2) : 0;
+        $incomeRateLow  = $total > 0 ? round(($currentExpense / $total) * 100, 2) : 0;
 
+        $expenseRateHigh = $incomeRateLow;
+        $expenseRateLow  = $incomeRateHigh;
+
+        //untuk review
         return Inertia::render('home/index', [
-           'cards'         => $cards,
-        'totalIncome'      => $currentIncome,
-        'totalExpense'     => $currentExpense,
-        'incomeRateHigh'   => $incomeRateHigh,
-        'incomeRateLow'    => $incomeRateLow,
-        'expenseRateHigh'  => $expenseRateHigh,
-        'expenseRateLow'   => $expenseRateLow,
+            'cards'         => $cards,
+            'totalIncome'      => $currentIncome,
+            'totalExpense'     => $currentExpense,
+            'incomeRateHigh'   => $incomeRateHigh,
+            'incomeRateLow'    => $incomeRateLow,
+            'expenseRateHigh'  => $expenseRateHigh,
+            'expenseRateLow'   => $expenseRateLow,
+            'transactions' => $transactions
         ]);
     }
 
