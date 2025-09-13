@@ -9,7 +9,7 @@ export default function TransactionsList({ transactions }: TransactionListProps)
     const { auth } = usePage().props
     return (
         <div className="mt-4 flex flex-col gap-3">
-            {transactions.length === 0 && <p className="text-gray-500">Belum ada transaksi</p>}
+            {transactions.length === 0 && <p className="text-gray-500">No transactions yet</p>}
             {transactions.map((transaction) => (
                 <div
                     key={transaction.id}

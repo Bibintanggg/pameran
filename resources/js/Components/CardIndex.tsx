@@ -41,19 +41,19 @@ export default function CardIndex({ id, currency, balance }: CardIndexProps) {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>Hapus kartu ini?</AlertDialogTitle>
+                                <AlertDialogTitle>Delete this card?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Aksi ini tidak bisa dibatalkan. Kartu dan datanya akan dihapus permanen.
+                                    This action cannot be undone. The card and its data will be permanently deleted.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction asChild>
                                     <button
                                         onClick={handleDelete}
                                         className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                                     >
-                                        Hapus
+                                        Delete
                                     </button>
                                 </AlertDialogAction>
                             </AlertDialogFooter>

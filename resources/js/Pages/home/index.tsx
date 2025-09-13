@@ -53,6 +53,23 @@ export default function Home() {
 
     const balance = activeCard ? activeCard.balance : 0;
 
+    // helper get ava
+    const getAvatarUrl = () => {
+        if (auth.user.avatar) {
+            return `/storage/${auth.user.avatar}`;
+        }
+        return '/default-avatar.png'; // fallback image
+    };
+
+    // helper user initials
+    const getUserInitials = () => {
+        const names = auth.user.name.split(' ');
+        if (names.length >= 2) {
+            return names[0][0] + names[names.length - 1][0];
+        }
+        return names[0][0];
+    };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
             <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
@@ -61,9 +78,14 @@ export default function Home() {
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
-                            <Avatar>
-                                <AvatarImage src="https://github.com/shadcn.png" />
-                                <AvatarFallback>CN</AvatarFallback>
+                            <Avatar className="h-12 w-12">
+                                <AvatarImage 
+                                    src={getAvatarUrl()} 
+                                    alt={auth.user.name} 
+                                />
+                                <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                                    {getUserInitials()}
+                                </AvatarFallback>
                             </Avatar>
 
                             <div className="flex flex-col">
@@ -119,12 +141,13 @@ export default function Home() {
                                 </button>
                             ))
                         ) : (
-                            <p className="text-gray-500">Belum ada kartu</p>
+                            <p className="text-gray-500">No cards yet</p>
                         )}
                     </div>
 
                     <div className="mt-8">
-                        <div className="relative bg-[#9290FE] w-full h-56 rounded-2xl p-4 flex flex-col justify-between overflow-hidden">
+                        <div className="relative bg-[#9290FE] w-full h-44 rounded-2xl p-4 flex flex-col 
+                        justify-between overflow-hidden lg:w-full lg:h-56 md:h-52">
                             <div className="absolute top-0 right-0 w-40 h-40 bg-[#7A78D1] rounded-full opacity-50 -translate-x-1/3 -translate-y-1/3"></div>
                             <div className="absolute bottom-6 left-0 space-y-2">
                                 <div className="w-16 h-2 bg-[#7A78D1] rounded-full"></div>
@@ -132,7 +155,7 @@ export default function Home() {
                                 <div className="w-14 h-2 bg-[#7A78D1] rounded-full"></div>
                             </div>
 
-                            <div className="flex items-center justify-between relative z-10 gap-4">
+                            <div className="flex items-center justify-between relative z-10 gap-1 lg:gap-2 ">
                                 <div className="flex-1">
                                     <CardBalance
                                         currency={currencyMap[activeCard?.currency ?? 1]}
