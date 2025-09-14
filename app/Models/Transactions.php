@@ -22,6 +22,7 @@ class Transactions extends Model
         'notes',
         'asset',
         'transaction_date',
+        'converted_amount',
         'category'
     ];
 

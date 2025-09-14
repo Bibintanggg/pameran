@@ -2,7 +2,7 @@ import { ChevronsRightLeftIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/Components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Components/ui/dropdown-menu"
 import { Button } from "./ui/button"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { usePage, router } from "@inertiajs/react"
 
 interface Card {
@@ -15,30 +15,56 @@ interface Card {
 export default function AddConvert({ label }: { label: string }) {
     const { props }: any = usePage()
     const cards: Card[] = props.cards || []
-    
+
     const [fromCard, setFromCard] = useState<Card | null>(null)
     const [toCard, setToCard] = useState<Card | null>(null)
     const [amount, setAmount] = useState("")
     const [notes, setNotes] = useState("")
     const [isOpen, setIsOpen] = useState(false)
 
+    const [rate, setRate] = useState<number | null>(null)
+    const [convertedAmount, setConvertedAmount] = useState<number | null>(null)
+
     const getCurrencySymbol = (currency: number) => {
         const symbols: Record<number, string> = { 1: 'Rp', 2: '฿', 3: '$' }
         return symbols[currency] || 'Rp'
     }
 
-    const formatBalance = (balance: number, currency: number) => 
+    const fetchRate = async (from: string, to: string, amount: number) => {
+        try {
+            const res = await fetch(
+                `https://api.freecurrencyapi.com/v1/latest?apikey=fca_live_e3wEN2sdrsUSaopn8LY0C6GNk4uMBvs0kpBtSKD6&currencies=USD%2CTHB%2CIDR&base_currency=IDR`
+            )
+            const data = await res.json()
+            const rateValue = data.data[to]
+            setRate(rateValue)
+            setConvertedAmount(amount * rateValue)
+        } catch (error) {
+            console.error("Failed to fetch rate:", error)
+        }
+    }
+
+    useEffect(() => {
+        if (fromCard && toCard && amount) {
+            const currencyMap: Record<number, string> = { 1: "IDR", 2: "THB", 3: "USD" }
+            fetchRate(currencyMap[fromCard.currency], currencyMap[toCard.currency], parseFloat(amount))
+        }
+    }, [fromCard, toCard, amount])
+
+    const formatBalance = (balance: number, currency: number) =>
         `${getCurrencySymbol(currency)} ${balance.toLocaleString()}`
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         if (!fromCard || !toCard || !amount) return
 
         router.post('/transactions/convert', {
             from_cards_id: fromCard.id,
             to_cards_id: toCard.id,
             amount: parseFloat(amount),
+            converted_amount: convertedAmount,
+            rate,
             notes
         }, {
             onSuccess: () => {
@@ -51,16 +77,16 @@ export default function AddConvert({ label }: { label: string }) {
         })
     }
 
-    const CardDropdown = ({ 
-        value, 
-        onChange, 
-        placeholder, 
-        excludeId 
-    }: { 
+    const CardDropdown = ({
+        value,
+        onChange,
+        placeholder,
+        excludeId
+    }: {
         value: Card | null
         onChange: (card: Card) => void
         placeholder: string
-        excludeId?: number 
+        excludeId?: number
     }) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -149,6 +175,13 @@ export default function AddConvert({ label }: { label: string }) {
                             className="w-full p-2 border rounded-lg"
                         />
                     </div>
+
+                    {convertedAmount && toCard && (
+                        <p className="text-sm text-green-600 mt-2">
+                            You will get {getCurrencySymbol(toCard.currency)} {convertedAmount.toLocaleString()}
+                            {" "} (rate: {rate})
+                        </p>
+                    )}
 
                     <div className="flex gap-3">
                         <Button
