@@ -23,7 +23,7 @@ export default function AddConvert({ label }: { label: string }) {
     const [isOpen, setIsOpen] = useState(false)
 
     const getCurrencySymbol = (currency: number) => {
-        const symbols = { 1: 'Rp', 2: '฿', 3: '$' }
+        const symbols: Record<number, string> = { 1: 'Rp', 2: '฿', 3: '$' }
         return symbols[currency] || 'Rp'
     }
 
