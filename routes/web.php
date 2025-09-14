@@ -28,6 +28,11 @@ Route::post('/transactions/expense', [TransactionsController::class, 'storeExpen
     ->middleware(['auth', 'verified'])
     ->name('transactions.store-expense');
 
+    // Tambahkan route ini di web.php
+Route::post('/transactions/convert', [TransactionsController::class, 'storeConvert'])
+    ->middleware('auth')
+    ->name('transactions.convert');
+
 Route::post('/add-cards', [CardsController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('cards.store');

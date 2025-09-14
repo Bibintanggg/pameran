@@ -1,140 +1,170 @@
-import { ChevronsRightLeftIcon, PlusIcon } from "lucide-react"
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogTrigger,
-} from "@/Components/ui/dialog"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/Components/ui/dropdown-menu"
+import { ChevronsRightLeftIcon } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/Components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Components/ui/dropdown-menu"
 import { Button } from "./ui/button"
-import React from "react"
+import { useState } from "react"
+import { usePage, router } from "@inertiajs/react"
 
-interface ConvertProps {
-    label: string
+interface Card {
+    id: number
+    name: string
+    balance: number
+    currency: number
 }
 
-export default function AddConvert({
-    label
-}: ConvertProps) {
-    // const [date, setDate] = React.useState<Date>()
-    // const [asset, setAsset] = React.useState<string>("")
-    const [wallet, setWallet] = React.useState<string>("")
-    const [toWallet, setToWallet] = React.useState<string>("")
+export default function AddConvert({ label }: { label: string }) {
+    const { props }: any = usePage()
+    const cards: Card[] = props.cards || []
+    
+    const [fromCard, setFromCard] = useState<Card | null>(null)
+    const [toCard, setToCard] = useState<Card | null>(null)
+    const [amount, setAmount] = useState("")
+    const [notes, setNotes] = useState("")
+    const [isOpen, setIsOpen] = useState(false)
+
+    const getCurrencySymbol = (currency: number) => {
+        const symbols = { 1: 'Rp', 2: '฿', 3: '$' }
+        return symbols[currency] || 'Rp'
+    }
+
+    const formatBalance = (balance: number, currency: number) => 
+        `${getCurrencySymbol(currency)} ${balance.toLocaleString()}`
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        
+        if (!fromCard || !toCard || !amount) return
+
+        router.post('/transactions/convert', {
+            from_cards_id: fromCard.id,
+            to_cards_id: toCard.id,
+            amount: parseFloat(amount),
+            notes
+        }, {
+            onSuccess: () => {
+                setFromCard(null)
+                setToCard(null)
+                setAmount("")
+                setNotes("")
+                setIsOpen(false)
+            }
+        })
+    }
+
+    const CardDropdown = ({ 
+        value, 
+        onChange, 
+        placeholder, 
+        excludeId 
+    }: { 
+        value: Card | null
+        onChange: (card: Card) => void
+        placeholder: string
+        excludeId?: number 
+    }) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                    {value ? value.name : placeholder}
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                {cards
+                    .filter(card => card.id !== excludeId)
+                    .map(card => (
+                        <DropdownMenuItem key={card.id} onClick={() => onChange(card)}>
+                            <div>
+                                <div className="font-medium">{card.name}</div>
+                                <div className="text-sm text-gray-500">
+                                    {formatBalance(card.balance, card.currency)}
+                                </div>
+                            </div>
+                        </DropdownMenuItem>
+                    ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+
     return (
-        <div className="">
-            <div className="flex items-center justify-center flex-col">
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <button className="flex flex-col items-center">
-                            <ChevronsRightLeftIcon opacity={54} size={32} />
-                            <p className="text-white text-sm font-semibold">{label}</p>
-                        </button>
-                    </DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <button className="flex flex-col items-center">
+                    <ChevronsRightLeftIcon opacity={54} size={32} />
+                    <p className="text-white text-sm font-semibold">{label}</p>
+                </button>
+            </DialogTrigger>
 
-                    <DialogContent className="w-96 rounded-lg">
-                        <DialogHeader>
-                            <DialogTitle className="text-start">Add Converter</DialogTitle>
-                            <DialogDescription className="text-start">
-                                Add your converter details here, then click Save when finished.
-                            </DialogDescription>
-                        </DialogHeader>
+            <DialogContent className="w-96">
+                <DialogHeader>
+                    <DialogTitle>Convert Money</DialogTitle>
+                </DialogHeader>
 
-                        <form className="space-y-3">
-                            <div className="flex items-center gap-4">
-                                {/* From */}
-                                <div className="flex flex-col w-1/2">
-                                    <label className="text-sm mb-1">From</label>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                                {wallet || "From"}
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-56" align="start">
-                                            <DropdownMenuGroup>
-                                                <DropdownMenuItem onClick={() => setWallet("IDR - Rupiah")}>
-                                                    IDR - Indonesian Rupiah
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setWallet("THB - Baht Thailand")}>
-                                                    THB - Baht Thailand
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setWallet("USD - Dollar AS ")}>
-                                                    USD - Dollar AS
-                                                </DropdownMenuItem>
-                                            </DropdownMenuGroup>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-sm mb-2 block">From</label>
+                            <CardDropdown
+                                value={fromCard}
+                                onChange={setFromCard}
+                                placeholder="Select source"
+                                excludeId={toCard?.id}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm mb-2 block">To</label>
+                            <CardDropdown
+                                value={toCard}
+                                onChange={setToCard}
+                                placeholder="Select destination"
+                                excludeId={fromCard?.id}
+                            />
+                        </div>
+                    </div>
 
-                                {/* To */}
-                                <div className="flex flex-col w-1/2">
-                                    <label className="text-sm mb-1">To</label>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
-                                                {toWallet || "To"}
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-56" align="start">
-                                            <DropdownMenuGroup>
-                                                <DropdownMenuItem onClick={() => setToWallet("IDR - Rupiah")}>
-                                                    IDR - Indonesian Rupiah
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setToWallet("THB - Baht Thailand")}>
-                                                    THB - Baht Thailand
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setToWallet("USD - Dollar AS ")}>
-                                                    USD - Dollar AS
-                                                </DropdownMenuItem>
-                                            </DropdownMenuGroup>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </div>
+                    <div>
+                        <label className="text-sm mb-2 block">Amount</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            placeholder="Enter amount"
+                            className="w-full p-2 border rounded-lg"
+                            required
+                        />
+                        {fromCard && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Available: {formatBalance(fromCard.balance, fromCard.currency)}
+                            </p>
+                        )}
+                    </div>
 
+                    <div>
+                        <label className="text-sm mb-2 block">Notes</label>
+                        <input
+                            type="text"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Optional notes"
+                            className="w-full p-2 border rounded-lg"
+                        />
+                    </div>
 
-                            <div className="flex items-center gap-4">
-                                <p className="w-24">Amount</p>
-                                <input
-                                    type="number"
-                                    placeholder="example.. 100000"
-                                    className="flex-1 border border-black/10 rounded-lg p-2 placeholder:justify-start placeholder:text-sm"
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <p className="w-24">Notes</p>
-                                <input
-                                    type="text"
-                                    placeholder="Optional"
-                                    className="flex-1 border border-black/10 rounded-lg p-2 placeholder:justify-start placeholder:text-sm"
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <button className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
-                                    Back
-                                </button>
-
-                                <button className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
-                                    Save changes
-                                </button>
-                                </div>
-                        </form>
-
-                    </DialogContent>
-                </Dialog>
-            </div>
-        </div>
+                    <div className="flex gap-3">
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => setIsOpen(false)}
+                            className="flex-1"
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit" className="flex-1">
+                            Convert
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
     )
 }

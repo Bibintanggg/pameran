@@ -8,6 +8,7 @@ use App\Models\Cards;
 use App\Models\Transactions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -145,6 +146,62 @@ class TransactionsController extends Controller
         };
         return back()->withErrors(['type' => 'Invalid transaction type']);
     }
+
+    public function storeConvert(Request $request)
+    {
+        $validated = $request->validate([
+            'from_cards_id' => 'required|exists:cards,id',
+            'to_cards_id' => 'required|exists:cards,id|different:from_cards_id',
+            'amount' => 'required|numeric|min:0.01',
+            'notes' => 'nullable|string|max:255',
+        ], [
+            'to_cards_id.different' => 'Source and destination cards must be different.',
+            'amount.min' => 'Amount must be greater than 0.'
+        ]);
+
+        // Pastikan kedua kartu milik user yang sedang login
+        $fromCard = Cards::where('id', $validated['from_cards_id'])
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $toCard = Cards::where('id', $validated['to_cards_id'])
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Cek apakah saldo mencukupi
+        if ($fromCard->balance < $validated['amount']) {
+            return back()->withErrors([
+                'amount' => 'Insufficient balance in source card. Available: ' . number_format($fromCard->balance, 2),
+            ]);
+        }
+
+        // Gunakan database transaction untuk memastikan konsistensi data
+        DB::transaction(function () use ($validated, $fromCard, $toCard) {
+            // Kurangi saldo dari kartu asal
+            $fromCard->decrement('balance', $validated['amount']);
+
+            // Tambah saldo ke kartu tujuan
+            $toCard->increment('balance', $validated['amount']);
+
+            // Buat record transaksi
+            Transactions::create([
+                'user_id' => Auth::id(),
+                'type' => TransactionsType::CONVERT->value,
+                'from_cards_id' => $fromCard->id,
+                'to_cards_id' => $toCard->id,
+                'amount' => $validated['amount'],
+                'asset' => 2, // Sesuaikan dengan enum Asset Anda
+                'rate' => null,
+                'notes' => $validated['notes'],
+                'transaction_date' => now()->toDateString(),
+                'category' => null,
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Convert transaction completed successfully!');
+    }
+
+
 
     /**
      * Display the specified resource.
