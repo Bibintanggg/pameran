@@ -1,10 +1,23 @@
 import BottomNavbar from "@/Components/BottomNavbar";
+import { ChartContent } from "@/Components/ChartContent";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { router } from "@inertiajs/react";
 import { SettingsIcon } from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar() {
+    const chartDataAll = [
+        { browser: "Chrome", visitors: 275 },
+        { browser: "Safari", visitors: 200 },
+    ]
+    const chartDataIncome = [
+        { browser: "Income1", visitors: 150 },
+        { browser: "Income2", visitors: 120 },
+    ]
+    const chartDataExpense = [
+        { browser: "Expense1", visitors: 90 },
+        { browser: "Expense2", visitors: 60 },
+    ]
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
             <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
@@ -54,6 +67,7 @@ export default function Navbar() {
                     </button>
                 </div>
 
+                <ChartContent data={chartDataAll} />
             </div>
         </div>
     )
