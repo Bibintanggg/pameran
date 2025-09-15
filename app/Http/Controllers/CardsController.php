@@ -101,7 +101,7 @@ class CardsController extends Controller
             'currency' => $validated['currency'],
             'name' => $validated['name'],
             'card_number' => $validated['card_number'],
-            'balance' => 0
+            'balance' => $validated['balance'] ?? 0
         ]);
 
         return redirect()->route('home.index')->with('success', 'Cards berhasil ditambahkan');

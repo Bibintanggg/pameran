@@ -33,7 +33,7 @@ export default function AddConvert({ label }: { label: string }) {
     const fetchRate = async (from: string, to: string, amount: number) => {
         try {
             const res = await fetch(
-                `https://api.freecurrencyapi.com/v1/latest?apikey=fca_live_e3wEN2sdrsUSaopn8LY0C6GNk4uMBvs0kpBtSKD6&currencies=USD%2CTHB%2CIDR&base_currency=IDR`
+                `https://api.freecurrencyapi.com/v1/latest?apikey=fca_live_e3wEN2sdrsUSaopn8LY0C6GNk4uMBvs0kpBtSKD6&currencies=${to}&base_currency=${from}`
             )
             const data = await res.json()
             const rateValue = data.data[to]
@@ -50,6 +50,7 @@ export default function AddConvert({ label }: { label: string }) {
             fetchRate(currencyMap[fromCard.currency], currencyMap[toCard.currency], parseFloat(amount))
         }
     }, [fromCard, toCard, amount])
+
 
     const formatBalance = (balance: number, currency: number) =>
         `${getCurrencySymbol(currency)} ${balance.toLocaleString()}`
