@@ -37,10 +37,21 @@ Route::post('/add-cards', [CardsController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('cards.store');
 
+Route::get('/all-activity', function() {
+    return Inertia::render('activity/index');
+})->name('activity.index');
+
+Route::get('/income', function() {
+    return Inertia::render('activity/income/index');
+})->name('activity.income');
+
+Route::get('/expense', function() {
+    return Inertia::render('activity/expense/index');
+})->name('activity.expense');
+
 Route::delete('/cards/{card}', [CardsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])
     ->name('cards.destroy');
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
