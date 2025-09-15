@@ -24,6 +24,7 @@ class TransactionsController extends Controller
             ->latest()
             ->get();
 
+
         return Inertia::render('home/index', [
             'transactions' => $transactions,
         ]);
@@ -148,43 +149,43 @@ class TransactionsController extends Controller
 
     public function storeConvert(Request $request)
     {
-    $request->validate([
-        'from_cards_id' => 'required|exists:cards,id',
-        'to_cards_id' => 'required|exists:cards,id|different:from_cards_id',
-        'amount' => 'required|numeric|min:0.01',
-        'converted_amount' => 'required|numeric|min:0.01',
-        'rate' => 'required|numeric|min:0',
-    ], [
-        'to_cards_id.different' => 'Source and destination cards must be different.',
-        'amount.min' => 'Amount must be greater than 0.'
-    ]);
-        
-    $fromCard = Cards::findOrFail($request->from_cards_id);
-    $toCard = Cards::findOrFail($request->to_cards_id);
+        $request->validate([
+            'from_cards_id' => 'required|exists:cards,id',
+            'to_cards_id' => 'required|exists:cards,id|different:from_cards_id',
+            'amount' => 'required|numeric|min:0.01',
+            'converted_amount' => 'required|numeric|min:0.01',
+            'rate' => 'required|numeric|min:0',
+        ], [
+            'to_cards_id.different' => 'Source and destination cards must be different.',
+            'amount.min' => 'Amount must be greater than 0.'
+        ]);
 
-    // Kurangi dari kartu asal
-    $fromCard->balance -= $request->amount;
-    $fromCard->save();
+        $fromCard = Cards::findOrFail($request->from_cards_id);
+        $toCard = Cards::findOrFail($request->to_cards_id);
 
-    // Tambah ke kartu tujuan (hasil konversi)
-    $toCard->balance += $request->converted_amount;
-    $toCard->save();
+        // Kurangi dari kartu asal
+        $fromCard->balance -= $request->amount;
+        $fromCard->save();
 
-    Transactions::create([
-        'user_id' => Auth::id(),
-        'type' => TransactionsType::CONVERT->value,
-        'from_cards_id' => $fromCard->id,
-        'to_cards_id' => $toCard->id,
-        'amount' => $request->amount,
-        'converted_amount' => $request->converted_amount,
-        'rate' => $request->rate,
-        'notes' => $request->notes,
-        'asset' => $fromCard->currency, // contoh
-        'transaction_date' => now(),
-    ]);
+        // Tambah ke kartu tujuan (hasil konversi)
+        $toCard->balance += $request->converted_amount;
+        $toCard->save();
 
-    return back()->with('success', 'Conversion successful!');
-}
+        Transactions::create([
+            'user_id' => Auth::id(),
+            'type' => TransactionsType::CONVERT->value,
+            'from_cards_id' => $fromCard->id,
+            'to_cards_id' => $toCard->id,
+            'amount' => $request->amount,
+            'converted_amount' => $request->converted_amount,
+            'rate' => $request->rate,
+            'notes' => $request->notes,
+            'asset' => $fromCard->currency, // contoh
+            'transaction_date' => now(),
+        ]);
+
+        return back()->with('success', 'Conversion successful!');
+    }
 
 
 

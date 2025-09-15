@@ -42,15 +42,13 @@ export default function Home() {
         expenseRateLow: number;
     };
 
+    const { incomePerCard, expensePerCard } = usePage().props as any;
+
     const [EyesOpen, setEyesOpen] = useState(false)
     const [activeCardId, setActiveCardId] = useState<number>(
         (cards && cards.length > 0) ? cards[0].id : 0
     )
     const activeCard = cards.find((card) => card.id === activeCardId)
-    // const [button]
-    console.log('Data cards di Home:', cards); //debug
-    console.log('Cards length:', cards?.length);
-
     const balance = activeCard ? activeCard.balance : 0;
 
     // helper get ava
@@ -163,7 +161,7 @@ export default function Home() {
                                         icon={<LogInIcon />}
                                         rate={incomeRateHigh}   // rateHigh untuk income
                                         rateLow={incomeRateLow}
-                                        balance={totalIncome ?? 0}
+                                        balance={incomePerCard[activeCardId] ?? 0}
                                     // rateLow={0}
                                     />
                                 </div>
@@ -174,7 +172,7 @@ export default function Home() {
                                         icon={<LogInIcon />}
                                         rate={expenseRateHigh}
                                         rateLow={expenseRateLow}
-                                        balance={totalExpense ?? 0}
+                                        balance={expensePerCard[activeCardId] ?? 0}
                                     // rateLow={15}
                                     />
                                 </div>

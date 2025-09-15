@@ -43,6 +43,21 @@ class CardsController extends Controller
                 ];
             });
 
+
+        $incomePerCard = Transactions::where('user_id', Auth::id())
+            ->where('type', TransactionsType::INCOME->value)
+            ->selectRaw('to_cards_id, SUM(amount) as total')
+            ->groupBy('to_cards_id')
+            ->pluck('total', 'to_cards_id')
+            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]); // <-- fix
+
+        $expensePerCard = Transactions::where('user_id', Auth::id())
+            ->where('type', TransactionsType::EXPENSE->value)
+            ->selectRaw('to_cards_id, SUM(amount) as total')
+            ->groupBy('to_cards_id')
+            ->pluck('total', 'to_cards_id')
+            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]); // <-- fix
+
         $currentIncome = Transactions::where('user_id', $userId)
             ->where('type', TransactionsType::INCOME->value)
             ->whereDate('created_at', now()->toDateString())
@@ -70,7 +85,9 @@ class CardsController extends Controller
             'incomeRateLow'    => $incomeRateLow,
             'expenseRateHigh'  => $expenseRateHigh,
             'expenseRateLow'   => $expenseRateLow,
-            'transactions' => $transactions
+            'transactions' => $transactions,
+            'incomePerCard' => $incomePerCard,
+            'expensePerCard' => $expensePerCard
         ]);
     }
 
