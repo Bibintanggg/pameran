@@ -18,13 +18,22 @@ import {
     ChevronsRightLeftIcon,
     ChevronRight,
 } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Transaction } from "@/types/transaction"
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 import TransactionsList from "@/Components/TransactionsList"
 
 export default function Home() {
-    const { auth, cards, transactions, totalIncome, totalExpense, incomeRateHigh, incomeRateLow, expenseRateHigh, expenseRateLow } = usePage().props as unknown as {
+    const { auth, 
+        cards, 
+        transactions, 
+        totalIncome, 
+        totalExpense, 
+        incomeRateHigh, 
+        incomeRateLow, 
+        expenseRateHigh, 
+        expenseRateLow,
+    } = usePage().props as unknown as {
         auth: any;
         cards: {
             id: number;
@@ -42,7 +51,7 @@ export default function Home() {
         expenseRateLow: number;
     };
 
-    const { incomePerCard, expensePerCard } = usePage().props as any;
+    const { incomePerCard, expensePerCard, ratesPerCard } = usePage().props as any;
 
     const [EyesOpen, setEyesOpen] = useState(false)
     const [activeCardId, setActiveCardId] = useState<number>(
@@ -50,6 +59,11 @@ export default function Home() {
     )
     const activeCard = cards.find((card) => card.id === activeCardId)
     const balance = activeCard ? activeCard.balance : 0;
+    const activeRates = ratesPerCard?.[activeCardId] ?? { income_rate: 0, expense_rate: 0 };
+
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter((t: any) => t.to_cards_id === activeCardId);
+    }, [transactions, activeCardId]);
 
     // helper get ava
     const getAvatarUrl = () => {
@@ -159,8 +173,8 @@ export default function Home() {
                                         currency={currencyMap[activeCard?.currency ?? 1]}
                                         type="Income"
                                         icon={<LogInIcon />}
-                                        rate={incomeRateHigh}   // rateHigh untuk income
-                                        rateLow={incomeRateLow}
+                                        rate={activeRates.income_rate}   // rateHigh untuk income
+                                        rateLow={activeRates.expense_rate}
                                         balance={incomePerCard[activeCardId] ?? 0}
                                     // rateLow={0}
                                     />
@@ -170,8 +184,8 @@ export default function Home() {
                                         currency={currencyMap[activeCard?.currency ?? 1]}
                                         type="Expense"
                                         icon={<LogInIcon />}
-                                        rate={expenseRateHigh}
-                                        rateLow={expenseRateLow}
+                                        rate={activeRates.expense_rate}
+                                        rateLow={activeRates.income_rate}
                                         balance={expensePerCard[activeCardId] ?? 0}
                                     // rateLow={15}
                                     />
@@ -195,7 +209,7 @@ export default function Home() {
                             </button>
                         </div>
 
-                        <TransactionsList transactions={transactions} />
+                        <TransactionsList transactions={filteredTransactions} />
                     </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 import { usePage } from "@inertiajs/react";
 import { Transaction } from "@/types/transaction";
+import { formatCurrency, currencyMap } from "@/utils/formatCurrency";
 
 interface TransactionListProps {
     transactions: Transaction[]
@@ -7,6 +8,7 @@ interface TransactionListProps {
 
 export default function TransactionsList({ transactions }: TransactionListProps) {
     const { auth } = usePage().props
+    
     return (
         <div className="mt-4 flex flex-col gap-3">
             {transactions.length === 0 && <p className="text-gray-500">No transactions yet</p>}
@@ -33,7 +35,9 @@ export default function TransactionsList({ transactions }: TransactionListProps)
 
                     <div className="flex flex-col items-center">
                         <div className="flex items-end flex-col">
-                        <span className="font-medium">{transaction.formatted_amount}</span>
+                        <span className="font-medium">
+                                {formatCurrency(transaction.amount, currencyMap[transaction.currency])}
+                            </span>
                         <span className="text-sm">{transaction.type_label}</span>
                         </div>
                     </div>

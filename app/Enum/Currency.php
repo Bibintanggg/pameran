@@ -25,6 +25,15 @@ enum Currency: int
             self::AS_DOLLAR->value => self::AS_DOLLAR->label(),
         ];
     }
+    
+    public function symbol(): string
+    {
+        return match ($this) {
+            self::INDONESIAN_RUPIAH => "Rp",
+            self::BAHT_THAILAND => "฿",
+            self::AS_DOLLAR => "$",
+        };
+    }
 
     public static function values(): array
     {

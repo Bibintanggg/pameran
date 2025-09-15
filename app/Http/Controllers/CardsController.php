@@ -22,19 +22,33 @@ class CardsController extends Controller
     {
         $userId = Auth::id();
         $cards = Cards::where('user_id', Auth::id())->get();
+        // $activeCardId = $request->get('card_id') ?? $cards->first()?->id;
 
         $transactions = Transactions::where('user_id', $userId)
+            // ->where('to_cards_id', $activeCardId)
+            ->with('toCard')
             ->latest()
             ->get()
             ->map(function ($data) {
+                $currency = $data->toCard?->currency;
+                if ($currency instanceof Currency) {
+                    $currency = $currency->value;
+                }
+
+                $currency ??= Currency::INDONESIAN_RUPIAH->value;
+
+                $currencySymbol = Currency::from($currency)->symbol();
+
                 return [
                     'id'               => $data->id,
+                    'to_cards_id'      => $data->to_cards_id,
                     'user_name'        => Auth::user()->name,
                     'type'             => $data->type,
                     'type_label'       => TransactionsType::from($data->type)->label(),
                     'amount'           => $data->amount,
-                    'formatted_amount' => 'Rp ' . number_format($data->amount, 0, ',', '.'),
+                    'formatted_amount' => $currencySymbol . ' ' . number_format($data->amount, 0, ',', '.'),
                     'notes'            => $data->notes,
+                    'currency'         => $data->toCard?->currency ?? 'IDR',
                     'asset'            => $data->asset,
                     'asset_label'      => Asset::from($data->asset)->label(),
                     'category'         => $data->category,
@@ -49,14 +63,14 @@ class CardsController extends Controller
             ->selectRaw('to_cards_id, SUM(amount) as total')
             ->groupBy('to_cards_id')
             ->pluck('total', 'to_cards_id')
-            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]); // <-- fix
+            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $expensePerCard = Transactions::where('user_id', Auth::id())
             ->where('type', TransactionsType::EXPENSE->value)
             ->selectRaw('to_cards_id, SUM(amount) as total')
             ->groupBy('to_cards_id')
             ->pluck('total', 'to_cards_id')
-            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]); // <-- fix
+            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $currentIncome = Transactions::where('user_id', $userId)
             ->where('type', TransactionsType::INCOME->value)
@@ -67,6 +81,20 @@ class CardsController extends Controller
             ->where('type', TransactionsType::EXPENSE->value)
             ->whereDate('created_at', now()->toDateString())
             ->sum('amount');
+
+        $ratesPerCard = collect();
+
+        foreach ($incomePerCard->keys()->merge($expensePerCard->keys())->unique() as $cardId) {
+            $income = $incomePerCard->get($cardId, 0);
+            $expense = $expensePerCard->get($cardId, 0);
+            $total = $income + $expense;
+
+            $ratesPerCard[$cardId] = [
+                'income_rate' => $total > 0 ? round(($income / $total) * 100, 2) : 0,
+                'expense_rate' => $total > 0 ? round(($expense / $total) * 100, 2) : 0,
+            ];
+        }
+
 
         $total = $currentIncome + $currentExpense;
 
@@ -87,7 +115,8 @@ class CardsController extends Controller
             'expenseRateLow'   => $expenseRateLow,
             'transactions' => $transactions,
             'incomePerCard' => $incomePerCard,
-            'expensePerCard' => $expensePerCard
+            'expensePerCard' => $expensePerCard,
+            'ratesPerCard' => $ratesPerCard
         ]);
     }
 

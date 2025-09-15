@@ -8,6 +8,7 @@ export interface Transaction {
     notes: string;
     asset: number;
     asset_label: string;
+    currency: string;
     category: number;
     category_label: string;
     transaction_date: string;
