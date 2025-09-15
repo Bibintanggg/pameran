@@ -6,10 +6,9 @@ enum Category: int
 {
     case SALLARY = 1;
     case ALLOWANCE = 2;
-    case BONUS = 3;
+    case BUSINESS = 3;
     case FOOD_DRINKS = 4;
     case TRANSPORTATION = 5;
-    case GROCERIES = 6;
     case HEALTH = 7;
     case SHOPPING = 8;
     case SAVINGS_INVESTMENTS = 9;
@@ -20,10 +19,9 @@ enum Category: int
         return match ($this) {
             self::SALLARY => "Sallary",
             self::ALLOWANCE => "Allowance",
-            self::BONUS => "Bonus",
+            self::BUSINESS => "Business",
             self::FOOD_DRINKS => "Food & Drinks",
             self::TRANSPORTATION => "Transportation",
-            self::GROCERIES => "Groceries",
             self::HEALTH => "Health",
             self::SHOPPING => "Shopping",
             self::SAVINGS_INVESTMENTS => "Savings & Investments",
@@ -36,10 +34,9 @@ enum Category: int
         return [
             self::SALLARY->value => self::SALLARY->label(),
             self::ALLOWANCE->value => self::ALLOWANCE->label(),
-            self::BONUS->value => self::BONUS->label(),
+            self::BUSINESS->value => self::BUSINESS->label(),
             self::FOOD_DRINKS->value => self::FOOD_DRINKS->label(),
             self::TRANSPORTATION->value => self::TRANSPORTATION->label(),
-            self::GROCERIES->value => self::GROCERIES->label(),
             self::HEALTH->value => self::HEALTH->label(),
             self::SHOPPING->value => self::SHOPPING->label(),
             self::SAVINGS_INVESTMENTS->value => self::SAVINGS_INVESTMENTS->label(),

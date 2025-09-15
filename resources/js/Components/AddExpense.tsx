@@ -78,7 +78,6 @@ export default function AddExpense({
         switch(value) {
             case 4 : return "Food & Drinks"
             case 5 : return "Transportation"
-            case 6 : return "Groceries"
             case 7 : return "Health"
             case 8 : return "Shopping"
             case 9 : return "Savings & Investments"
@@ -186,7 +185,6 @@ export default function AddExpense({
                                         <DropdownMenuGroup>
                                             <DropdownMenuItem onClick={() => setData("category", 4)}>Food & Drinks</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setData("category", 5)}>Transportation</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 6)}>Groceries</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setData("category", 7)}>Health</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setData("category", 8)}>Shopping</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setData("category", 9)}>Savings & Investments</DropdownMenuItem>

@@ -62,7 +62,7 @@ class TransactionsController extends Controller
             if (!in_array($validated['category'], [
                 Category::SALLARY->value,
                 Category::ALLOWANCE->value,
-                Category::BONUS->value
+                Category::BUSINESS->value
             ])) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
@@ -107,7 +107,6 @@ class TransactionsController extends Controller
             if (!in_array($data['category'], [
                 Category::FOOD_DRINKS->value,
                 Category::TRANSPORTATION->value,
-                Category::GROCERIES->value,
                 Category::HEALTH->value,
                 Category::SHOPPING->value,
                 Category::SAVINGS_INVESTMENTS->value,
@@ -172,7 +171,7 @@ class TransactionsController extends Controller
     $toCard->save();
 
     Transactions::create([
-        'user_id' => auth()->id(),
+        'user_id' => Auth::id(),
         'type' => TransactionsType::CONVERT->value,
         'from_cards_id' => $fromCard->id,
         'to_cards_id' => $toCard->id,

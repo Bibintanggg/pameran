@@ -58,7 +58,6 @@ export default function AddIncome({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // ✅ Validasi frontend sebelum submit
         if (!data.transaction_date) {
             alert('Please select a date');
             return;
@@ -101,7 +100,7 @@ export default function AddIncome({
         switch (value) {
             case 1: return "Salary";
             case 2: return "Allowance";
-            case 3: return "Bonus";
+            case 3: return "Business";
             default: return "Select Your Category Income";
         }
     }
@@ -204,7 +203,7 @@ export default function AddIncome({
                                         <DropdownMenuGroup>
                                             <DropdownMenuItem onClick={() => setData("category", 1)}>Salary</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setData("category", 2)}>Allowance</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 3)}>Bonus</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 3)}>Business</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
