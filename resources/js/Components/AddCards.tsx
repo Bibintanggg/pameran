@@ -22,9 +22,10 @@ import { useForm } from "@inertiajs/react"
 
 interface CardsProps {
     label: string
+    className?: string
 }
 
-export default function Cards({ label }: CardsProps) {
+export default function Cards({ label, className }: CardsProps) {
     const [wallet, setWallet] = React.useState<string>("")
     const {data, setData, post, processing, errors, reset} = useForm({
         'currency': 1,
@@ -53,7 +54,8 @@ export default function Cards({ label }: CardsProps) {
 
     return (
         <div className="mt-5">
-            <div className="w-40 h-16 bg-[#808080]/10 rounded-lg flex items-center justify-between px-4">
+            <div className="w-40 h-16 bg-[#808080]/10 rounded-lg flex items-center 
+            justify-between px-4">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center justify-center">
                         <p className="text-black text-lg font-semibold">{label}</p>
@@ -61,7 +63,8 @@ export default function Cards({ label }: CardsProps) {
 
                     <Dialog>
                         <DialogTrigger asChild>
-                            <button className="w-10 h-10 rounded-full bg-[#808080]/20 flex items-center justify-center">
+                            <button className="w-10 h-10 rounded-full bg-[#808080]/20 flex 
+                            items-center justify-center">
                                 <PlusIcon color="#215509" opacity={54} />
                             </button>
                         </DialogTrigger>
