@@ -46,7 +46,7 @@ export default function Sidebar({
                         <Wallet className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h2 className="font-bold text-xl text-gray-900">iBanKo</h2>
+                        <h2 className="font-bold text-xl text-gray-900">Finance Manager</h2>
                         <p className="text-xs text-gray-500">Financial Record</p>
                     </div>
                 </div>
@@ -147,7 +147,7 @@ export default function Sidebar({
             <nav className="flex-1 p-6">
                 <ul className="space-y-2">
                     <li>
-                        <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#9290FE] to-[#7A78D1] rounded-xl shadow-md">
+                        <a href="/home" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#9290FE] to-[#7A78D1] rounded-xl shadow-md">
                             <Activity className="h-5 w-5" />
                             Overview
                         </a>
@@ -155,11 +155,11 @@ export default function Sidebar({
                     <li>
                         <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
                             <CreditCard className="h-5 w-5" />
-                            Transactions
+                            Cards
                         </a>
                     </li>
                     <li>
-                        <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
+                        <a href="/all-activity" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
                             <TrendingUp className="h-5 w-5" />
                             Analytics
                         </a>

@@ -1,12 +1,13 @@
-import { BarChart3, CreditCard, Home, PlusSquare, Settings } from "lucide-react"
+import { BarChart3, CreditCard, Home, PlusSquare, Settings, TrendingUp } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
+// import Activity from "@/Pages/activity"
 
 export default function BottomNavbar() {
     const { url } = usePage()
 
     const data = [
         { icon: <Home className="w-6 h-6" />, path: "/home" },
-        { icon: <BarChart3 className="w-6 h-6" />, path: "/all-activity" },
+        { icon: <TrendingUp className="w-6 h-6" />, path: "/all-activity" },
         { icon: <PlusSquare className="w-6 h-6" />, path: "/tambah" },
         { icon: <CreditCard className="w-6 h-6" />, path: "/transaksi" },
         { icon: <Settings className="w-6 h-6" />, path: "/settings" },
