@@ -32,6 +32,7 @@ import { Transaction } from "@/types/transaction"
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency"
 import TransactionsList from "@/Components/TransactionsList"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
+import Sidebar from "@/Components/Sidebar"
 
 export default function Home() {
     const {
@@ -63,6 +64,13 @@ export default function Home() {
 
     const { incomePerCard, expensePerCard, ratesPerCard } = usePage().props as any;
 
+    const { chartData: chartDataFromProps = { monthly: {}, yearly: {} } } = (usePage().props as unknown) as {
+        chartData: {
+            monthly: Record<number, { month: string; income: number; expense: number }[]>;
+            yearly: Record<number, { year: number; income: number; expense: number }[]>;
+        };
+    };
+
     const [EyesOpen, setEyesOpen] = useState(false)
     const [activeCardId, setActiveCardId] = useState<number>(
         (cards && cards.length > 0) ? cards[0].id : 0
@@ -92,15 +100,18 @@ export default function Home() {
         return names[0][0];
     };
 
-    //chart buat desktop
-    const chartData = [
-        { month: 'Jan', income: incomePerCard[activeCardId] * 0.7 || 500, expense: expensePerCard[activeCardId] * 0.8 || 400 },
-        { month: 'Feb', income: incomePerCard[activeCardId] * 0.85 || 600, expense: expensePerCard[activeCardId] * 0.9 || 450 },
-        { month: 'Mar', income: incomePerCard[activeCardId] * 0.9 || 750, expense: expensePerCard[activeCardId] * 0.85 || 500 },
-        { month: 'Apr', income: incomePerCard[activeCardId] * 0.95 || 800, expense: expensePerCard[activeCardId] * 1.1 || 600 },
-        { month: 'May', income: incomePerCard[activeCardId] * 1.1 || 900, expense: expensePerCard[activeCardId] * 0.95 || 550 },
-        { month: 'Jun', income: incomePerCard[activeCardId] || 1000, expense: expensePerCard[activeCardId] || 650 }
-    ];
+    //chart desktop
+
+    const [chartMode, setChartMode] = useState<'monthly' | 'yearly'>('monthly');
+
+    const chartData = (activeCardId && chartDataFromProps?.[chartMode]?.[activeCardId]
+        ? chartDataFromProps[chartMode][activeCardId]
+        : []
+    ).map((item) => ({
+        label: chartMode === "monthly" ? item.month : String(item.year),
+        income: Number(item.income),
+        expense: Number(item.expense),
+    }));
 
     // Current date for desktop
     const currentDate = new Date().toLocaleDateString('en-US', {
@@ -279,144 +290,15 @@ export default function Home() {
 
             {/* desktop layout */}
             <div className="hidden lg:flex min-h-screen">
-                {/* sidebar */}
-                <div className="w-80 bg-white shadow-sm border-r border-gray-100 flex flex-col">
-
-                    <div className="p-6 border-b border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-[#9290FE] to-[#7A78D1] rounded-xl flex items-center justify-center">
-                                <Wallet className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h2 className="font-bold text-xl text-gray-900">E-kurs / Finance app</h2>
-                                <p className="text-xs text-gray-500">Financial Record</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-6 border-b border-gray-100">
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-14 w-14 ring-4 ring-blue-50">
-                                <AvatarImage
-                                    src={getAvatarUrl()}
-                                    alt={auth.user.name}
-                                />
-                                <AvatarFallback className="bg-blue-500 text-white font-semibold text-lg">
-                                    {getUserInitials()}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-lg text-gray-900">Hello {auth.user.name.split(' ')[0]}</h3>
-                                <p className="text-sm text-gray-500">{auth.user.name}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-6 border-b border-gray-100">
-                        <h3 className="text-sm font-semibold text-gray-600 mb-4">My Card</h3>
-                        <div className="bg-gradient-to-br from-gray-900 to-gray-700 rounded-2xl p-6 text-white relative overflow-hidden">
-                            <div className="absolute top-4 right-4">
-                                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                                    <Wallet className="w-4 h-4" />
-                                </div>
-                            </div>
-
-                            <div className="mb-6">
-                                <p className="text-sm opacity-80 mb-2">{activeCard?.name || 'Select a card'}</p>
-                                <p className="text-3xl font-bold">
-                                    {EyesOpen
-                                        ? formatCurrency(
-                                            activeCard?.balance ?? 0,
-                                            currencyMap[activeCard?.currency ?? 1]
-                                        )
-                                        : "••••••••"}
-                                </p>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <button
-                                    onClick={() => setEyesOpen(!EyesOpen)}
-                                    className="text-sm px-3 py-1 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-                                >
-                                    {EyesOpen ? (
-                                        <>
-                                            <EyeIcon className="w-4 h-4 inline mr-1" />
-                                            Hide
-                                        </>
-                                    ) : (
-                                        <>
-                                            <EyeClosedIcon className="w-4 h-4 inline mr-1" />
-                                            Show
-                                        </>
-                                    )}
-                                </button>
-                                <p className="text-xs opacity-60">•••• •••• •••• 8889</p>
-                            </div>
-
-                            <div className="absolute -bottom-4 -right-4 w-16 h-16 rounded-full bg-white/10"></div>
-                            <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-white/5"></div>
-                        </div>
-                    </div>
-
-                    <div className="p-6 border-b border-gray-100">
-                        <h3 className="text-sm font-semibold text-gray-600 mb-4">Financial Record</h3>
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-600">Total Income</span>
-                                <span className="font-semibold text-green-600">
-                                    {formatCurrency(incomePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 1])}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-600">Total Expense</span>
-                                <span className="font-semibold text-red-500">
-                                    {formatCurrency(expensePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 1])}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                                <span className="text-sm font-semibold text-gray-800">Balance</span>
-                                <span className="font-bold text-gray-900">
-                                    {formatCurrency(
-                                        (incomePerCard[activeCardId] ?? 0) - (expensePerCard[activeCardId] ?? 0),
-                                        currencyMap[activeCard?.currency ?? 1]
-                                    )}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <nav className="flex-1 p-6">
-                        <ul className="space-y-2">
-                            <li>
-                                <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#9290FE] to-[#7A78D1] rounded-xl shadow-md">
-                                    <Activity className="h-5 w-5" />
-                                    Overview
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
-                                    <CreditCard className="h-5 w-5" />
-                                    Transactions
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
-                                    <TrendingUp className="h-5 w-5" />
-                                    Analytics
-                                </a>
-                            </li>
-                            <li>
-                                <button
-                                    onClick={() => router.visit(route("profile.edit"))}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
-                                >
-                                    <SettingsIcon className="h-5 w-5" />
-                                    Settings
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+                <Sidebar
+                    auth={auth}
+                    activeCard={activeCard}
+                    activeCardId={activeCardId}
+                    EyesOpen={EyesOpen}
+                    setEyesOpen={setEyesOpen}
+                    incomePerCard={incomePerCard}
+                    expensePerCard={expensePerCard}
+                />
 
                 <div className="flex-1 overflow-hidden bg-gray-50">
                     <div className="h-full overflow-y-auto">
@@ -478,15 +360,23 @@ export default function Home() {
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">  {/* chart and card with grid */}
-                                    
+
                                     <QuickActionCard gradient={false}>
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-lg font-bold text-gray-900">Money Flow</h3>
                                             <div className="flex gap-2">
-                                                <button className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                                <button
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'monthly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
+                                                    onClick={() => setChartMode('monthly')}
+                                                >
                                                     Monthly
                                                 </button>
-                                                <button className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                                <button
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'yearly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
+                                                    onClick={() => setChartMode('yearly')}
+                                                >
                                                     Yearly
                                                 </button>
                                             </div>
@@ -506,7 +396,7 @@ export default function Home() {
                                                     </defs>
                                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                                     <XAxis
-                                                        dataKey="month"
+                                                        dataKey="label"
                                                         axisLine={false}
                                                         tickLine={false}
                                                         tick={{ fill: '#6B7280', fontSize: 12 }}
@@ -575,7 +465,7 @@ export default function Home() {
 
                                 {/* transaksi oi */}
                                 <div className="space-y-6">
-                                    <QuickActionCard gradient={false}> 
+                                    <QuickActionCard gradient={false} className="overflow-y-auto">
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="text-lg font-bold text-gray-900">Available Card</h3>
                                             <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
