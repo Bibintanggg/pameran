@@ -166,6 +166,167 @@ class CardsController extends Controller
         ]);
     }
 
+    public function allActivity(Request $request)
+    {
+        $userId = Auth::id();
+
+        $filter = $request->query('filter', 'all'); // all, income, expense
+        $chartMode = $request->query('chartMode', 'monthly'); // monthly, yearly
+
+        $cards = Cards::where('user_id', $userId)->get();
+
+        $transactionsQuery = Transactions::where('user_id', $userId)
+            ->with('toCard');
+
+        if ($filter === 'income') {
+            $transactionsQuery->where('type', TransactionsType::INCOME->value);
+        } elseif ($filter === 'expense') {
+            $transactionsQuery->where('type', TransactionsType::EXPENSE->value);
+        }
+
+        $transactions = $transactionsQuery->latest()
+            ->get()
+            ->map(function ($data) {
+                $currency = $data->toCard?->currency;
+                if ($currency instanceof Currency) {
+                    $currency = $currency->value;
+                }
+
+                $currency ??= Currency::INDONESIAN_RUPIAH->value;
+                $currencySymbol = Currency::from($currency)->symbol();
+
+                return [
+                    'id'               => $data->id,
+                    'to_cards_id'      => $data->to_cards_id,
+                    'user_name'        => Auth::user()->name,
+                    'type'             => $data->type,
+                    'type_label'       => TransactionsType::from($data->type)->label(),
+                    'amount'           => $data->amount,
+                    'formatted_amount' => $currencySymbol . ' ' . number_format($data->amount, 0, ',', '.'),
+                    'notes'            => $data->notes,
+                    'currency'         => $data->toCard?->currency ?? 'IDR',
+                    'asset'            => $data->asset,
+                    'asset_label'      => Asset::from($data->asset)->label(),
+                    'category'         => $data->category,
+                    'category_label'   => $data->category ? Category::from($data->category)->label() : 'Transfer',
+                    'transaction_date' => $data->created_at->format('d F Y'),
+                    'created_at'       => $data->created_at,
+                ];
+            });
+
+        $totalIncome = Transactions::where('user_id', $userId)
+            ->where('type', TransactionsType::INCOME->value)
+            ->sum('amount');
+
+        $totalExpense = Transactions::where('user_id', $userId)
+            ->where('type', TransactionsType::EXPENSE->value)
+            ->sum('amount');
+
+        $incomePerCard = Transactions::where('user_id', $userId)
+            ->where('type', TransactionsType::INCOME->value)
+            ->selectRaw('to_cards_id, SUM(amount) as total')
+            ->groupBy('to_cards_id')
+            ->pluck('total', 'to_cards_id')
+            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
+
+        $expensePerCard = Transactions::where('user_id', $userId)
+            ->where('type', TransactionsType::EXPENSE->value)
+            ->selectRaw('to_cards_id, SUM(amount) as total')
+            ->groupBy('to_cards_id')
+            ->pluck('total', 'to_cards_id')
+            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
+
+        $ratesPerCard = collect();
+
+        foreach ($incomePerCard->keys()->merge($expensePerCard->keys())->unique() as $cardId) {
+            $income = $incomePerCard->get($cardId, 0);
+            $expense = $expensePerCard->get($cardId, 0);
+            $total = $income + $expense;
+
+            $ratesPerCard[$cardId] = [
+                'income_rate' => $total > 0 ? round(($income / $total) * 100, 2) : 0,
+                'expense_rate' => $total > 0 ? round(($expense / $total) * 100, 2) : 0,
+            ];
+        }
+
+        $currentYear = now()->year;
+
+        $monthlyData = Transactions::where('user_id', $userId)
+            ->whereYear('transaction_date', $currentYear)
+            ->selectRaw(
+                'to_cards_id,
+                MONTH(transaction_date) as month,
+                SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as income,
+                SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
+                [TransactionsType::INCOME->value, TransactionsType::EXPENSE->value]
+            )
+            ->groupBy('to_cards_id', 'month')
+            ->get()
+            ->groupBy('to_cards_id');
+
+        $monthlyChartData = $monthlyData->map(function ($dataPerCard) {
+            return collect(range(1, 12))->map(function ($month) use ($dataPerCard) {
+                $data = $dataPerCard->firstWhere('month', $month);
+                return [
+                    'month' => Carbon::create()->month($month)->format('M'),
+                    'income' => $data->income ?? 0,
+                    'expense' => $data->expense ?? 0,
+                    'label' => Carbon::create()->month($month)->format('M'),
+                ];
+            });
+        });
+
+        $yearlyData = Transactions::where('user_id', $userId)
+            ->selectRaw(
+                'to_cards_id,
+                YEAR(transaction_date) as year,
+                SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as income,
+                SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
+                [TransactionsType::INCOME->value, TransactionsType::EXPENSE->value]
+            )
+            ->groupBy('to_cards_id', 'year')
+            ->get()
+            ->groupBy('to_cards_id');
+
+        $yearlyChartData = $yearlyData->map(function ($dataPerCard) {
+            return $dataPerCard->map(function ($data) {
+                return [
+                    'year' => $data->year,
+                    'income' => $data->income ?? 0,
+                    'expense' => $data->expense ?? 0,
+                    'label' => (string) $data->year,
+                ];
+            });
+        });
+
+        // calculate income expense buat metrics
+        $totalTransactions = $totalIncome + $totalExpense;
+        $incomeRate = $totalTransactions > 0 ? round(($totalIncome / $totalTransactions) * 100, 2) : 0;
+        $expenseRate = $totalTransactions > 0 ? round(($totalExpense / $totalTransactions) * 100, 2) : 0;
+
+        return Inertia::render('activity/index', [
+            'transactions' => $transactions,
+            'cards' => $cards,
+            'chartData' => [
+                'monthly' => $monthlyChartData,
+                'yearly' => $yearlyChartData,
+            ],
+            'totalIncome' => $totalIncome,
+            'totalExpense' => $totalExpense,
+            'ratesPerCard' => $ratesPerCard,
+            'incomeRate' => $incomeRate,
+            'expenseRate' => $expenseRate,
+            'filter' => $filter,
+            'chartMode' => $chartMode,
+            'auth' => [
+                'user' => [
+                    'name' => Auth::user()->name,
+                    'avatar' => null, 
+                ]
+            ]
+        ]);
+    }
+
 
 
     /**

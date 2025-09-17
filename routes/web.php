@@ -37,9 +37,9 @@ Route::post('/add-cards', [CardsController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('cards.store');
 
-Route::get('/all-activity', function() {
-    return Inertia::render('activity/index');
-})->name('activity.index');
+Route::get('/all-activity', [CardsController::class, 'allActivity'])
+    ->middleware(['auth', 'verified']) // tambahkan middleware jika perlu
+    ->name('all-activity');
 
 Route::get('/income', function() {
     return Inertia::render('activity/income/index');

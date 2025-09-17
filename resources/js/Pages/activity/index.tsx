@@ -3,7 +3,7 @@ import BottomNavbar from "@/Components/BottomNavbar";
 import TransactionsList from "@/Components/TransactionsList";
 import Sidebar from "@/Components/Sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
-import { router } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
 import {
     SettingsIcon,
     Calendar,
@@ -18,94 +18,77 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { Transaction } from "@/types/transaction";
+import { Card } from "@/types/card";
+import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 import ActivityNavbar from "./layout/nav";
 
-export default function AllActivity() {
-    const [chartMode, setChartMode] = useState<'monthly' | 'yearly'>('monthly');
-
-    const staticAuth = {
+type Props = {
+    transactions: Transaction[];
+    cards: Card[];
+    chartData: {
+        monthly: Record<string, { label: string; income: number; expense: number }[]>;
+        yearly: Record<string, { label: string; income: number; expense: number }[]>;
+    };
+    totalIncome: number;
+    totalExpense: number;
+    ratesPerCard: Record<string, { income_rate: number; expense_rate: number }>;
+    incomeRate: number;
+    expenseRate: number;
+    filter: string;
+    chartMode: string;
+    auth: {
         user: {
-            name: "John Doe",
-            avatar: null
+            name: string;
+            avatar: string | null;
         }
     };
+    incomePerCard: Record<number, number>;
+    expensePerCard: Record<number, number>;
+};
 
-    const staticCards = [
-        { id: 1, name: "Main Card", balance: 15000, currency: 1 },
-        { id: 2, name: "Savings", balance: 25000, currency: 1 },
-        { id: 3, name: "Business", balance: 8500, currency: 1 }
-    ];
+interface MetricCardProps {
+    title: string;
+    value: string;
+    change: number;
+    icon: React.ReactNode;
+    trend?: "up" | "down";
+    color?: "blue" | "green" | "orange";
+}
 
-    const staticTransactions = [
-        {
-            id: 1,
-            description: "Salary Payment",
-            amount: 5000,
-            type: "income",
-            date: "2024-03-15",
-            category: "Work"
-        },
-        {
-            id: 2,
-            description: "Grocery Shopping",
-            amount: -150,
-            type: "expense",
-            date: "2024-03-14",
-            category: "Food"
-        },
-        {
-            id: 3,
-            description: "Freelance Work",
-            amount: 800,
-            type: "income",
-            date: "2024-03-13",
-            category: "Work"
-        },
-        {
-            id: 4,
-            description: "Netflix Subscription",
-            amount: -15,
-            type: "expense",
-            date: "2024-03-12",
-            category: "Entertainment"
-        },
-        {
-            id: 5,
-            description: "Gas Station",
-            amount: -45,
-            type: "expense",
-            date: "2024-03-11",
-            category: "Transportation"
-        }
-    ];
+export default function AllActivity() {
+    const {
+        transactions,
+        cards,
+        chartData,
+        totalIncome,
+        totalExpense,
+        ratesPerCard,
+        incomeRate,
+        expenseRate,
+        auth,
+        filter: initialFilter,
+        chartMode: initialChartMode,
+        incomePerCard,
+        expensePerCard
+    } = usePage().props as unknown as Props;
 
-    const staticChartData = [
-        { label: "Jan", income: 4500, expense: 2800 },
-        { label: "Feb", income: 5200, expense: 3100 },
-        { label: "Mar", income: 6800, expense: 2900 },
-        { label: "Apr", income: 5500, expense: 3500 },
-        { label: "May", income: 7200, expense: 3200 },
-        { label: "Jun", income: 6100, expense: 2700 }
-    ];
+    const [filter, setFilter] = useState<"all" | "income" | "expense">(initialFilter as "all" | "income" | "expense");
+    const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
 
-    const totalIncome = 35300;
-    const totalExpense = 18200;
-    const incomeRate = 12.5;
-    const expenseRate = 8.3;
+    const filteredTransactions = transactions.filter((t) => {
+        if (filter === "all") return true;
+        if (filter === "income") return t.type_label === "Income";
+        if (filter === "expense") return t.type_label === "Expense";
+        return true;
+    });
 
     const getUserInitials = () => {
-        const names = staticAuth.user.name.split(' ');
+        const names = auth.user.name.split(' ');
         if (names.length >= 2) {
             return names[0][0] + names[names.length - 1][0];
         }
         return names[0][0];
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
     };
 
     const currentDate = new Date().toLocaleDateString('en-US', {
@@ -115,7 +98,7 @@ export default function AllActivity() {
         day: 'numeric'
     });
 
-    const MetricCard = ({ title, value, change, icon, trend = "up", color = "blue" }) => (
+    const MetricCard = ({ title, value, change, icon, trend = "up", color = "blue" }: MetricCardProps) => (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -140,36 +123,30 @@ export default function AllActivity() {
         </div>
     );
 
+    const mergedChartData = Object.values(chartData[chartMode]).flat();
 
-    const StaticTransactionsList = ({ transactions }) => (
-        <div className="space-y-3">
-            {transactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
-                        }`}>
-                            {transaction.type === 'income' ?
-                                <ArrowUpRight className="w-5 h-5 text-green-600" /> :
-                                <ArrowDownLeft className="w-5 h-5 text-red-600" />
-                            }
-                        </div>
-                        <div>
-                            <p className="font-medium text-gray-900">{transaction.description}</p>
-                            <p className="text-sm text-gray-500">{transaction.category} • {transaction.date}</p>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <p className={`font-semibold ${
-                            transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                            {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
-                        </p>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
+    const formatAutoCurrency = (amount: number, currencyId?: number) => {
+        const currency = currencyMap[currencyId ?? 1];
+        return formatCurrency(amount, currency);
+    };
+
+    const incomePerCardSafe = incomePerCard ?? {};
+
+    const handleFilterChange = (newFilter: "all" | "income" | "expense") => {
+        setFilter(newFilter);
+        router.get(route('all-activity'), { 
+            filter: newFilter,
+            chartMode 
+        }, { preserveState: true });
+    };
+
+    const handleChartModeChange = (newMode: "monthly" | "yearly") => {
+        setChartMode(newMode);
+        router.get(route('all-activity'), { 
+            filter,
+            chartMode: newMode 
+        }, { preserveState: true });
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -179,7 +156,7 @@ export default function AllActivity() {
                     <BottomNavbar />
 
                     <div className="flex-1 overflow-y-auto p-6">
-
+                        {/* Mobile Header */}
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-10 w-10">
@@ -199,10 +176,12 @@ export default function AllActivity() {
                             </button>
                         </div>
 
-                        <hr className="w-full h-0.5 bg- mb-6" />
+                        <hr className="w-full h-0.5 bg-gray-200 mb-6" />
 
+                        {/* Activity Navigation */}
                         <ActivityNavbar />
 
+                        {/* Mobile Statistics Cards */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                 <div className="flex items-center justify-between mb-2">
@@ -210,7 +189,7 @@ export default function AllActivity() {
                                     <ArrowUpRight className="w-4 h-4 text-green-500" />
                                 </div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {formatCurrency(totalIncome)}
+                                    {formatAutoCurrency(totalIncome)}
                                 </p>
                                 <p className="text-xs text-green-600">+{incomeRate}%</p>
                             </div>
@@ -221,30 +200,28 @@ export default function AllActivity() {
                                     <ArrowDownLeft className="w-4 h-4 text-red-500" />
                                 </div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {formatCurrency(totalExpense)}
+                                    {formatAutoCurrency(totalExpense)}
                                 </p>
                                 <p className="text-xs text-red-600">+{expenseRate}%</p>
                             </div>
                         </div>
 
-                        {/* chart -mobile */}
+                        {/* Mobile Chart */}
                         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">Overview</h3>
                                 <div className="flex gap-2">
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors ${
-                                            chartMode === 'monthly' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                                        }`}
-                                        onClick={() => setChartMode('monthly')}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors ${chartMode === 'monthly' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}
+                                        onClick={() => handleChartModeChange('monthly')}
                                     >
                                         Monthly
                                     </button>
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors ${
-                                            chartMode === 'yearly' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                                        }`}
-                                        onClick={() => setChartMode('yearly')}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors ${chartMode === 'yearly' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}
+                                        onClick={() => handleChartModeChange('yearly')}
                                     >
                                         Yearly
                                     </button>
@@ -252,7 +229,7 @@ export default function AllActivity() {
                             </div>
                             <div className="h-48">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={staticChartData}>
+                                    <AreaChart data={mergedChartData}>
                                         <defs>
                                             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
@@ -304,14 +281,14 @@ export default function AllActivity() {
                             </div>
                         </div>
 
-                        {/* mobile transaksi */}
+                        {/* Mobile Transactions */}
                         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">All Transactions</h3>
                                 <button className="text-blue-500 text-sm">View all</button>
                             </div>
                             <div className="max-h-60 overflow-y-auto">
-                                <StaticTransactionsList transactions={staticTransactions} />
+                                <TransactionsList transactions={filteredTransactions} />
                             </div>
                         </div>
                     </div>
@@ -320,31 +297,15 @@ export default function AllActivity() {
 
             {/* Desktop Layout */}
             <div className="hidden lg:flex min-h-screen">
-
-                <div className="w-80 bg-white shadow-sm border-r border-gray-100 flex flex-col">
-                    <div className="p-6 border-b border-gray-100">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Avatar className="h-12 w-12">
-                                <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                                    {getUserInitials()}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h2 className="font-semibold text-gray-900">{staticAuth.user.name}</h2>
-                                <p className="text-sm text-gray-500">Financial Dashboard</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex-1 p-6">
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-gray-900">Quick Stats</h3>
-                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-                                <p className="text-sm text-gray-600">Total Balance</p>
-                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(48500)}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <Sidebar
+                    auth={auth}
+                    activeCard={cards[0]}
+                    activeCardId={cards[0]?.id || 0}
+                    EyesOpen={false}
+                    setEyesOpen={() => { }}
+                    incomePerCard={incomePerCard}
+                    expensePerCard={expensePerCard}
+                />
 
                 <div className="flex-1 overflow-hidden bg-gray-50">
                     <div className="h-full overflow-y-auto">
@@ -373,17 +334,18 @@ export default function AllActivity() {
                                 </div>
                             </div>
 
+                            {/* Desktop Activity Navigation */}
                             <div className="mt-6">
                                 <ActivityNavbar />
                             </div>
                         </div>
 
                         <div className="p-8 space-y-8">
-
+                            {/* Desktop Metrics */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
                                     title="Total Income"
-                                    value={formatCurrency(totalIncome)}
+                                    value={formatAutoCurrency(totalIncome)}
                                     change={incomeRate}
                                     trend="up"
                                     color="green"
@@ -391,7 +353,7 @@ export default function AllActivity() {
                                 />
                                 <MetricCard
                                     title="Total Expense"
-                                    value={formatCurrency(totalExpense)}
+                                    value={formatAutoCurrency(totalExpense)}
                                     change={expenseRate}
                                     trend="up"
                                     color="orange"
@@ -399,34 +361,32 @@ export default function AllActivity() {
                                 />
                                 <MetricCard
                                     title="Net Balance"
-                                    value={formatCurrency(totalIncome - totalExpense)}
+                                    value={formatAutoCurrency(totalIncome - totalExpense)}
                                     change={Math.abs(incomeRate - expenseRate)}
-                                    trend="up"
+                                    trend={totalIncome - totalExpense >= 0 ? "up" : "down"}
                                     color="blue"
                                     icon={<DollarSign className="w-6 h-6 text-blue-600" />}
                                 />
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
+                                {/* Desktop Chart */}
                                 <div className="lg:col-span-2 space-y-8">
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-lg font-bold text-gray-900">Complete Money Flow</h3>
                                             <div className="flex gap-2">
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${
-                                                        chartMode === 'monthly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
-                                                    onClick={() => setChartMode('monthly')}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'monthly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
+                                                    onClick={() => handleChartModeChange('monthly')}
                                                 >
                                                     Monthly
                                                 </button>
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${
-                                                        chartMode === 'yearly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
-                                                    onClick={() => setChartMode('yearly')}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'yearly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
+                                                    onClick={() => handleChartModeChange('yearly')}
                                                 >
                                                     Yearly
                                                 </button>
@@ -434,7 +394,7 @@ export default function AllActivity() {
                                         </div>
                                         <div className="h-80">
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={staticChartData}>
+                                                <AreaChart data={mergedChartData}>
                                                     <defs>
                                                         <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                                                             <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
@@ -486,6 +446,7 @@ export default function AllActivity() {
                                         </div>
                                     </div>
 
+                                    {/* Desktop Transactions */}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-lg font-bold text-gray-900">All Transactions</h3>
@@ -499,11 +460,12 @@ export default function AllActivity() {
                                             </div>
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
-                                            <StaticTransactionsList transactions={staticTransactions} />
+                                            <TransactionsList transactions={filteredTransactions} />
                                         </div>
                                     </div>
                                 </div>
 
+                                {/* Desktop Sidebar Content */}
                                 <div className="space-y-6">
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <h3 className="text-lg font-bold text-gray-900 mb-4">Summary</h3>
@@ -514,7 +476,7 @@ export default function AllActivity() {
                                                     <span className="font-medium text-green-900">Total Income</span>
                                                 </div>
                                                 <span className="font-semibold text-green-900">
-                                                    {formatCurrency(totalIncome)}
+                                                    {formatAutoCurrency(totalIncome)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
@@ -523,7 +485,7 @@ export default function AllActivity() {
                                                     <span className="font-medium text-orange-900">Total Expense</span>
                                                 </div>
                                                 <span className="font-semibold text-orange-900">
-                                                    {formatCurrency(totalExpense)}
+                                                    {formatAutoCurrency(totalExpense)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -532,7 +494,7 @@ export default function AllActivity() {
                                                     <span className="font-medium text-blue-900">Net Balance</span>
                                                 </div>
                                                 <span className="font-semibold text-blue-900">
-                                                    {formatCurrency(totalIncome - totalExpense)}
+                                                    {formatAutoCurrency(totalIncome - totalExpense)}
                                                 </span>
                                             </div>
                                         </div>
@@ -541,20 +503,20 @@ export default function AllActivity() {
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <h3 className="text-lg font-bold text-gray-900 mb-4">Cards Overview</h3>
                                         <div className="space-y-3">
-                                            {staticCards.map(card => (
+                                            {cards.map(card => (
                                                 <div key={card.id} className="p-3 bg-gray-50 rounded-lg">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <span className="font-medium text-gray-900">{card.name}</span>
                                                         <span className="text-sm text-gray-500">
-                                                            {formatCurrency(card.balance)}
+                                                            {formatAutoCurrency(card.balance)}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center justify-between text-sm">
                                                         <span className="text-green-600">
-                                                            +{formatCurrency(Math.floor(card.balance * 0.3))}
+                                                            +{formatAutoCurrency(incomePerCard[card.id] || 0)}
                                                         </span>
                                                         <span className="text-orange-600">
-                                                            -{formatCurrency(Math.floor(card.balance * 0.15))}
+                                                            -{formatAutoCurrency(expensePerCard[card.id] || 0)}
                                                         </span>
                                                     </div>
                                                 </div>
