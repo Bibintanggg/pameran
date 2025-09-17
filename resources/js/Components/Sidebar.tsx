@@ -1,45 +1,78 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar"
-import { router } from "@inertiajs/react"
+import { router, usePage } from "@inertiajs/react"
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency"
-import { Wallet, Activity, CreditCard, TrendingUp, SettingsIcon, EyeIcon, EyeClosedIcon } from "lucide-react"
+import {
+    Wallet,
+    Activity,
+    CreditCard,
+    TrendingUp,
+    SettingsIcon,
+    EyeIcon,
+    EyeClosedIcon,
+} from "lucide-react"
+import clsx from "clsx"
 
 type SidebarProps = {
     auth: {
         user: {
-            name: string;
-            avatar?: string;
-        };
-    };
+            name: string
+            avatar?: string
+        }
+    }
     activeCard?: {
-        name?: string;
-        balance?: number;
-        currency?: number;
-    };
-    activeCardId: string | number;
-    EyesOpen: boolean;
-    setEyesOpen: (open: boolean) => void;
-    incomePerCard: Record<string | number, number>;
-    expensePerCard: Record<string | number, number>;
-};
+        name?: string
+        balance?: number
+        currency?: number
+    }
+    activeCardId: string | number
+    EyesOpen: boolean
+    setEyesOpen: (open: boolean) => void
+    incomePerCard: Record<string | number, number>
+    expensePerCard: Record<string | number, number>
+}
 
 export default function Sidebar({
-    auth, activeCard, activeCardId, EyesOpen, setEyesOpen,
-    incomePerCard, expensePerCard
+    auth,
+    activeCard,
+    activeCardId,
+    EyesOpen,
+    setEyesOpen,
+    incomePerCard,
+    expensePerCard,
 }: SidebarProps) {
+    const { url } = usePage()
+
+    // 🔹 helper navigateWithCard biar query param ikut
+    const navigateWithCard = (href: string) => {
+        const urlObj = new URL(href, window.location.origin)
+        if (activeCardId) {
+            urlObj.searchParams.set("card", String(activeCardId))
+        }
+        router.visit(urlObj.pathname + urlObj.search)
+    }
+
     const getAvatarUrl = () => {
-        if (auth.user.avatar) return `/storage/${auth.user.avatar}`;
-        return '/default-avatar.png';
-    };
+        if (auth.user.avatar) return `/storage/${auth.user.avatar}`
+        return "/default-avatar.png"
+    }
 
     const getUserInitials = () => {
-        const names = auth.user.name.split(' ');
-        if (names.length >= 2) return names[0][0] + names[names.length - 1][0];
-        return names[0][0];
-    };
+        const names = auth.user.name.split(" ")
+        if (names.length >= 2) return names[0][0] + names[names.length - 1][0]
+        return names[0][0]
+    }
+
+    const linkClass = (href: string) =>
+        clsx(
+            "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all w-full text-left",
+            url.startsWith(href)
+                ? "text-white bg-gradient-to-r from-[#9290FE] to-[#7A78D1] shadow-md"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+        )
 
     return (
         <div className="w-80 bg-white shadow-sm border-r border-gray-100 flex flex-col">
-            {/* Logo/Brand */}
+            {/* Header */}
             <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-[#9290FE] to-[#7A78D1] rounded-xl flex items-center justify-center">
@@ -62,13 +95,15 @@ export default function Sidebar({
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                        <h3 className="font-bold text-lg text-gray-900">Hello {auth.user.name.split(' ')[0]}</h3>
+                        <h3 className="font-bold text-lg text-gray-900">
+                            Hello {auth.user.name.split(" ")[0]}
+                        </h3>
                         <p className="text-sm text-gray-500">{auth.user.name}</p>
                     </div>
                 </div>
             </div>
 
-            {/* My Card Section */}
+            {/* Card Info */}
             <div className="p-6 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-600 mb-4">My Card</h3>
                 <div className="bg-gradient-to-br from-gray-900 to-gray-700 rounded-2xl p-6 text-white relative overflow-hidden">
@@ -79,7 +114,9 @@ export default function Sidebar({
                     </div>
 
                     <div className="mb-6">
-                        <p className="text-sm opacity-80 mb-2">{activeCard?.name || 'Select a card'}</p>
+                        <p className="text-sm opacity-80 mb-2">
+                            {activeCard?.name || "Select a card"}
+                        </p>
                         <p className="text-3xl font-bold">
                             {EyesOpen
                                 ? formatCurrency(
@@ -115,27 +152,36 @@ export default function Sidebar({
                 </div>
             </div>
 
-            {/* Quick Stats */}
+            {/* Financial Record */}
             <div className="p-6 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-600 mb-4">Financial Record</h3>
+                <h3 className="text-sm font-semibold text-gray-600 mb-4">
+                    Financial Record
+                </h3>
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">Total Income</span>
                         <span className="font-semibold text-green-600">
-                            {formatCurrency(incomePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 1])}
+                            {formatCurrency(
+                                incomePerCard[activeCardId] ?? 0,
+                                currencyMap[activeCard?.currency ?? 1]
+                            )}
                         </span>
                     </div>
                     <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">Total Expense</span>
                         <span className="font-semibold text-red-500">
-                            {formatCurrency(expensePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 1])}
+                            {formatCurrency(
+                                expensePerCard[activeCardId] ?? 0,
+                                currencyMap[activeCard?.currency ?? 1]
+                            )}
                         </span>
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span className="text-sm font-semibold text-gray-800">Balance</span>
                         <span className="font-bold text-gray-900">
                             {formatCurrency(
-                                (incomePerCard[activeCardId] ?? 0) - (expensePerCard[activeCardId] ?? 0),
+                                (incomePerCard[activeCardId] ?? 0) -
+                                (expensePerCard[activeCardId] ?? 0),
                                 currencyMap[activeCard?.currency ?? 1]
                             )}
                         </span>
@@ -147,27 +193,36 @@ export default function Sidebar({
             <nav className="flex-1 p-6">
                 <ul className="space-y-2">
                     <li>
-                        <a href="/home" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#9290FE] to-[#7A78D1] rounded-xl shadow-md">
+                        <button
+                            onClick={() => navigateWithCard("/home")}
+                            className={linkClass("/home")}
+                        >
                             <Activity className="h-5 w-5" />
                             Overview
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
-                            <CreditCard className="h-5 w-5" />
-                            Cards
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/all-activity" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
-                            <TrendingUp className="h-5 w-5" />
-                            Analytics
-                        </a>
+                        </button>
                     </li>
                     <li>
                         <button
-                            onClick={() => router.visit(route("profile.edit"))}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
+                            onClick={() => navigateWithCard("/cards")}
+                            className={linkClass("/cards")}
+                        >
+                            <CreditCard className="h-5 w-5" />
+                            Cards
+                        </button>
+                    </li>
+                    <li>
+                        <button
+                            onClick={() => navigateWithCard("/all-activity")}
+                            className={linkClass("/all-activity")}
+                        >
+                            <TrendingUp className="h-5 w-5" />
+                            Analytics
+                        </button>
+                    </li>
+                    <li>
+                        <button
+                            onClick={() => navigateWithCard(route("profile.edit"))}
+                            className={linkClass("/profile")}
                         >
                             <SettingsIcon className="h-5 w-5" />
                             Settings

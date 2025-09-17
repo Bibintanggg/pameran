@@ -316,12 +316,14 @@ class CardsController extends Controller
             'ratesPerCard' => $ratesPerCard,
             'incomeRate' => $incomeRate,
             'expenseRate' => $expenseRate,
+            'incomePerCard' => $incomePerCard,   
+            'expensePerCard' => $expensePerCard,
             'filter' => $filter,
             'chartMode' => $chartMode,
             'auth' => [
                 'user' => [
                     'name' => Auth::user()->name,
-                    'avatar' => null, 
+                    'avatar' => null,
                 ]
             ]
         ]);
@@ -390,6 +392,7 @@ class CardsController extends Controller
     public function destroy(string $id)
     {
         $card = Cards::where('id', $id)
+
             ->where('user_id', Auth::id())
             ->firstOrFail();
 

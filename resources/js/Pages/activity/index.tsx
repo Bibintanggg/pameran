@@ -14,9 +14,10 @@ import {
     Activity as ActivityIcon,
     TrendingUp,
     ChevronRight,
-    CreditCard
+    CreditCard,
+    RefreshCw
 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Transaction } from "@/types/transaction";
 import { Card } from "@/types/card";
@@ -75,6 +76,7 @@ export default function AllActivity() {
 
     const [filter, setFilter] = useState<"all" | "income" | "expense">(initialFilter as "all" | "income" | "expense");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
+    const [isLoading, setIsLoading] = useState(false);
 
     const filteredTransactions = transactions.filter((t) => {
         if (filter === "all") return true;
@@ -111,7 +113,7 @@ export default function AllActivity() {
                         ) : (
                             <ArrowDownLeft className="w-4 h-4 mr-1" />
                         )}
-                        <span>{change}%</span>
+                        <span>{Math.abs(change)}%</span>
                     </div>
                 </div>
                 <div className={`p-3 rounded-xl ${color === 'blue' ? 'bg-blue-50' :
@@ -123,30 +125,62 @@ export default function AllActivity() {
         </div>
     );
 
-    const mergedChartData = Object.values(chartData[chartMode]).flat();
+    const mergedChartData = React.useMemo(() => {
+        if (!chartData[chartMode]) return [];
+        return Object.values(chartData[chartMode]).flat();
+    }, [chartData, chartMode]);
 
     const formatAutoCurrency = (amount: number, currencyId?: number) => {
         const currency = currencyMap[currencyId ?? 1];
         return formatCurrency(amount, currency);
     };
 
-    const incomePerCardSafe = incomePerCard ?? {};
-
     const handleFilterChange = (newFilter: "all" | "income" | "expense") => {
+        if (isLoading) return;
+        
+        setIsLoading(true);
         setFilter(newFilter);
+        
         router.get(route('all-activity'), { 
             filter: newFilter,
             chartMode 
-        }, { preserveState: true });
+        }, { 
+            preserveState: true,
+            onFinish: () => setIsLoading(false)
+        });
     };
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
+        if (isLoading) return;
+        
+        setIsLoading(true);
         setChartMode(newMode);
+        
         router.get(route('all-activity'), { 
             filter,
             chartMode: newMode 
-        }, { preserveState: true });
+        }, { 
+            preserveState: true,
+            onFinish: () => setIsLoading(false)
+        });
     };
+
+    const refreshData = () => {
+        if (isLoading) return;
+        
+        setIsLoading(true);
+        router.get(route('all-activity'), { 
+            filter,
+            chartMode 
+        }, { 
+            preserveState: false,
+            onFinish: () => setIsLoading(false)
+        });
+    };
+
+    const netBalance = totalIncome - totalExpense;
+    const netBalanceTrend = netBalance >= 0 ? "up" : "down";
+    const netBalanceChange = Math.abs(incomeRate - expenseRate);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -160,28 +194,39 @@ export default function AllActivity() {
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                                        {getUserInitials()}
-                                    </AvatarFallback>
+                                    {auth.user.avatar ? (
+                                        <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
+                                    ) : (
+                                        <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                                            {getUserInitials()}
+                                        </AvatarFallback>
+                                    )}
                                 </Avatar>
                             </div>
 
                             <div className="flex flex-col items-center">
                                 <h1 className="text-xl font-semibold">Activity</h1>
-                                <p className="text-sm text-gray-500">Statistics</p>
+                                <p className="text-sm text-gray-500">All Transactions</p>
                             </div>
 
-                            <button>
-                                <SettingsIcon className="h-6 w-6 text-gray-600" />
-                            </button>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={refreshData}
+                                    disabled={isLoading}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                    <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+                                </button>
+                                <button>
+                                    <SettingsIcon className="h-6 w-6 text-gray-600" />
+                                </button>
+                            </div>
                         </div>
 
                         <hr className="w-full h-0.5 bg-gray-200 mb-6" />
 
-                        {/* Activity Navigation */}
                         <ActivityNavbar />
 
-                        {/* Mobile Statistics Cards */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                 <div className="flex items-center justify-between mb-2">
@@ -212,22 +257,35 @@ export default function AllActivity() {
                                 <h3 className="text-lg font-semibold">Overview</h3>
                                 <div className="flex gap-2">
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors ${chartMode === 'monthly' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                                            }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                                            chartMode === 'monthly' 
+                                                ? 'bg-blue-500 text-white' 
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}
                                         onClick={() => handleChartModeChange('monthly')}
+                                        disabled={isLoading}
                                     >
                                         Monthly
                                     </button>
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors ${chartMode === 'yearly' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                                            }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                                            chartMode === 'yearly' 
+                                                ? 'bg-blue-500 text-white' 
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}
                                         onClick={() => handleChartModeChange('yearly')}
+                                        disabled={isLoading}
                                     >
                                         Yearly
                                     </button>
                                 </div>
                             </div>
-                            <div className="h-48">
+                            <div className="h-48 relative">
+                                {isLoading && (
+                                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+                                        <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
+                                    </div>
+                                )}
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={mergedChartData}>
                                         <defs>
@@ -259,6 +317,10 @@ export default function AllActivity() {
                                                 borderRadius: '8px',
                                                 fontSize: '12px'
                                             }}
+                                            formatter={(value: any, name: string) => [
+                                                formatAutoCurrency(value),
+                                                name === 'income' ? 'Income' : 'Expense'
+                                            ]}
                                         />
                                         <Area
                                             type="monotone"
@@ -284,11 +346,27 @@ export default function AllActivity() {
                         {/* Mobile Transactions */}
                         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold">All Transactions</h3>
-                                <button className="text-blue-500 text-sm">View all</button>
+                                <div>
+                                    <h3 className="text-lg font-semibold">Transactions</h3>
+                                    <p className="text-sm text-gray-500">
+                                        Showing {filteredTransactions.length} transactions
+                                    </p>
+                                </div>
+                                <button 
+                                    className="text-blue-500 text-sm"
+                                    onClick={() => router.visit(route('transactions.index'))}
+                                >
+                                    View all
+                                </button>
                             </div>
                             <div className="max-h-60 overflow-y-auto">
-                                <TransactionsList transactions={filteredTransactions} />
+                                {filteredTransactions.length > 0 ? (
+                                    <TransactionsList transactions={filteredTransactions} />
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <p>No transactions found for the current filter.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -324,6 +402,13 @@ export default function AllActivity() {
                                         <p className="font-semibold text-gray-900">{currentDate}</p>
                                     </div>
                                     <div className="flex gap-2">
+                                        <button 
+                                            onClick={refreshData}
+                                            disabled={isLoading}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                        >
+                                            <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+                                        </button>
                                         <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                             <Calendar className="w-5 h-5 text-gray-600" />
                                         </button>
@@ -334,14 +419,12 @@ export default function AllActivity() {
                                 </div>
                             </div>
 
-                            {/* Desktop Activity Navigation */}
                             <div className="mt-6">
                                 <ActivityNavbar />
                             </div>
                         </div>
 
                         <div className="p-8 space-y-8">
-                            {/* Desktop Metrics */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
                                     title="Total Income"
@@ -361,38 +444,50 @@ export default function AllActivity() {
                                 />
                                 <MetricCard
                                     title="Net Balance"
-                                    value={formatAutoCurrency(totalIncome - totalExpense)}
-                                    change={Math.abs(incomeRate - expenseRate)}
-                                    trend={totalIncome - totalExpense >= 0 ? "up" : "down"}
+                                    value={formatAutoCurrency(netBalance)}
+                                    change={netBalanceChange}
+                                    trend={netBalanceTrend}
                                     color="blue"
                                     icon={<DollarSign className="w-6 h-6 text-blue-600" />}
                                 />
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Desktop Chart */}
                                 <div className="lg:col-span-2 space-y-8">
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-lg font-bold text-gray-900">Complete Money Flow</h3>
                                             <div className="flex gap-2">
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'monthly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                        }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                                                        chartMode === 'monthly' 
+                                                            ? 'bg-gray-800 text-white' 
+                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    }`}
                                                     onClick={() => handleChartModeChange('monthly')}
+                                                    disabled={isLoading}
                                                 >
                                                     Monthly
                                                 </button>
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'yearly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                        }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                                                        chartMode === 'yearly' 
+                                                            ? 'bg-gray-800 text-white' 
+                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    }`}
                                                     onClick={() => handleChartModeChange('yearly')}
+                                                    disabled={isLoading}
                                                 >
                                                     Yearly
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="h-80">
+                                        <div className="h-80 relative">
+                                            {isLoading && (
+                                                <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+                                                    <RefreshCw className="h-8 w-8 text-blue-500 animate-spin" />
+                                                </div>
+                                            )}
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart data={mergedChartData}>
                                                     <defs>
@@ -424,6 +519,10 @@ export default function AllActivity() {
                                                             borderRadius: '12px',
                                                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                                                         }}
+                                                        formatter={(value: any, name: string) => [
+                                                            formatAutoCurrency(value),
+                                                            name === 'income' ? 'Income' : 'Expense'
+                                                        ]}
                                                     />
                                                     <Area
                                                         type="monotone"
@@ -449,18 +548,34 @@ export default function AllActivity() {
                                     {/* Desktop Transactions */}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
-                                            <h3 className="text-lg font-bold text-gray-900">All Transactions</h3>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900">All Transactions</h3>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    Showing {filteredTransactions.length} of {transactions.length} transactions
+                                                </p>
+                                            </div>
                                             <div className="flex items-center gap-3">
-                                                <button className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                                <button 
+                                                    className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                    onClick={() => router.visit(route('transactions.index'))}
+                                                >
                                                     View all
                                                 </button>
                                                 <button className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                                    Filter
+                                                    Export
                                                 </button>
                                             </div>
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
-                                            <TransactionsList transactions={filteredTransactions} />
+                                            {filteredTransactions.length > 0 ? (
+                                                <TransactionsList transactions={filteredTransactions} />
+                                            ) : (
+                                                <div className="text-center py-12 text-gray-500">
+                                                    <ActivityIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                                    <p className="text-lg font-medium">No transactions found</p>
+                                                    <p>Try changing the filter or adding new transactions.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -493,9 +608,23 @@ export default function AllActivity() {
                                                     <DollarSign className="w-5 h-5 text-blue-600" />
                                                     <span className="font-medium text-blue-900">Net Balance</span>
                                                 </div>
-                                                <span className="font-semibold text-blue-900">
-                                                    {formatAutoCurrency(totalIncome - totalExpense)}
+                                                <span className={`font-semibold ${netBalance >= 0 ? 'text-blue-900' : 'text-red-600'}`}>
+                                                    {formatAutoCurrency(netBalance)}
                                                 </span>
+                                            </div>
+                                            
+                                            {/* Statistics Summary */}
+                                            <div className="border-t pt-4 mt-4">
+                                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                                                        <p className="text-gray-500 mb-1">Income Rate</p>
+                                                        <p className="font-semibold text-green-600">{incomeRate}%</p>
+                                                    </div>
+                                                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                                                        <p className="text-gray-500 mb-1">Expense Rate</p>
+                                                        <p className="font-semibold text-orange-600">{expenseRate}%</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -503,25 +632,90 @@ export default function AllActivity() {
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <h3 className="text-lg font-bold text-gray-900 mb-4">Cards Overview</h3>
                                         <div className="space-y-3">
-                                            {cards.map(card => (
-                                                <div key={card.id} className="p-3 bg-gray-50 rounded-lg">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <span className="font-medium text-gray-900">{card.name}</span>
-                                                        <span className="text-sm text-gray-500">
-                                                            {formatAutoCurrency(card.balance)}
+                                            {cards.length > 0 ? (
+                                                cards.map(card => {
+                                                    const cardIncome = incomePerCard[card.id] || 0;
+                                                    const cardExpense = expensePerCard[card.id] || 0;
+                                                    const cardRates = ratesPerCard[card.id] || { income_rate: 0, expense_rate: 0 };
+                                                    
+                                                    return (
+                                                        <div key={card.id} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <CreditCard className="h-4 w-4 text-gray-500" />
+                                                                    <span className="font-medium text-gray-900">{card.name}</span>
+                                                                </div>
+                                                                <span className="text-sm text-gray-500 font-medium">
+                                                                    {formatAutoCurrency(card.balance)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-end justify-between text-sm flex-col">
+                                                                <div className="flex items-center gap-1">
+                                                                    <ArrowUpRight className="h-3 w-3 text-green-500" />
+                                                                    <span className="text-green-600">
+                                                                        {formatAutoCurrency(cardIncome)}
+                                                                    </span>
+                                                                    <span className="text-gray-400">
+                                                                        ({cardRates.income_rate}%)
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <ArrowDownLeft className="h-3 w-3 text-orange-500" />
+                                                                    <span className="text-orange-600">
+                                                                        {formatAutoCurrency(cardExpense)}
+                                                                    </span>
+                                                                    <span className="text-gray-400">
+                                                                        ({cardRates.expense_rate}%)
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            {/* Net balance per card */}
+                                                            <div className="mt-2 pt-2 border-t border-gray-200">
+                                                                <div className="flex items-center justify-between text-xs">
+                                                                    <span className="text-gray-500">Net:</span>
+                                                                    <span className={`font-medium ${(cardIncome - cardExpense) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                        {formatAutoCurrency(cardIncome - cardExpense)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })
+                                            ) : (
+                                                <div className="text-center py-4 text-gray-500">
+                                                    <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                                    <p className="text-sm">No cards found</p>
+                                                    <button 
+                                                        onClick={() => router.visit(route('cards.create'))}
+                                                        className="text-blue-500 text-sm hover:underline mt-1"
+                                                    >
+                                                        Add your first card
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Quick Stats */}
+                                        {cards.length > 0 && (
+                                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                                <div className="grid grid-cols-1 gap-2 text-xs">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Active Cards:</span>
+                                                        <span className="font-medium">{cards.length}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Total Balance:</span>
+                                                        <span className="font-medium">
+                                                            {formatAutoCurrency(cards.reduce((sum, card) => sum + (card.balance || 0), 0))}
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span className="text-green-600">
-                                                            +{formatAutoCurrency(incomePerCard[card.id] || 0)}
-                                                        </span>
-                                                        <span className="text-orange-600">
-                                                            -{formatAutoCurrency(expensePerCard[card.id] || 0)}
-                                                        </span>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Transactions:</span>
+                                                        <span className="font-medium">{transactions.length}</span>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
