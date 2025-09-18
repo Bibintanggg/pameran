@@ -33,6 +33,7 @@ import { currencyMap, formatCurrency } from "@/utils/formatCurrency"
 import TransactionsList from "@/Components/TransactionsList"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import Sidebar from "@/Components/Sidebar"
+import { useActiveCard } from "@/context/ActiveCardContext" // Import context
 
 export default function Home() {
     const {
@@ -72,9 +73,9 @@ export default function Home() {
     };
 
     const [EyesOpen, setEyesOpen] = useState(false)
-    const [activeCardId, setActiveCardId] = useState<number>(
-        (cards && cards.length > 0) ? cards[0].id : 0
-    )
+    
+    // GANTI: Gunakan context instead of local state
+    const { activeCardId, setActiveCardId } = useActiveCard();
 
     const activeCard = cards.find((card) => card.id === activeCardId)
     const balance = activeCard ? activeCard.balance : 0;
@@ -101,7 +102,6 @@ export default function Home() {
     };
 
     //chart desktop
-
     const [chartMode, setChartMode] = useState<'monthly' | 'yearly'>('monthly');
 
     const chartData = (activeCardId && chartDataFromProps?.[chartMode]?.[activeCardId]
@@ -293,7 +293,7 @@ export default function Home() {
                 <Sidebar
                     auth={auth}
                     activeCard={activeCard}
-                    activeCardId={activeCardId}
+                    activeCardId={activeCardId} // Pass dari context
                     EyesOpen={EyesOpen}
                     setEyesOpen={setEyesOpen}
                     incomePerCard={incomePerCard}
@@ -359,7 +359,7 @@ export default function Home() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                <div className="lg:col-span-2 space-y-8">  {/* chart and card with grid */}
+                                <div className="lg:col-span-2 space-y-8">
 
                                     <QuickActionCard gradient={false}>
                                         <div className="flex items-center justify-between mb-6">
@@ -442,8 +442,8 @@ export default function Home() {
                                                 <button className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                                                     View all
                                                 </button>
-                                                <button className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                                    Filter
+                                                <button onClick={() => router.visit(route('all-activity'))} className="text-sm px-3 py-1 text-blue-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                                    Show All
                                                 </button>
                                             </div>
                                         </div>
@@ -463,7 +463,6 @@ export default function Home() {
                                     </QuickActionCard>
                                 </div>
 
-                                {/* transaksi oi */}
                                 <div className="space-y-6">
                                     <QuickActionCard gradient={false} className="overflow-y-auto">
                                         <div className="flex items-center justify-between mb-4">

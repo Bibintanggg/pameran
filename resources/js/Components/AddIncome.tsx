@@ -51,6 +51,13 @@ export default function AddIncome({
         'to_cards_id': activeCardId
     })
 
+    const formatDate = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     React.useEffect(() => {
         setData("to_cards_id", activeCardId)
     }, [activeCardId])
@@ -144,7 +151,7 @@ export default function AddIncome({
                                             selected={date}
                                             onSelect={(d) => {
                                                 setDate(d);
-                                                setData("transaction_date", d ? d.toISOString().split("T")[0] : "");
+                                                setData("transaction_date", d ? formatDate(d) : "");
                                             }}
                                         />
                                     </PopoverContent>

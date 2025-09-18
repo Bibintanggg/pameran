@@ -9,23 +9,22 @@ import { Calendar } from "@/Components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover"
 import {
     SettingsIcon,
-    // Calendar,
     Filter,
     ArrowUpRight,
     ArrowDownLeft,
     DollarSign,
     Activity as ActivityIcon,
-    TrendingUp,
     ChevronRight,
     CreditCard,
     RefreshCw
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Transaction } from "@/types/transaction";
 import { Card } from "@/types/card";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 import ActivityNavbar from "./layout/nav";
+import { useActiveCard } from "@/context/ActiveCardContext"; // Import context
 
 type Props = {
     transactions: Transaction[];
@@ -79,16 +78,116 @@ export default function AllActivity() {
         expensePerCard
     } = usePage().props as unknown as Props;
 
+    const { activeCardId, setActiveCardId } = useActiveCard();
+
     const [filter, setFilter] = useState<"all" | "income" | "expense">(initialFilter as "all" | "income" | "expense");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
 
-    const filteredTransactions = transactions.filter((t) => {
-        if (filter === "all") return true;
-        if (filter === "income") return t.type_label === "Income";
-        if (filter === "expense") return t.type_label === "Expense";
-        return true;
-    });
+    const activeCard = cards.find((card) => card.id === activeCardId); // DARI CONTEXT CARD AKTIF
+
+    // Filter transaksi berdasarkan kartu aktif
+    const filteredTransactions = useMemo(() => {
+        if (activeCardId === 0) { // Jika semua kartu dipilih
+            return transactions.filter((t) => {
+                if (filter === "all") return true;
+                if (filter === "income") return t.type_label === "Income";
+                if (filter === "expense") return t.type_label === "Expense";
+                return true;
+            });
+        } else { // Jika kartu tertentu dipilih
+            return transactions.filter((t) => {
+                const matchesCard = t.to_cards_id === activeCardId;
+                if (!matchesCard) return false;
+                if (filter === "all") return true;
+                if (filter === "income") return t.type_label === "Income";
+                if (filter === "expense") return t.type_label === "Expense";
+                return true;
+            });
+        }
+    }, [transactions, activeCardId, filter]);
+
+    // Data untuk chart berdasarkan kartu aktif
+    const chartDataForActiveCard = useMemo(() => {
+        if (activeCardId === 0) {
+            // Gabungkan data untuk semua kartu
+            const allMonthlyData: Record<string, { income: number; expense: number }> = {};
+            const allYearlyData: Record<string, { income: number; expense: number }> = {};
+
+            // Proses data bulanan
+            Object.values(chartData.monthly).forEach(cardData => {
+                cardData.forEach(item => {
+                    if (!allMonthlyData[item.label]) {
+                        allMonthlyData[item.label] = { income: 0, expense: 0 };
+                    }
+                    allMonthlyData[item.label].income += item.income;
+                    allMonthlyData[item.label].expense += item.expense;
+                });
+            });
+
+            // Proses data tahunan
+            Object.values(chartData.yearly).forEach(cardData => {
+                cardData.forEach(item => {
+                    if (!allYearlyData[item.label]) {
+                        allYearlyData[item.label] = { income: 0, expense: 0 };
+                    }
+                    allYearlyData[item.label].income += item.income;
+                    allYearlyData[item.label].expense += item.expense;
+                });
+            });
+
+            const monthlyResult = Object.entries(allMonthlyData).map(([label, data]) => ({
+                label,
+                income: data.income,
+                expense: data.expense
+            }));
+
+            const yearlyResult = Object.entries(allYearlyData).map(([label, data]) => ({
+                label,
+                income: data.income,
+                expense: data.expense
+            }));
+
+            return {
+                monthly: monthlyResult,
+                yearly: yearlyResult
+            };
+        } else {
+            // Gunakan data untuk kartu aktif tertentu
+            return {
+                monthly: chartData.monthly[activeCardId] || [],
+                yearly: chartData.yearly[activeCardId] || []
+            };
+        }
+    }, [chartData, activeCardId]);
+
+    const mergedChartData = useMemo(() => {
+        return chartMode === "monthly"
+            ? chartDataForActiveCard.monthly
+            : chartDataForActiveCard.yearly;
+    }, [chartDataForActiveCard, chartMode]);
+
+    // Hitung total income dan expense berdasarkan kartu aktif
+    const calculatedTotalIncome = useMemo(() => {
+        if (activeCardId === 0) return totalIncome;
+        return incomePerCard[activeCardId] || 0;
+    }, [activeCardId, totalIncome, incomePerCard]);
+
+    const calculatedTotalExpense = useMemo(() => {
+        if (activeCardId === 0) return totalExpense;
+        return expensePerCard[activeCardId] || 0;
+    }, [activeCardId, totalExpense, expensePerCard]);
+
+    // Hitung rates berdasarkan kartu aktif
+    const calculatedIncomeRate = useMemo(() => {
+        if (activeCardId === 0) return incomeRate;
+        return ratesPerCard[activeCardId]?.income_rate || 0;
+    }, [activeCardId, incomeRate, ratesPerCard]);
+
+    const calculatedExpenseRate = useMemo(() => {
+        if (activeCardId === 0) return expenseRate;
+        return ratesPerCard[activeCardId]?.expense_rate || 0;
+    }, [activeCardId, expenseRate, ratesPerCard]);
 
     const getUserInitials = () => {
         const names = auth.user.name.split(' ');
@@ -130,13 +229,8 @@ export default function AllActivity() {
         </div>
     );
 
-    const mergedChartData = React.useMemo(() => {
-        if (!chartData[chartMode]) return [];
-        return Object.values(chartData[chartMode]).flat();
-    }, [chartData, chartMode]);
-
     const formatAutoCurrency = (amount: number, currencyId?: number) => {
-        const currency = currencyMap[currencyId ?? 1];
+        const currency = currencyMap[currencyId ?? (activeCard?.currency || 1)];
         return formatCurrency(amount, currency);
     };
 
@@ -185,9 +279,9 @@ export default function AllActivity() {
 
     const [date, setDate] = React.useState<{ from: Date | undefined; to?: Date | undefined }>();
 
-    const netBalance = totalIncome - totalExpense;
+    const netBalance = calculatedTotalIncome - calculatedTotalExpense;
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
-    const netBalanceChange = Math.abs(incomeRate - expenseRate);
+    const netBalanceChange = Math.abs(calculatedIncomeRate - calculatedExpenseRate);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -234,6 +328,35 @@ export default function AllActivity() {
 
                         <ActivityNavbar />
 
+                        {/* Card Selection for Mobile */}
+                        <div className="mb-4">
+                            <div className="flex items-center gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                                <button
+                                    onClick={() => setActiveCardId(0)}
+                                    className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === 0
+                                        ? "bg-blue-500 text-white"
+                                        : "bg-gray-100 text-gray-700"}`}
+                                >
+                                    All Cards
+                                </button>
+                                {cards && cards.length > 0 ? (
+                                    cards.map((card) => (
+                                        <button
+                                            key={card.id}
+                                            onClick={() => setActiveCardId(card.id)}
+                                            className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === card.id
+                                                ? "bg-blue-500 text-white"
+                                                : "bg-gray-100 text-gray-700"}`}
+                                        >
+                                            {card.name}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-gray-500 text-sm">No cards yet</p>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                 <div className="flex items-center justify-between mb-2">
@@ -241,9 +364,9 @@ export default function AllActivity() {
                                     <ArrowUpRight className="w-4 h-4 text-green-500" />
                                 </div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {formatAutoCurrency(totalIncome)}
+                                    {formatAutoCurrency(calculatedTotalIncome, activeCard?.currency)}
                                 </p>
-                                <p className="text-xs text-green-600">+{incomeRate}%</p>
+                                <p className="text-xs text-green-600">+{calculatedIncomeRate}%</p>
                             </div>
 
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -252,9 +375,9 @@ export default function AllActivity() {
                                     <ArrowDownLeft className="w-4 h-4 text-red-500" />
                                 </div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {formatAutoCurrency(totalExpense)}
+                                    {formatAutoCurrency(calculatedTotalExpense, activeCard?.currency)}
                                 </p>
-                                <p className="text-xs text-red-600">+{expenseRate}%</p>
+                                <p className="text-xs text-red-600">+{calculatedExpenseRate}%</p>
                             </div>
                         </div>
 
@@ -323,7 +446,7 @@ export default function AllActivity() {
                                                 fontSize: '12px'
                                             }}
                                             formatter={(value: any, name: string) => [
-                                                formatAutoCurrency(value),
+                                                formatAutoCurrency(value, activeCard?.currency),
                                                 name === 'income' ? 'Income' : 'Expense'
                                             ]}
                                         />
@@ -382,8 +505,8 @@ export default function AllActivity() {
             <div className="hidden lg:flex min-h-screen">
                 <Sidebar
                     auth={auth}
-                    activeCard={cards[0]}
-                    activeCardId={cards[0]?.id || 0}
+                    activeCard={activeCard}
+                    activeCardId={activeCardId}
                     EyesOpen={false}
                     setEyesOpen={() => { }}
                     incomePerCard={incomePerCard}
@@ -399,7 +522,7 @@ export default function AllActivity() {
                                     <h1 className="text-3xl font-bold text-gray-900">
                                         Activity Overview
                                     </h1>
-                                    <p className="text-gray-500 mt-1">Complete financial statistics across all cards</p>
+                                    <p className="text-gray-500 mt-1">Complete financial statistics {activeCardId === 0 ? "across all cards" : `for ${activeCard?.name}`}</p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
@@ -414,9 +537,6 @@ export default function AllActivity() {
                                         >
                                             <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         </button>
-                                        {/* <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                            <Calendar className="w-5 h-5 text-gray-600" />
-                                        </button> */}
                                         <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                             <Filter className="w-5 h-5 text-gray-600" />
                                         </button>
@@ -433,23 +553,23 @@ export default function AllActivity() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
                                     title="Total Income"
-                                    value={formatAutoCurrency(totalIncome)}
-                                    change={incomeRate}
+                                    value={formatAutoCurrency(calculatedTotalIncome, activeCard?.currency)}
+                                    change={calculatedIncomeRate}
                                     trend="up"
                                     color="green"
                                     icon={<ArrowUpRight className="w-6 h-6 text-green-600" />}
                                 />
                                 <MetricCard
                                     title="Total Expense"
-                                    value={formatAutoCurrency(totalExpense)}
-                                    change={expenseRate}
+                                    value={formatAutoCurrency(calculatedTotalExpense, activeCard?.currency)}
+                                    change={calculatedExpenseRate}
                                     trend="up"
                                     color="orange"
                                     icon={<ArrowDownLeft className="w-6 h-6 text-orange-600" />}
                                 />
                                 <MetricCard
                                     title="Net Balance"
-                                    value={formatAutoCurrency(netBalance)}
+                                    value={formatAutoCurrency(netBalance, activeCard?.currency)}
                                     change={netBalanceChange}
                                     trend={netBalanceTrend}
                                     color="blue"
@@ -461,7 +581,9 @@ export default function AllActivity() {
                                 <div className="lg:col-span-2 space-y-8">
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
-                                            <h3 className="text-lg font-bold text-gray-900">Complete Money Flow</h3>
+                                            <h3 className="text-lg font-bold text-gray-900">
+                                                {activeCardId === 0 ? "Complete Money Flow" : `Money Flow for ${activeCard?.name}`}
+                                            </h3>
                                             <div className="flex gap-2">
                                                 <button
                                                     className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'monthly'
@@ -512,7 +634,7 @@ export default function AllActivity() {
                                                     />
                                                     <YAxis
                                                         axisLine={false}
-                                                        tickLine={false}
+                                                        toggleLine={false}
                                                         tick={{ fill: '#6B7280', fontSize: 12 }}
                                                     />
                                                     <Tooltip
@@ -523,7 +645,7 @@ export default function AllActivity() {
                                                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                                                         }}
                                                         formatter={(value: any, name: string) => [
-                                                            formatAutoCurrency(value),
+                                                            formatAutoCurrency(value, activeCard?.currency),
                                                             name === 'income' ? 'Income' : 'Expense'
                                                         ]}
                                                     />
@@ -552,7 +674,9 @@ export default function AllActivity() {
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
                                             <div>
-                                                <h3 className="text-lg font-bold text-gray-900">All Transactions</h3>
+                                                <h3 className="text-lg font-bold text-gray-900">
+                                                    {activeCardId === 0 ? "All Transactions" : `Transactions for ${activeCard?.name}`}
+                                                </h3>
                                                 <p className="text-sm text-gray-500 mt-1">
                                                     Showing {filteredTransactions.length} of {transactions.length} transactions
                                                 </p>
@@ -631,7 +755,7 @@ export default function AllActivity() {
                                                     <span className="font-medium text-green-900">Total Income</span>
                                                 </div>
                                                 <span className="font-semibold text-green-900">
-                                                    {formatAutoCurrency(totalIncome)}
+                                                    {formatAutoCurrency(calculatedTotalIncome, activeCard?.currency)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
@@ -640,7 +764,7 @@ export default function AllActivity() {
                                                     <span className="font-medium text-orange-900">Total Expense</span>
                                                 </div>
                                                 <span className="font-semibold text-orange-900">
-                                                    {formatAutoCurrency(totalExpense)}
+                                                    {formatAutoCurrency(calculatedTotalExpense, activeCard?.currency)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -649,7 +773,7 @@ export default function AllActivity() {
                                                     <span className="font-medium text-blue-900">Net Balance</span>
                                                 </div>
                                                 <span className={`font-semibold ${netBalance >= 0 ? 'text-blue-900' : 'text-red-600'}`}>
-                                                    {formatAutoCurrency(netBalance)}
+                                                    {formatAutoCurrency(netBalance, activeCard?.currency)}
                                                 </span>
                                             </div>
 
@@ -658,11 +782,11 @@ export default function AllActivity() {
                                                 <div className="grid grid-cols-2 gap-3 text-sm">
                                                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                                                         <p className="text-gray-500 mb-1">Income Rate</p>
-                                                        <p className="font-semibold text-green-600">{incomeRate}%</p>
+                                                        <p className="font-semibold text-green-600">{calculatedIncomeRate}%</p>
                                                     </div>
                                                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                                                         <p className="text-gray-500 mb-1">Expense Rate</p>
-                                                        <p className="font-semibold text-orange-600">{expenseRate}%</p>
+                                                        <p className="font-semibold text-orange-600">{calculatedExpenseRate}%</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -679,21 +803,28 @@ export default function AllActivity() {
                                                     const cardRates = ratesPerCard[card.id] || { income_rate: 0, expense_rate: 0 };
 
                                                     return (
-                                                        <div key={card.id} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                                        <div
+                                                            key={card.id}
+                                                            className={`p-3 rounded-lg transition-colors cursor-pointer ${activeCardId === card.id
+                                                                    ? 'bg-blue-50 border border-blue-200'
+                                                                    : 'bg-gray-50 hover:bg-gray-100'
+                                                                }`}
+                                                            onClick={() => setActiveCardId(card.id)}
+                                                        >
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <div className="flex items-center gap-2">
                                                                     <CreditCard className="h-4 w-4 text-gray-500" />
                                                                     <span className="font-medium text-gray-900">{card.name}</span>
                                                                 </div>
                                                                 <span className="text-sm text-gray-500 font-medium">
-                                                                    {formatAutoCurrency(card.balance)}
+                                                                    {formatAutoCurrency(card.balance, card.currency)}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-end justify-between text-sm flex-col">
                                                                 <div className="flex items-center gap-1">
                                                                     <ArrowUpRight className="h-3 w-3 text-green-500" />
                                                                     <span className="text-green-600">
-                                                                        {formatAutoCurrency(cardIncome)}
+                                                                        {formatAutoCurrency(cardIncome, card.currency)}
                                                                     </span>
                                                                     <span className="text-gray-400">
                                                                         ({cardRates.income_rate}%)
@@ -702,7 +833,7 @@ export default function AllActivity() {
                                                                 <div className="flex items-center gap-1">
                                                                     <ArrowDownLeft className="h-3 w-3 text-orange-500" />
                                                                     <span className="text-orange-600">
-                                                                        {formatAutoCurrency(cardExpense)}
+                                                                        {formatAutoCurrency(cardExpense, card.currency)}
                                                                     </span>
                                                                     <span className="text-gray-400">
                                                                         ({cardRates.expense_rate}%)
@@ -714,7 +845,7 @@ export default function AllActivity() {
                                                                 <div className="flex items-center justify-between text-xs">
                                                                     <span className="text-gray-500">Net:</span>
                                                                     <span className={`font-medium ${(cardIncome - cardExpense) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                        {formatAutoCurrency(cardIncome - cardExpense)}
+                                                                        {formatAutoCurrency(cardIncome - cardExpense, card.currency)}
                                                                     </span>
                                                                 </div>
                                                             </div>

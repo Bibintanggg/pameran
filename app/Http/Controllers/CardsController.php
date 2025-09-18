@@ -54,7 +54,7 @@ class CardsController extends Controller
                     'asset_label'      => Asset::from($data->asset)->label(),
                     'category'         => $data->category,
                     'category_label'   => $data->category ? Category::from($data->category)->label() : 'Transfer',
-                    'transaction_date' => $data->created_at->format('d F Y'),
+                    'transaction_date' => $data->transaction_date->format('d F Y'),
                 ];
             });
 

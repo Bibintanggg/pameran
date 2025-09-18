@@ -27,7 +27,7 @@ class Transactions extends Model
     ];
 
     protected $casts = [
-        'transaction_date' => 'date',
+        'transaction_date' => 'date:Y-m-d',
         'amount' => 'decimal:2',
         'rate' => 'decimal:6'
     ];

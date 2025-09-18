@@ -11,6 +11,7 @@ import {
     EyeClosedIcon,
 } from "lucide-react"
 import clsx from "clsx"
+import { useActiveCard } from "@/context/ActiveCardContext" // Import context
 
 type SidebarProps = {
     auth: {
@@ -24,7 +25,6 @@ type SidebarProps = {
         balance?: number
         currency?: number
     }
-    activeCardId: string | number
     EyesOpen: boolean
     setEyesOpen: (open: boolean) => void
     incomePerCard: Record<string | number, number>
@@ -34,13 +34,15 @@ type SidebarProps = {
 export default function Sidebar({
     auth,
     activeCard,
-    activeCardId,
     EyesOpen,
     setEyesOpen,
     incomePerCard,
     expensePerCard,
 }: SidebarProps) {
     const { url } = usePage()
+    
+    // GANTI: Gunakan context
+    const { activeCardId } = useActiveCard();
 
     // 🔹 helper navigateWithCard biar query param ikut
     const navigateWithCard = (href: string) => {
