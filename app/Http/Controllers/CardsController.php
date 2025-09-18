@@ -172,6 +172,8 @@ class CardsController extends Controller
 
         $filter = $request->query('filter', 'all'); // all, income, expense
         $chartMode = $request->query('chartMode', 'monthly'); // monthly, yearly
+        $startDate = $request->query('start_date'); // startdet
+        $endDate = $request->query('end_date'); // enddet
 
         $cards = Cards::where('user_id', $userId)->get();
 
@@ -182,6 +184,13 @@ class CardsController extends Controller
             $transactionsQuery->where('type', TransactionsType::INCOME->value);
         } elseif ($filter === 'expense') {
             $transactionsQuery->where('type', TransactionsType::EXPENSE->value);
+        }
+
+        if ($startDate && $endDate) {
+            $transactionsQuery->whereBetween('transaction_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
         }
 
         $transactions = $transactionsQuery->latest()
@@ -209,7 +218,7 @@ class CardsController extends Controller
                     'asset_label'      => Asset::from($data->asset)->label(),
                     'category'         => $data->category,
                     'category_label'   => $data->category ? Category::from($data->category)->label() : 'Transfer',
-                    'transaction_date' => $data->created_at->format('d F Y'),
+                    'transaction_date' => $data->transaction_date->format('d F Y'),
                     'created_at'       => $data->created_at,
                 ];
             });
@@ -316,10 +325,12 @@ class CardsController extends Controller
             'ratesPerCard' => $ratesPerCard,
             'incomeRate' => $incomeRate,
             'expenseRate' => $expenseRate,
-            'incomePerCard' => $incomePerCard,   
+            'incomePerCard' => $incomePerCard,
             'expensePerCard' => $expensePerCard,
             'filter' => $filter,
             'chartMode' => $chartMode,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
             'auth' => [
                 'user' => [
                     'name' => Auth::user()->name,

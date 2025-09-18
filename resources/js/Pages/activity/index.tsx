@@ -4,9 +4,12 @@ import TransactionsList from "@/Components/TransactionsList";
 import Sidebar from "@/Components/Sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { router, usePage } from "@inertiajs/react";
+import { addDays, format } from "date-fns"
+import { Calendar } from "@/Components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover"
 import {
     SettingsIcon,
-    Calendar,
+    // Calendar,
     Filter,
     ArrowUpRight,
     ArrowDownLeft,
@@ -46,6 +49,8 @@ type Props = {
     };
     incomePerCard: Record<number, number>;
     expensePerCard: Record<number, number>;
+    startDate: string | null;
+    endDate: string | null;
 };
 
 interface MetricCardProps {
@@ -137,14 +142,14 @@ export default function AllActivity() {
 
     const handleFilterChange = (newFilter: "all" | "income" | "expense") => {
         if (isLoading) return;
-        
+
         setIsLoading(true);
         setFilter(newFilter);
-        
-        router.get(route('all-activity'), { 
+
+        router.get(route('all-activity'), {
             filter: newFilter,
-            chartMode 
-        }, { 
+            chartMode
+        }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
         });
@@ -152,14 +157,14 @@ export default function AllActivity() {
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
         if (isLoading) return;
-        
+
         setIsLoading(true);
         setChartMode(newMode);
-        
-        router.get(route('all-activity'), { 
+
+        router.get(route('all-activity'), {
             filter,
-            chartMode: newMode 
-        }, { 
+            chartMode: newMode
+        }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
         });
@@ -167,16 +172,18 @@ export default function AllActivity() {
 
     const refreshData = () => {
         if (isLoading) return;
-        
+
         setIsLoading(true);
-        router.get(route('all-activity'), { 
+        router.get(route('all-activity'), {
             filter,
-            chartMode 
-        }, { 
+            chartMode
+        }, {
             preserveState: false,
             onFinish: () => setIsLoading(false)
         });
     };
+
+    const [date, setDate] = React.useState<{ from: Date | undefined; to?: Date | undefined }>();
 
     const netBalance = totalIncome - totalExpense;
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
@@ -210,7 +217,7 @@ export default function AllActivity() {
                             </div>
 
                             <div className="flex gap-2">
-                                <button 
+                                <button
                                     onClick={refreshData}
                                     disabled={isLoading}
                                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
@@ -257,22 +264,20 @@ export default function AllActivity() {
                                 <h3 className="text-lg font-semibold">Overview</h3>
                                 <div className="flex gap-2">
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                            chartMode === 'monthly' 
-                                                ? 'bg-blue-500 text-white' 
-                                                : 'bg-gray-100 text-gray-600'
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'monthly'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-100 text-gray-600'
+                                            }`}
                                         onClick={() => handleChartModeChange('monthly')}
                                         disabled={isLoading}
                                     >
                                         Monthly
                                     </button>
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                            chartMode === 'yearly' 
-                                                ? 'bg-blue-500 text-white' 
-                                                : 'bg-gray-100 text-gray-600'
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'yearly'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-100 text-gray-600'
+                                            }`}
                                         onClick={() => handleChartModeChange('yearly')}
                                         disabled={isLoading}
                                     >
@@ -352,7 +357,7 @@ export default function AllActivity() {
                                         Showing {filteredTransactions.length} transactions
                                     </p>
                                 </div>
-                                <button 
+                                <button
                                     className="text-blue-500 text-sm"
                                     onClick={() => router.visit(route('transactions.index'))}
                                 >
@@ -402,16 +407,16 @@ export default function AllActivity() {
                                         <p className="font-semibold text-gray-900">{currentDate}</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button 
+                                        <button
                                             onClick={refreshData}
                                             disabled={isLoading}
                                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                                         >
                                             <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         </button>
-                                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                        {/* <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                             <Calendar className="w-5 h-5 text-gray-600" />
-                                        </button>
+                                        </button> */}
                                         <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                             <Filter className="w-5 h-5 text-gray-600" />
                                         </button>
@@ -459,22 +464,20 @@ export default function AllActivity() {
                                             <h3 className="text-lg font-bold text-gray-900">Complete Money Flow</h3>
                                             <div className="flex gap-2">
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                                        chartMode === 'monthly' 
-                                                            ? 'bg-gray-800 text-white' 
-                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'monthly'
+                                                        ? 'bg-gray-800 text-white'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
                                                     onClick={() => handleChartModeChange('monthly')}
                                                     disabled={isLoading}
                                                 >
                                                     Monthly
                                                 </button>
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                                        chartMode === 'yearly' 
-                                                            ? 'bg-gray-800 text-white' 
-                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'yearly'
+                                                        ? 'bg-gray-800 text-white'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
                                                     onClick={() => handleChartModeChange('yearly')}
                                                     disabled={isLoading}
                                                 >
@@ -555,7 +558,7 @@ export default function AllActivity() {
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <button 
+                                                <button
                                                     className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                                                     onClick={() => router.visit(route('transactions.index'))}
                                                 >
@@ -564,6 +567,43 @@ export default function AllActivity() {
                                                 <button className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                                     Export
                                                 </button>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <button className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                                            {date?.from && date?.to ? (
+                                                                <>
+                                                                    {format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}
+                                                                </>
+                                                            ) : (
+                                                                <>Filter</>
+                                                            )}
+                                                        </button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0">
+                                                        <Calendar
+                                                            initialFocus
+                                                            mode="range"
+                                                            selected={date}
+                                                            onSelect={(selected) => {
+                                                                setDate(selected);
+
+                                                                if (selected?.from && selected?.to) {
+                                                                    setIsLoading(true);
+
+                                                                    router.get(route('all-activity'), {
+                                                                        filter,
+                                                                        chartMode,
+                                                                        start_date: selected.from.toISOString().split('T')[0],
+                                                                        end_date: selected.to.toISOString().split('T')[0],
+                                                                    }, {
+                                                                        preserveState: true,
+                                                                        onFinish: () => setIsLoading(false)
+                                                                    });
+                                                                }
+                                                            }}
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
@@ -612,7 +652,7 @@ export default function AllActivity() {
                                                     {formatAutoCurrency(netBalance)}
                                                 </span>
                                             </div>
-                                            
+
                                             {/* Statistics Summary */}
                                             <div className="border-t pt-4 mt-4">
                                                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -637,7 +677,7 @@ export default function AllActivity() {
                                                     const cardIncome = incomePerCard[card.id] || 0;
                                                     const cardExpense = expensePerCard[card.id] || 0;
                                                     const cardRates = ratesPerCard[card.id] || { income_rate: 0, expense_rate: 0 };
-                                                    
+
                                                     return (
                                                         <div key={card.id} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                                             <div className="flex items-center justify-between mb-2">
@@ -685,7 +725,7 @@ export default function AllActivity() {
                                                 <div className="text-center py-4 text-gray-500">
                                                     <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
                                                     <p className="text-sm">No cards found</p>
-                                                    <button 
+                                                    <button
                                                         onClick={() => router.visit(route('cards.create'))}
                                                         className="text-blue-500 text-sm hover:underline mt-1"
                                                     >
@@ -694,7 +734,7 @@ export default function AllActivity() {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         {/* Quick Stats */}
                                         {cards.length > 0 && (
                                             <div className="mt-4 pt-4 border-t border-gray-200">
