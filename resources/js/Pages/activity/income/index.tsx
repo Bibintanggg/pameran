@@ -637,7 +637,7 @@ export default function Income() {
                                                     View all
                                                 </button>
                                                 <button 
-                                                    onClick={() => window.location.href = route("income.export")}
+                                                    onClick={() => window.location.href = route("activity-income.export")}
                                                     className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                 >
                                                     Export

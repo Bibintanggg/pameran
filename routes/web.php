@@ -50,9 +50,17 @@ Route::get('/activity/income', [CardsController::class, 'incomeActivity'])
     ->middleware(['auth', 'verified'])
     ->name('income.index');
 
+Route::get('/activity/expense', [CardsController::class, 'expenseActivity'])
+    ->middleware(['auth', 'verified'])
+    ->name('expense.index');
+
 Route::get('/expense', function() {
     return Inertia::render('activity/expense/index');
 })->name('activity.expense');
+
+Route::get('/cards', function() {
+    return Inertia::render('cards/index');
+})->name('cards.index');
 
 Route::delete('/cards/{card}', [CardsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])

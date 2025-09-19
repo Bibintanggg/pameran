@@ -205,20 +205,20 @@ export default function Sidebar({
                     </li>
                     <li>
                         <button
-                            onClick={() => navigateWithCard("/cards")}
-                            className={linkClass("/cards")}
-                        >
-                            <CreditCard className="h-5 w-5" />
-                            Cards
-                        </button>
-                    </li>
-                    <li>
-                        <button
                             onClick={() => navigateWithCard("/all-activity")}
                             className={linkClass("/all-activity")}
                         >
                             <TrendingUp className="h-5 w-5" />
                             Analytics
+                        </button>
+                    </li>
+                    <li>
+                        <button
+                            onClick={() => navigateWithCard("/cards")}
+                            className={linkClass("/cards")}
+                        >
+                            <CreditCard className="h-5 w-5" />
+                            Cards
                         </button>
                     </li>
                     <li>

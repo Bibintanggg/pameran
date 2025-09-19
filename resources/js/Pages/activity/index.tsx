@@ -688,7 +688,7 @@ export default function AllActivity() {
                                                 >
                                                     View all
                                                 </button>
-                                                <button onClick={() => window.location.href = route("activity.export")}
+                                                <button onClick={() => window.location.href = route("activity-income.export")}
                                                 className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                                     Export
                                                 </button>

@@ -14,7 +14,7 @@ export default function ActivityNavbar() {
             <button onClick={() => router.visit(route('income.index'))} className="pb-2 border-b-2 text-gray-500 border-transparent hover:text-gray-700">
                 Income
             </button>
-            <button className="pb-2 border-b-2 text-gray-500 border-transparent hover:text-gray-700">
+            <button onClick={() => router.visit(route('expense.index'))}  className="pb-2 border-b-2 text-gray-500 border-transparent hover:text-gray-700">
                 Expense
             </button>
         </div>
