@@ -675,7 +675,7 @@ export default function AllActivity() {
                                         <div className="flex items-center justify-between mb-6">
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-900">
-                                                    {activeCardId === 0 ? "All Transactions" : `Transactions for ${activeCard?.name}`}
+                                                    All Transactions
                                                 </h3>
                                                 <p className="text-sm text-gray-500 mt-1">
                                                     Showing {filteredTransactions.length} of {transactions.length} transactions

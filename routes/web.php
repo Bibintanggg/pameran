@@ -28,7 +28,6 @@ Route::post('/transactions/expense', [TransactionsController::class, 'storeExpen
     ->middleware(['auth', 'verified'])
     ->name('transactions.store-expense');
 
-    // Tambahkan route ini di web.php
 Route::post('/transactions/convert', [TransactionsController::class, 'storeConvert'])
     ->middleware('auth')
     ->name('transactions.convert');
@@ -38,15 +37,18 @@ Route::post('/add-cards', [CardsController::class, 'store'])
     ->name('cards.store');
 
 Route::get('/all-activity', [CardsController::class, 'allActivity'])
-    ->middleware(['auth', 'verified']) // tambahkan middleware jika perlu
+    ->middleware(['auth', 'verified']) 
     ->name('all-activity');
 
 Route::get('/activity/export', [CardsController::class, 'exportAllActivity'])
     ->name('activity.export');
 
-Route::get('/income', function() {
-    return Inertia::render('activity/income/index');
-})->name('activity.income');
+Route::get('/activity/income/export', [CardsController::class, 'exportIncomeActivity'])
+    ->name('activity-income.export');
+
+Route::get('/activity/income', [CardsController::class, 'incomeActivity'])
+    ->middleware(['auth', 'verified'])
+    ->name('income.index');
 
 Route::get('/expense', function() {
     return Inertia::render('activity/expense/index');
