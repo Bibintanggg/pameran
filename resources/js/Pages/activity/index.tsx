@@ -230,7 +230,7 @@ export default function AllActivity() {
     );
 
     const formatAutoCurrency = (amount: number, currencyId?: number) => {
-        const currency = currencyMap[currencyId ?? (activeCard?.currency || 1)];
+        const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
         return formatCurrency(amount, currency);
     };
 

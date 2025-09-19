@@ -48,9 +48,9 @@ export default function AddExpense({
         'transaction_date': '',
         'amount': 0,
         'notes': '',
-        'asset': 0,
-        'category': 0,
-        'type': 2, // expense
+        'asset': '',
+        'category': '',
+        'type': 'expense', // expense
         'to_cards_id': activeCardId
     })
 
@@ -66,22 +66,23 @@ export default function AddExpense({
     }
 
     //helper
-    const getAssetLabel = (value: number) => {
+    const getAssetLabel = (value: string) => {
             switch(value) {
-                case 1: return "Cash";
-                case 2: return "Transfer";
+                case 'cash': return "Cash";
+                case 'transfer': return "Transfer";
                 default: return "Select Your Asset";
             }
         }
     
-    const getCategoryLabel = (value: number) => {
+    const getCategoryLabel = (value: string) => {
         switch(value) {
-            case 4 : return "Food & Drinks"
-            case 5 : return "Transportation"
-            case 7 : return "Health"
-            case 8 : return "Shopping"
-            case 9 : return "Savings & Investments"
-            case 10 : return "Travel"
+            case 'food_drinks' : return "Food & Drinks"
+            case 'topup' : return 'Top-Up'
+            case 'transportation' : return "Transportation"
+            case 'health' : return "Health"
+            case 'shopping' : return "Shopping"
+            case 'savings_investments' : return "Savings & Investments"
+            case 'travel' : return "Travel"
             default: return  "Pick your category"
         }
     }
@@ -166,8 +167,8 @@ export default function AddExpense({
                                     <DropdownMenuContent className="w-56" align="start">
                                         {/* <DropdownMenuLabel>Select Your Asset</DropdownMenuLabel> */}
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setData("asset", 1)}>Cash</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("asset", 2)}>Transfer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 'cash')}>Cash</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 'transfer')}>Transfer</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -183,12 +184,13 @@ export default function AddExpense({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setData("category", 4)}>Food & Drinks</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 5)}>Transportation</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 7)}>Health</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 8)}>Shopping</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 9)}>Savings & Investments</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 10)}>Travel</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'food_drinks')}>Food & Drinks</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'topup')}>Top-Up</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'transportation')}>Transportation</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'health')}>Health</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'shopping')}>Shopping</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'savings_investments')}>Savings & Investments</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'travel')}>Travel</DropdownMenuItem>
                                             {/* <DropdownMenuItem onClick={() => setData("category")}>Others</DropdownMenuItem> */}
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>

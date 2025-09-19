@@ -52,7 +52,7 @@ export default function Home() {
             id: number;
             name: string;
             balance: number;
-            currency: number
+            currency: string
         }[];
         transactions: Transaction[];
         totalIncome: number;
@@ -193,7 +193,7 @@ export default function Home() {
                                     {EyesOpen
                                         ? formatCurrency(
                                             activeCard?.balance ?? 0,
-                                            currencyMap[activeCard?.currency ?? 1]
+                                            currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                                         )
                                         : "••••••••"}
                                 </p>
@@ -245,7 +245,7 @@ export default function Home() {
                                 <div className="flex items-center justify-between relative z-10 gap-1 lg:gap-2 ">
                                     <div className="flex-1">
                                         <CardBalance
-                                            currency={currencyMap[activeCard?.currency ?? 1]}
+                                            currency={currencyMap[activeCard?.currency ?? 'indonesian_rupiah']}
                                             type="Income"
                                             icon={<LogInIcon />}
                                             rate={activeRates.income_rate}
@@ -255,7 +255,7 @@ export default function Home() {
                                     </div>
                                     <div className="flex-1">
                                         <CardBalance
-                                            currency={currencyMap[activeCard?.currency ?? 1]}
+                                            currency={currencyMap[activeCard?.currency ?? 'indonesian_rupiah']}
                                             type="Expense"
                                             icon={<LogInIcon />}
                                             rate={activeRates.expense_rate}
@@ -331,7 +331,7 @@ export default function Home() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
                                     title="Total Income"
-                                    value={formatCurrency(incomePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 1])}
+                                    value={formatCurrency(incomePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 'indonesian_rupiah'])}
                                     change={activeRates.income_rate}
                                     trend="up"
                                     color="green"
@@ -339,7 +339,7 @@ export default function Home() {
                                 />
                                 <MetricCard
                                     title="Total Expense"
-                                    value={formatCurrency(expensePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 1])}
+                                    value={formatCurrency(expensePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 'indonesian_rupiah'])}
                                     change={activeRates.expense_rate}
                                     trend="up"
                                     color="orange"
@@ -349,7 +349,7 @@ export default function Home() {
                                     title="Net Balance"
                                     value={formatCurrency(
                                         (incomePerCard[activeCardId] ?? 0) - (expensePerCard[activeCardId] ?? 0),
-                                        currencyMap[activeCard?.currency ?? 1]
+                                        currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                                     )}
                                     change={Math.abs(activeRates.income_rate - activeRates.expense_rate)}
                                     trend="up"
@@ -366,14 +366,18 @@ export default function Home() {
                                             <h3 className="text-lg font-bold text-gray-900">Money Flow</h3>
                                             <div className="flex gap-2">
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'monthly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${
+                                                        chartMode === 'monthly' ? 'bg-gray-800 text-white' : 
+                                                        'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                         }`}
                                                     onClick={() => setChartMode('monthly')}
                                                 >
                                                     Monthly
                                                 </button>
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'yearly' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${
+                                                        chartMode === 'yearly' ? 'bg-gray-800 text-white' 
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                         }`}
                                                     onClick={() => setChartMode('yearly')}
                                                 >
@@ -486,7 +490,7 @@ export default function Home() {
                                                             <div className="text-left">
                                                                 <p className="font-semibold text-gray-900">{card.name}</p>
                                                                 <p className="text-sm text-gray-500">
-                                                                    {formatCurrency(card.balance, currencyMap[card.currency ?? 1])}
+                                                                    {formatCurrency(card.balance, currencyMap[card.currency ?? 'indonesian_rupiah'])}
                                                                 </p>
                                                             </div>
                                                             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#9290FE] to-[#7A78D1] flex items-center justify-center">

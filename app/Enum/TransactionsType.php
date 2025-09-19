@@ -2,11 +2,11 @@
 
 namespace App\Enum;
 
-enum TransactionsType: int
+enum TransactionsType: string
 {
-    case INCOME = 1;
-    case EXPENSE = 2;
-    case CONVERT =3;
+    case INCOME = 'income';
+    case EXPENSE = 'expense';
+    case CONVERT = 'convert';
 
     public function label(): string
     {

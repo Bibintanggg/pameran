@@ -2,11 +2,11 @@
 
 namespace App\Enum;
 
-enum Currency: int
+enum Currency: string
 {
-    case INDONESIAN_RUPIAH = 1;
-    case BAHT_THAILAND = 2;
-    case AS_DOLLAR = 3;
+    case INDONESIAN_RUPIAH = 'indonesian_rupiah';
+    case BAHT_THAILAND = 'baht_thailand';
+    case AS_DOLLAR = 'as_dollar';
 
     public function label(): string
     {

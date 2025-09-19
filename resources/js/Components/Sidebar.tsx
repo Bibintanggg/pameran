@@ -23,7 +23,7 @@ type SidebarProps = {
     activeCard?: {
         name?: string
         balance?: number
-        currency?: number
+        currency?: string
     }
     EyesOpen: boolean
     setEyesOpen: (open: boolean) => void
@@ -123,7 +123,7 @@ export default function Sidebar({
                             {EyesOpen
                                 ? formatCurrency(
                                     activeCard?.balance ?? 0,
-                                    currencyMap[activeCard?.currency ?? 1]
+                                    currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                                 )
                                 : "••••••••"}
                         </p>
@@ -165,7 +165,7 @@ export default function Sidebar({
                         <span className="font-semibold text-green-600">
                             {formatCurrency(
                                 incomePerCard[activeCardId] ?? 0,
-                                currencyMap[activeCard?.currency ?? 1]
+                                currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                             )}
                         </span>
                     </div>
@@ -174,7 +174,7 @@ export default function Sidebar({
                         <span className="font-semibold text-red-500">
                             {formatCurrency(
                                 expensePerCard[activeCardId] ?? 0,
-                                currencyMap[activeCard?.currency ?? 1]
+                                currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                             )}
                         </span>
                     </div>
@@ -184,7 +184,7 @@ export default function Sidebar({
                             {formatCurrency(
                                 (incomePerCard[activeCardId] ?? 0) -
                                 (expensePerCard[activeCardId] ?? 0),
-                                currencyMap[activeCard?.currency ?? 1]
+                                currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                             )}
                         </span>
                     </div>

@@ -2,17 +2,18 @@
 
 namespace App\Enum;
 
-enum Category: int
+enum Category: string
 {
-    case SALLARY = 1;
-    case ALLOWANCE = 2;
-    case BUSINESS = 3;
-    case FOOD_DRINKS = 4;
-    case TRANSPORTATION = 5;
-    case HEALTH = 7;
-    case SHOPPING = 8;
-    case SAVINGS_INVESTMENTS = 9;
-    case TRAVEL = 10;
+    case SALLARY = 'sallary';
+    case ALLOWANCE = 'allowance';
+    case BUSINESS = 'business';
+    case FOOD_DRINKS = 'food_drinks';
+    case TOPUP = 'topup';
+    case TRANSPORTATION = 'transportation';
+    case HEALTH = 'health';
+    case SHOPPING = 'shopping';
+    case SAVINGS_INVESTMENTS = 'savings_investments';
+    case TRAVEL = 'travel';
 
     public function label(): string
     {
@@ -22,6 +23,7 @@ enum Category: int
             self::BUSINESS => "Business",
             self::FOOD_DRINKS => "Food & Drinks",
             self::TRANSPORTATION => "Transportation",
+            self::TOPUP => "Top-Up",
             self::HEALTH => "Health",
             self::SHOPPING => "Shopping",
             self::SAVINGS_INVESTMENTS => "Savings & Investments",
@@ -39,6 +41,7 @@ enum Category: int
             self::TRANSPORTATION->value => self::TRANSPORTATION->label(),
             self::HEALTH->value => self::HEALTH->label(),
             self::SHOPPING->value => self::SHOPPING->label(),
+            self::TOPUP->value => self::TOPUP->label(),
             self::SAVINGS_INVESTMENTS->value => self::SAVINGS_INVESTMENTS->label(),
             self::TRAVEL->value => self::TRAVEL->label()
         ];

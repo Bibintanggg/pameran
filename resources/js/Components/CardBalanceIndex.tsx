@@ -6,7 +6,7 @@ import { currencyMap } from "@/utils/formatCurrency";
 interface Card {
     id: number
     balance: number
-    currency: number
+    currency: string
 }
 
 interface PageProps {

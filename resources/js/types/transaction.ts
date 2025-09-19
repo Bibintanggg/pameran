@@ -1,15 +1,15 @@
 export interface Transaction {
     id: number;
     user_name: string;
-    type: number;
+    type: string;
     type_label: string;
     amount: number;
     formatted_amount: string;
     notes: string;
-    asset: number;
+    asset: string;
     asset_label: string;
     currency: string;
-    category: number;
+    category: string;
     category_label: string;
     transaction_date: string;
 }

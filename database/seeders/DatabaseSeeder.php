@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         Cards::create([
             'user_id' => 1,
             'name' => 'IDR Card',
-            'currency' => 1,
+            'currency' => 'indonesian_rupiah',
             'card_number' => null,
             'balance' => 0,
         ]);

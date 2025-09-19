@@ -9,7 +9,7 @@ interface Card {
     id: number
     name: string
     balance: number
-    currency: number
+    currency: string
 }
 
 export default function AddConvert({ label }: { label: string }) {
@@ -25,8 +25,8 @@ export default function AddConvert({ label }: { label: string }) {
     const [rate, setRate] = useState<number | null>(null)
     const [convertedAmount, setConvertedAmount] = useState<number | null>(null)
 
-    const getCurrencySymbol = (currency: number) => {
-        const symbols: Record<number, string> = { 1: 'Rp', 2: '฿', 3: '$' }
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: Record<string, string> = { 'indonesian_rupiah': 'Rp', 'baht_thailand': '฿', 'as_dollar': '$' }
         return symbols[currency] || 'Rp'
     }
 
@@ -46,13 +46,13 @@ export default function AddConvert({ label }: { label: string }) {
 
     useEffect(() => {
         if (fromCard && toCard && amount) {
-            const currencyMap: Record<number, string> = { 1: "IDR", 2: "THB", 3: "USD" }
+            const currencyMap: Record<string, string> = { 'indonesian_rupiah': "IDR", 'baht_thailand': "THB", 'as_dollar': "USD" }
             fetchRate(currencyMap[fromCard.currency], currencyMap[toCard.currency], parseFloat(amount))
         }
     }, [fromCard, toCard, amount])
 
 
-    const formatBalance = (balance: number, currency: number) =>
+    const formatBalance = (balance: number, currency: string) =>
         `${getCurrencySymbol(currency)} ${balance.toLocaleString()}`
 
     const handleSubmit = (e: React.FormEvent) => {

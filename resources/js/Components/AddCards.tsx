@@ -28,7 +28,7 @@ interface CardsProps {
 export default function Cards({ label, className }: CardsProps) {
     const [wallet, setWallet] = React.useState<string>("")
     const {data, setData, post, processing, errors, reset} = useForm({
-        'currency': 1,
+        'currency': 'indonesian_rupiah',
         'name': '',
         'card_number': '',
         'balance': ''
@@ -44,11 +44,11 @@ export default function Cards({ label, className }: CardsProps) {
     }
 
     //helper
-    const getCurrencyLabel = (value: number) => {
+    const getCurrencyLabel = (value: string) => {
         switch(value) {
-            case 1 : return 'Rupiah'
-            case 2 : return 'THB - Baht Thailand'
-            case 3 : return 'USD - Dollar AS'
+            case 'indonesian_rupiah' : return 'Rupiah'
+            case 'baht_thailand' : return 'THB - Baht Thailand'
+            case 'as_dollar' : return 'USD - Dollar AS'
         }
     }
 
@@ -90,13 +90,13 @@ export default function Cards({ label, className }: CardsProps) {
 
                                             {/* <DropdownMenuLabel>Select Your Currency</DropdownMenuLabel> */}
                                             <DropdownMenuGroup>
-                                                <DropdownMenuItem onClick={() => setData("currency", 1)}>
+                                                <DropdownMenuItem onClick={() => setData("currency", 'indonesian_rupiah')}>
                                                     IDR - Indonesian Rupiah
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setData("currency", 2)}>
+                                                <DropdownMenuItem onClick={() => setData("currency", 'baht_thailand')}>
                                                     THB - Baht Thailand
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setData("currency", 3)}>
+                                                <DropdownMenuItem onClick={() => setData("currency", 'as_dollar')}>
                                                     USD - Dollar AS
                                                 </DropdownMenuItem>
                                             </DropdownMenuGroup>

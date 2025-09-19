@@ -45,9 +45,9 @@ export default function AddIncome({
         'transaction_date': '',
         'amount': 0,
         'notes': '',
-        'asset': 0,
-        'category': 0,
-        'type': 1,
+        'asset': '',
+        'category': '',
+        'type': 'income', //income
         'to_cards_id': activeCardId
     })
 
@@ -95,19 +95,19 @@ export default function AddIncome({
     }
 
     // Helper functions untuk display labels
-    const getAssetLabel = (value: number) => {
+    const getAssetLabel = (value: string) => {
         switch (value) {
-            case 1: return "Cash";
-            case 2: return "Transfer";
+            case 'cash' : return "Cash";
+            case 'transfer': return "Transfer";
             default: return "Select Your Asset";
         }
     }
 
-    const getCategoryLabel = (value: number) => {
+    const getCategoryLabel = (value: string) => {
         switch (value) {
-            case 1: return "Salary";
-            case 2: return "Allowance";
-            case 3: return "Business";
+            case 'sallary' : return "Salary";
+            case 'allowance' : return "Allowance";
+            case 'business' : return "Business";
             default: return "Select Your Category Income";
         }
     }
@@ -191,8 +191,8 @@ export default function AddIncome({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setData("asset", 1)}>Cash</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("asset", 2)}>Transfer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 'cash')}>Cash</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("asset", 'transfer')}>Transfer</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -208,9 +208,9 @@ export default function AddIncome({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setData("category", 1)}>Salary</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 2)}>Allowance</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setData("category", 3)}>Business</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'sallary')}>Salary</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'allowance')}>Allowance</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setData("category", 'business')}>Business</DropdownMenuItem>
                                         </DropdownMenuGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

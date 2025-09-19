@@ -24,7 +24,7 @@ class CardsController extends Controller
     public function index(Request $request)
     {
         $userId = Auth::id();
-        $filter = $request->query('filter', 'monthly'); // default bulanan
+        $filter = $request->query('filter', 'monthly');
         $currentYear = now()->year;
 
         $cards = Cards::where('user_id', $userId)->get();
@@ -42,14 +42,18 @@ class CardsController extends Controller
                 $currency ??= Currency::INDONESIAN_RUPIAH->value;
                 $currencySymbol = Currency::from($currency)->symbol();
 
+                $displayAmount = $data->type === TransactionsType::CONVERT->value
+                    ? $data->converted_amount
+                    : $data->amount;
+
                 return [
                     'id'               => $data->id,
                     'to_cards_id'      => $data->to_cards_id,
                     'user_name'        => Auth::user()->name,
                     'type'             => $data->type,
                     'type_label'       => TransactionsType::from($data->type)->label(),
-                    'amount'           => $data->amount,
-                    'formatted_amount' => $currencySymbol . ' ' . number_format($data->amount, 0, ',', '.'),
+                    'amount'           => $displayAmount,
+                    'formatted_amount' => $currencySymbol . ' ' . number_format($displayAmount, 0, ',', '.'),
                     'notes'            => $data->notes,
                     'currency'         => $data->toCard?->currency ?? 'IDR',
                     'asset'            => $data->asset,
@@ -61,8 +65,17 @@ class CardsController extends Controller
             });
 
         $incomePerCard = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::INCOME->value)
-            ->selectRaw('to_cards_id, SUM(amount) as total')
+            ->whereIn('type', [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->selectRaw('to_cards_id, SUM(CASE 
+            WHEN type = ? THEN amount 
+            WHEN type = ? THEN converted_amount 
+            ELSE 0 END) as total', [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ])
             ->groupBy('to_cards_id')
             ->pluck('total', 'to_cards_id')
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
@@ -75,15 +88,26 @@ class CardsController extends Controller
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $currentIncome = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::INCOME->value)
+            ->whereIn('type', [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ])
             ->whereDate('created_at', now()->toDateString())
-            ->sum('amount');
+            ->selectRaw('SUM(CASE 
+            WHEN type = ? THEN amount 
+            WHEN type = ? THEN converted_amount 
+            ELSE 0 END) as total', [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->value('total') ?? 0;
 
         $currentExpense = Transactions::where('user_id', $userId)
             ->where('type', TransactionsType::EXPENSE->value)
             ->whereDate('created_at', now()->toDateString())
             ->sum('amount');
 
+        // Rest of the code remains the same...
         $ratesPerCard = collect();
 
         foreach ($incomePerCard->keys()->merge($expensePerCard->keys())->unique() as $cardId) {
@@ -103,14 +127,23 @@ class CardsController extends Controller
         $expenseRateHigh = $incomeRateLow;
         $expenseRateLow  = $incomeRateHigh;
 
+        // Monthly dan yearly data sudah benar
         $monthlyData = Transactions::where('user_id', $userId)
             ->whereYear('transaction_date', $currentYear)
             ->selectRaw(
                 'to_cards_id,
             MONTH(transaction_date) as month,
-            SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as income,
+            SUM(CASE 
+                WHEN type = ? THEN amount 
+                WHEN type = ? THEN converted_amount 
+                ELSE 0 
+            END) as income,
             SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
-                [TransactionsType::INCOME->value, TransactionsType::EXPENSE->value]
+                [
+                    TransactionsType::INCOME->value,
+                    TransactionsType::CONVERT->value,
+                    TransactionsType::EXPENSE->value
+                ]
             )
             ->groupBy('to_cards_id', 'month')
             ->get()
@@ -127,14 +160,21 @@ class CardsController extends Controller
             });
         });
 
-        // Yearly data per card
         $yearlyData = Transactions::where('user_id', $userId)
             ->selectRaw(
                 'to_cards_id,
             YEAR(transaction_date) as year,
-            SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as income,
+            SUM(CASE 
+                WHEN type = ? THEN amount 
+                WHEN type = ? THEN converted_amount 
+                ELSE 0 
+            END) as income,
             SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
-                [TransactionsType::INCOME->value, TransactionsType::EXPENSE->value]
+                [
+                    TransactionsType::INCOME->value,
+                    TransactionsType::CONVERT->value,
+                    TransactionsType::EXPENSE->value
+                ]
             )
             ->groupBy('to_cards_id', 'year')
             ->get()
@@ -346,9 +386,9 @@ class CardsController extends Controller
     {
         $userId = Auth::id();
 
-         $transactions = Transactions::where('user_id', $userId)
-        ->with('toCard')
-        ->get();
+        $transactions = Transactions::where('user_id', $userId)
+            ->with('toCard')
+            ->get();
 
         return Excel::download(new TransactionExport($transactions), 'all-activity.xlsx');
     }
@@ -369,7 +409,7 @@ class CardsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'currency' => ["required", 'integer', Rule::in(Currency::values())],
+            'currency' => ["required", 'string', Rule::in(Currency::values())],
             'name' => 'required|string|max:30',
             'card_number' => 'nullable|string|max:100',
             'balance' => 'nullable|numeric||min:0'

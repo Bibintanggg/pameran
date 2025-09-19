@@ -2,10 +2,10 @@
 
 namespace App\Enum;
 
-enum Asset: int
+enum Asset: string
 {
-    case CASH = 1;
-    case TRANSFER = 2;
+    case CASH = 'cash';
+    case TRANSFER = 'transfer';
 
     public function label(): string
     {

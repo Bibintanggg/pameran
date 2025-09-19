@@ -14,16 +14,16 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->integer('type');
+            $table->string('type');
             $table->foreignId('from_cards_id')->nullable()->constrained('cards')->onDelete('cascade');
             $table->foreignId('to_cards_id')->nullable()->constrained('cards')->onDelete('cascade');
             $table->decimal('amount', 18, 2);
             $table->decimal('converted_amount', 18, 2)->nullable();
-            $table->integer('asset');
+            $table->string('asset');
             $table->decimal('rate', 18, 6)->nullable();
             $table->string('notes')->nullable();
             $table->date('transaction_date');
-            $table->integer('category')->nullable();
+            $table->string('category')->nullable();
             $table->timestamps();
         });
     }

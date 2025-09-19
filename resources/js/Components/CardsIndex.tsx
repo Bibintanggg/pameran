@@ -4,7 +4,7 @@ import CardIndex from "./CardIndex";
 
 interface Card {
     id: number;
-    currency: number;
+    currency: string;
     name: string;
     card_number?: string;
     balance: number;

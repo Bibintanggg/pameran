@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\Asset;
 use App\Enum\Category;
 use App\Enum\TransactionsType;
 use App\Models\Cards;
@@ -53,9 +54,9 @@ class TransactionsController extends Controller
             'transaction_date' => 'required|date',
             'amount' => 'required|numeric|min:1',
             'notes' => 'nullable|string',
-            'asset' => 'required|integer',
-            'category' => 'required|integer',
-            'type' => ['required', 'integer', Rule::in(TransactionsType::values())],
+            'asset' => 'required|string',
+            'category' => 'required|string',
+            'type' => ['required', 'string', Rule::in(TransactionsType::values())],
             'to_cards_id' => 'required|exists:cards,id',
         ]);
 
@@ -97,9 +98,9 @@ class TransactionsController extends Controller
             'transaction_date' => 'required|date',
             'amount' => 'required|numeric|min:1',
             'notes' => 'nullable|string',
-            'asset' => 'required|integer',
-            'category' => 'required|integer',
-            'type' => ['required', 'integer', Rule::in(TransactionsType::values())],
+            'asset' => 'required|string',
+            'category' => 'required|string',
+            'type' => ['required', 'string', Rule::in(TransactionsType::values())],
             'to_cards_id' => 'required|exists:cards,id'
         ]);
 
@@ -109,6 +110,7 @@ class TransactionsController extends Controller
                 Category::FOOD_DRINKS->value,
                 Category::TRANSPORTATION->value,
                 Category::HEALTH->value,
+                Category::TOPUP->value,
                 Category::SHOPPING->value,
                 Category::SAVINGS_INVESTMENTS->value,
                 Category::TRAVEL->value,
@@ -180,7 +182,8 @@ class TransactionsController extends Controller
             'converted_amount' => $request->converted_amount,
             'rate' => $request->rate,
             'notes' => $request->notes,
-            'asset' => $fromCard->currency, // contoh
+            'asset' => Asset::TRANSFER->value,
+            'currency' => $toCard->currency,
             'transaction_date' => now(),
         ]);
 
