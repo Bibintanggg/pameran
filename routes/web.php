@@ -41,6 +41,9 @@ Route::get('/all-activity', [CardsController::class, 'allActivity'])
     ->middleware(['auth', 'verified']) // tambahkan middleware jika perlu
     ->name('all-activity');
 
+Route::get('/activity/export', [CardsController::class, 'exportAllActivity'])
+    ->name('activity.export');
+
 Route::get('/income', function() {
     return Inertia::render('activity/income/index');
 })->name('activity.income');

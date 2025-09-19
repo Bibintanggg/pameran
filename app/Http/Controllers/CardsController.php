@@ -6,6 +6,7 @@ use App\Enum\Asset;
 use App\Enum\Category;
 use App\Enum\Currency;
 use App\Enum\TransactionsType;
+use App\Exports\TransactionExport;
 use App\Models\Cards;
 use App\Models\Transactions;
 use Carbon\Carbon;
@@ -13,6 +14,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CardsController extends Controller
 {
@@ -338,6 +340,17 @@ class CardsController extends Controller
                 ]
             ]
         ]);
+    }
+
+    public function exportAllActivity(Request $request)
+    {
+        $userId = Auth::id();
+
+         $transactions = Transactions::where('user_id', $userId)
+        ->with('toCard')
+        ->get();
+
+        return Excel::download(new TransactionExport($transactions), 'all-activity.xlsx');
     }
 
 
