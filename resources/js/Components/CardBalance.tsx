@@ -20,7 +20,7 @@ export default function CardBalance({
     rateLow,
 }: CardBalanceProps) {
     return (
-        <div className="bg-white w-36 md:w-44 lg:w-44 h-20 md:h-24 lg:h-28 rounded-lg shadow-sm 
+        <div className="bg-white w-[120px] md:w-44 lg:w-44 h-20 md:h-24 lg:h-28 rounded-lg shadow-sm 
         flex flex-col justify-between p-2 md:p-3">
             <div className="flex items-center justify-between">
                 <p className="text-xs md:text-sm text-gray-500">{type}</p>

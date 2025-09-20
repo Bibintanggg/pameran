@@ -86,10 +86,10 @@ export default function Income() {
 
     // Filter transaksi untuk income saja berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
-        const incomeTransactions = transactions.filter(t => 
+        const incomeTransactions = transactions.filter(t =>
             t.type_label === "Income" || t.type_label === "Convert"
         );
-        
+
         if (activeCardId === 0) {
             return incomeTransactions;
         } else {
@@ -163,7 +163,7 @@ export default function Income() {
                     </div>
                 </div>
                 <div className={`p-3 rounded-xl ${
-                    color === 'green' ? 'bg-green-50' : 
+                    color === 'green' ? 'bg-green-50' :
                     color === 'blue' ? 'bg-blue-50' : 'bg-orange-50'
                 }`}>
                     {icon}
@@ -410,14 +410,14 @@ export default function Income() {
                                             fillOpacity={1}
                                             fill="url(#colorIncome)"
                                         />
-                                        <Area
+                                        {/* <Area
                                             type="monotone"
                                             dataKey="target"
                                             stroke="#D1D5DB"
                                             strokeWidth={1}
                                             strokeDasharray="5 5"
                                             fill="none"
-                                        />
+                                        /> */}
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
@@ -432,7 +432,7 @@ export default function Income() {
                                         Showing {filteredTransactions.length} income transactions
                                     </p>
                                 </div>
-                                <button 
+                                <button
                                     className="text-green-500 text-sm"
                                     onClick={() => router.visit(route('transactions.index'))}
                                 >
@@ -596,7 +596,7 @@ export default function Income() {
                                                         }}
                                                         formatter={(value: any, name: string) => [
                                                             formatAutoCurrency(value, activeCard?.currency),
-                                                            name === 'income' ? 'Income' : 'Target'
+                                                            name === 'income' ? 'Income' : ''
                                                         ]}
                                                     />
                                                     <Area
@@ -607,14 +607,15 @@ export default function Income() {
                                                         fillOpacity={1}
                                                         fill="url(#colorIncome)"
                                                     />
-                                                    <Area
+                                                    {/* <Area
                                                         type="monotone"
                                                         dataKey="target"
                                                         stroke="#D1D5DB"
+                                                        color="black"
                                                         strokeWidth={2}
                                                         strokeDasharray="5 5"
                                                         fill="none"
-                                                    />
+                                                    /> */}
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -630,13 +631,13 @@ export default function Income() {
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <button 
+                                                <button
                                                     className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                                                     onClick={() => router.visit(route('transactions.index'))}
                                                 >
                                                     View all
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => window.location.href = route("activity-income.export")}
                                                     className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                 >
@@ -763,7 +764,7 @@ export default function Income() {
                                                 cards.map(card => {
                                                     const cardIncome = incomePerCard[card.id] || 0;
                                                     const isActive = activeCardId === card.id;
-                                                    
+
                                                     return (
                                                         <div
                                                             key={card.id}

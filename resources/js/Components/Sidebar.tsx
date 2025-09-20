@@ -40,7 +40,7 @@ export default function Sidebar({
     expensePerCard,
 }: SidebarProps) {
     const { url } = usePage()
-    
+
     // GANTI: Gunakan context
     const { activeCardId } = useActiveCard();
 

@@ -88,10 +88,10 @@ export default function Expense() {
 
     // Filter transaksi untuk expense saja berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
-        const expenseTransactions = transactions.filter(t => 
+        const expenseTransactions = transactions.filter(t =>
             t.type_label === "Expense"
         );
-        
+
         if (activeCardId === 0) {
             return expenseTransactions;
         } else {
@@ -163,7 +163,7 @@ export default function Expense() {
                     </div>
                 </div>
                 <div className={`p-3 rounded-xl ${
-                    color === 'red' ? 'bg-red-50' : 
+                    color === 'red' ? 'bg-red-50' :
                     color === 'orange' ? 'bg-orange-50' : 'bg-blue-50'
                 }`}>
                     {icon}
@@ -453,7 +453,7 @@ export default function Expense() {
                                         Showing {filteredTransactions.length} expense transactions
                                     </p>
                                 </div>
-                                <button 
+                                <button
                                     className="text-red-500 text-sm"
                                     onClick={() => router.visit(route('transactions.index'))}
                                 >
@@ -668,13 +668,13 @@ export default function Expense() {
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <button 
+                                                <button
                                                     className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                                                     onClick={() => router.visit(route('transactions.index'))}
                                                 >
                                                     View all
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => window.location.href = route("expense.export")}
                                                     className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                 >
@@ -793,56 +793,6 @@ export default function Expense() {
                                         </div>
                                     )}
 
-                                    {/* Budget Tracking */}
-                                    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-4">Budget Analysis</h3>
-                                        <div className="space-y-4">
-                                            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="font-medium text-red-900">Annual Budget</span>
-                                                    <Target className="w-4 h-4 text-red-600" />
-                                                </div>
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <span className="text-gray-600">Used</span>
-                                                    <span className="font-semibold text-red-600">
-                                                        {budgetUtilization.toFixed(1)}%
-                                                    </span>
-                                                </div>
-                                                <div className="mt-2 w-full bg-red-100 rounded-full h-2">
-                                                    <div 
-                                                        className="bg-red-500 h-2 rounded-full transition-all duration-300"
-                                                        style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="font-medium text-orange-900">Monthly Avg</span>
-                                                    <Receipt className="w-4 h-4 text-orange-600" />
-                                                </div>
-                                                <div className="text-sm text-orange-700">
-                                                    {formatAutoCurrency(avgMonthlyExpense, activeCard?.currency)} per month
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3 text-sm">
-                                                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                                                    <p className="text-gray-500 mb-1">Remaining</p>
-                                                    <p className="font-semibold text-gray-900">
-                                                        {formatAutoCurrency((monthlyBudget * 12) - calculatedTotalExpense, activeCard?.currency)}
-                                                    </p>
-                                                </div>
-                                                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                                                    <p className="text-gray-500 mb-1">Daily Avg</p>
-                                                    <p className="font-semibold text-gray-900">
-                                                        {formatAutoCurrency(calculatedTotalExpense / 365, activeCard?.currency)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     {/* Expense by Card */}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <h3 className="text-lg font-bold text-gray-900 mb-4">Expense by Card</h3>
@@ -851,7 +801,7 @@ export default function Expense() {
                                                 cards.map(card => {
                                                     const cardExpense = expensePerCard[card.id] || 0;
                                                     const isActive = activeCardId === card.id;
-                                                    
+
                                                     return (
                                                         <div
                                                             key={card.id}

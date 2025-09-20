@@ -242,7 +242,7 @@ export default function Home() {
                                     <div className="w-14 h-2 bg-[#7A78D1] rounded-full"></div>
                                 </div>
 
-                                <div className="flex items-center justify-between relative z-10 gap-1 lg:gap-2 ">
+                                <div className="flex items-center justify-between relative z-10 gap-1 lg:gap-2">
                                     <div className="flex-1">
                                         <CardBalance
                                             currency={currencyMap[activeCard?.currency ?? 'indonesian_rupiah']}
