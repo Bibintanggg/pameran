@@ -847,7 +847,6 @@ class CardsController extends Controller
 
         return Excel::download(new TransactionExport($transactions), 'expense-activity.xlsx');
     }
-
     /**
      * Show the form for creating a new resource.
      */

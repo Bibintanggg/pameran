@@ -2,6 +2,7 @@
 import BottomNavbar from "@/Components/BottomNavbar";
 import Sidebar from "@/Components/Sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
+import { router, usePage } from "@inertiajs/react";
 import {
     Settings,
     Plus,
@@ -14,89 +15,100 @@ import {
     Copy,
     Wallet,
     TrendingUp,
-    TrendingDown,
     ArrowUpRight,
-    ArrowDownLeft
+    ArrowDownLeft,
+    RefreshCw
 } from "lucide-react";
 import { useState } from "react";
+import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
+
+type Card = {
+    id: number;
+    name: string;
+    card_number: string;
+    balance: number;
+    currency: string;
+    type: string;
+    color: string;
+    income: number;
+    expense: number;
+    net: number;
+};
+
+type Statistics = {
+    totalCards: number;
+    totalBalance: number;
+    totalIncome: number;
+    totalExpense: number;
+    netIncome: number;
+    incomeGrowth: number;
+    expenseGrowth: number;
+    balanceGrowth: number;
+};
+
+type Props = {
+    cards: Card[];
+    statistics: Statistics;
+    auth: {
+        user: {
+            name: string;
+            avatar: string | null;
+        }
+    };
+};
 
 export default function Cards() {
+    const { cards, statistics, auth } = usePage().props as Props;
+
     const [eyesOpen, setEyesOpen] = useState(false);
-    const [selectedCard, setSelectedCard] = useState(null);
+    const [selectedCard, setSelectedCard] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Static data untuk cards
-    const staticCards = [
-        {
-            id: 1,
-            name: "Main Wallet",
-            card_number: "**** **** **** 1234",
-            balance: 25000,
-            currency: "USD",
-            color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            type: "Debit Card",
-            income: 15000,
-            expense: 8500
-        },
-        {
-            id: 2,
-            name: "Savings",
-            card_number: "**** **** **** 5678",
-            balance: 45000,
-            currency: "USD",
-            color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            type: "Savings Account",
-            income: 25000,
-            expense: 3200
-        },
-        {
-            id: 3,
-            name: "Business Card",
-            card_number: "**** **** **** 9012",
-            balance: 18500,
-            currency: "USD",
-            color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-            type: "Business Account",
-            income: 32000,
-            expense: 15600
-        },
-        {
-            id: 4,
-            name: "Investment",
-            card_number: "**** **** **** 3456",
-            balance: 67500,
-            currency: "USD",
-            color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-            type: "Investment Account",
-            income: 45000,
-            expense: 12800
-        }
-    ];
-
-    const staticAuth = {
-        user: {
-            name: "John Doe",
-            avatar: null
-        }
+    const formatAutoCurrency = (amount: number, currencyId?: string) => {
+        const currency = currencyMap[currencyId ?? 'as_dollar']; // fallback beneran ada
+        return formatCurrency(amount, currency);
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    };
 
     const getUserInitials = () => {
-        const names = staticAuth.user.name.split(' ');
+        const names = auth.user.name.split(' ');
         if (names.length >= 2) {
             return names[0][0] + names[names.length - 1][0];
         }
         return names[0][0];
     };
 
-    const CardComponent = ({ card, isDesktop = false }) => (
+    const refreshData = () => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+        router.get(route('cards.show'), {}, {
+            preserveState: false,
+            onFinish: () => setIsLoading(false)
+        });
+    };
+
+    const handleDeleteCard = (cardId: number) => {
+        if (confirm('Are you sure you want to delete this card?')) {
+            router.delete(route('cards.destroy', cardId), {
+                onSuccess: () => {
+                    setSelectedCard(null);
+                }
+            });
+        }
+    };
+
+    const handleEditCard = (cardId: number) => {
+        router.visit(route('cards.edit', cardId));
+    };
+
+    const copyCardNumber = (cardNumber: string) => {
+        navigator.clipboard.writeText(cardNumber);
+    };
+
+    const CardComponent = ({ card, isDesktop = false }: { card: Card; isDesktop?: boolean }) => (
         <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl`}>
-            <div 
+            <div
                 className="absolute inset-0 p-6 flex flex-col justify-between text-white"
                 style={{ background: card.color }}
             >
@@ -105,7 +117,7 @@ export default function Cards() {
                         <p className="text-sm opacity-80">{card.type}</p>
                         <h3 className="text-lg font-bold">{card.name}</h3>
                     </div>
-                    <button 
+                    <button
                         className="p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -115,38 +127,49 @@ export default function Cards() {
                         <MoreVertical className="w-5 h-5" />
                     </button>
                 </div>
-                
+
                 <div>
                     <p className="text-sm opacity-80 mb-2">{card.card_number}</p>
                     <div className="flex justify-between items-end">
                         <div>
                             <p className="text-sm opacity-80">Balance</p>
                             <p className="text-2xl font-bold">
-                                {eyesOpen ? formatCurrency(card.balance) : "****"}
+                                {eyesOpen ? formatAutoCurrency(card.balance, card.currency) : "****"}
                             </p>
                         </div>
                         <CreditCard className="w-8 h-8 opacity-60" />
                     </div>
                 </div>
             </div>
-            
-            {/* Dropdown Menu */}
+
             {selectedCard === card.id && (
                 <div className="absolute top-12 right-6 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10">
-                    <button className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm">
+                    <button
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
+                        onClick={() => router.visit(route('cards.show', card.id))}
+                    >
                         <Eye className="w-4 h-4" />
                         View Details
                     </button>
-                    <button className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm">
+                    <button
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
+                        onClick={() => handleEditCard(card.id)}
+                    >
                         <Edit className="w-4 h-4" />
                         Edit Card
                     </button>
-                    <button className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm">
+                    <button
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
+                        onClick={() => copyCardNumber(card.card_number)}
+                    >
                         <Copy className="w-4 h-4" />
                         Copy Number
                     </button>
                     <hr className="my-2" />
-                    <button className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-3 text-sm text-red-600">
+                    <button
+                        className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-3 text-sm text-red-600"
+                        onClick={() => handleDeleteCard(card.id)}
+                    >
                         <Trash2 className="w-4 h-4" />
                         Delete Card
                     </button>
@@ -155,7 +178,14 @@ export default function Cards() {
         </div>
     );
 
-    const StatsCard = ({ title, amount, change, icon, isPositive }) => (
+    const StatsCard = ({ title, amount, change, icon, isPositive, isAmount = true }: {
+        title: string;
+        amount: number;
+        change: number;
+        icon: React.ReactNode;
+        isPositive: boolean;
+        isAmount?: boolean;
+    }) => (
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-3">
                 <div className={`p-2 rounded-lg ${isPositive ? 'bg-green-50' : 'bg-red-50'}`}>
@@ -167,15 +197,11 @@ export default function Cards() {
                 </div>
             </div>
             <p className="text-sm text-gray-600 mb-1">{title}</p>
-            <p className="text-xl font-bold text-gray-900">{formatCurrency(amount)}</p>
+            <p className="text-xl font-bold text-gray-900">
+                {isAmount ? formatAutoCurrency(amount) : amount.toString()}
+            </p>
         </div>
     );
-
-    // Calculate totals
-    const totalBalance = staticCards.reduce((sum, card) => sum + card.balance, 0);
-    const totalIncome = staticCards.reduce((sum, card) => sum + card.income, 0);
-    const totalExpense = staticCards.reduce((sum, card) => sum + card.expense, 0);
-    const netIncome = totalIncome - totalExpense;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -189,13 +215,17 @@ export default function Cards() {
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                                        {getUserInitials()}
-                                    </AvatarFallback>
+                                    {auth.user.avatar ? (
+                                        <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
+                                    ) : (
+                                        <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                                            {getUserInitials()}
+                                        </AvatarFallback>
+                                    )}
                                 </Avatar>
                                 <div>
                                     <h2 className="font-semibold text-gray-900">My Cards</h2>
-                                    <p className="text-sm text-gray-500">{staticCards.length} cards</p>
+                                    <p className="text-sm text-gray-500">{statistics.totalCards} cards</p>
                                 </div>
                             </div>
 
@@ -204,10 +234,17 @@ export default function Cards() {
                                     onClick={() => setEyesOpen(!eyesOpen)}
                                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
-                                    {eyesOpen ? 
-                                        <Eye className="h-5 w-5 text-gray-600" /> : 
+                                    {eyesOpen ?
+                                        <Eye className="h-5 w-5 text-gray-600" /> :
                                         <EyeOff className="h-5 w-5 text-gray-600" />
                                     }
+                                </button>
+                                <button
+                                    onClick={refreshData}
+                                    disabled={isLoading}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                    <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                 </button>
                                 <button>
                                     <Settings className="h-6 w-6 text-gray-600" />
@@ -219,33 +256,50 @@ export default function Cards() {
 
                         {/* Mobile Stats */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
-                            <StatsCard 
+                            <StatsCard
                                 title="Total Balance"
-                                amount={totalBalance}
-                                change={12.5}
+                                amount={statistics.totalBalance}
+                                change={statistics.balanceGrowth}
                                 icon={<Wallet className="w-5 h-5 text-blue-600" />}
-                                isPositive={true}
+                                isPositive={statistics.balanceGrowth >= 0}
                             />
-                            <StatsCard 
+                            <StatsCard
                                 title="Net Income"
-                                amount={netIncome}
-                                change={8.3}
+                                amount={statistics.netIncome}
+                                change={statistics.incomeGrowth}
                                 icon={<TrendingUp className="w-5 h-5 text-green-600" />}
-                                isPositive={true}
+                                isPositive={statistics.netIncome >= 0}
                             />
                         </div>
 
                         {/* Add Card Button */}
-                        <button className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-xl p-4 mb-6 flex items-center justify-center gap-3 transition-colors">
+                        <button
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-xl p-4 mb-6 flex items-center justify-center gap-3 transition-colors"
+                            onClick={() => router.visit(route('cards.create'))}
+                        >
                             <Plus className="w-5 h-5" />
                             <span className="font-medium">Add New Card</span>
                         </button>
 
                         {/* Mobile Cards Grid */}
                         <div className="space-y-4">
-                            {staticCards.map((card) => (
-                                <CardComponent key={card.id} card={card} />
-                            ))}
+                            {cards.length > 0 ? (
+                                cards.map((card) => (
+                                    <CardComponent key={card.id} card={card} />
+                                ))
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">
+                                    <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                    <p className="text-lg font-medium">No cards found</p>
+                                    <p className="mb-4">Add your first card to get started</p>
+                                    <button
+                                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                                        onClick={() => router.visit(route('cards.create'))}
+                                    >
+                                        Add Card
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -254,7 +308,7 @@ export default function Cards() {
             {/* Desktop Layout */}
             <div className="hidden lg:flex min-h-screen">
                 <Sidebar
-                    auth={staticAuth}
+                    auth={auth}
                     activeCard={null}
                     activeCardId={0}
                     EyesOpen={eyesOpen}
@@ -279,15 +333,26 @@ export default function Cards() {
                                         onClick={() => setEyesOpen(!eyesOpen)}
                                         className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                     >
-                                        {eyesOpen ? 
-                                            <Eye className="h-5 w-5 text-gray-600" /> : 
+                                        {eyesOpen ?
+                                            <Eye className="h-5 w-5 text-gray-600" /> :
                                             <EyeOff className="h-5 w-5 text-gray-600" />
                                         }
                                         <span className="text-sm font-medium">
                                             {eyesOpen ? 'Hide' : 'Show'} Balance
                                         </span>
                                     </button>
-                                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                                    <button
+                                        onClick={refreshData}
+                                        disabled={isLoading}
+                                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                        <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+                                        <span className="text-sm font-medium">Refresh</span>
+                                    </button>
+                                    <button
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                                        onClick={() => router.visit(route('cards.create'))}
+                                    >
                                         <Plus className="h-5 w-5" />
                                         <span className="font-medium">Add Card</span>
                                     </button>
@@ -296,87 +361,114 @@ export default function Cards() {
                         </div>
 
                         <div className="p-8 space-y-8">
-                            {/* Desktop Cards Grid */}
-                            <div>
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-gray-900">Your Cards</h2>
-                                    <p className="text-gray-500">{staticCards.length} cards total</p>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {staticCards.map((card) => (
-                                        <CardComponent key={card.id} card={card} isDesktop={true} />
-                                    ))}
-                                </div>
-                            </div>
+                            {cards.length > 0 ? (
+                                <>
+                                    {/* Desktop Cards Grid */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h2 className="text-xl font-bold text-gray-900">Your Cards</h2>
+                                            <p className="text-gray-500">{statistics.totalCards} cards total</p>
+                                        </div>
 
-                            {/* Card Details Section */}
-                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6">Cards Overview</h3>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="text-left border-b border-gray-100">
-                                                <th className="pb-3 font-medium text-gray-600">Card Name</th>
-                                                <th className="pb-3 font-medium text-gray-600">Type</th>
-                                                <th className="pb-3 font-medium text-gray-600">Balance</th>
-                                                <th className="pb-3 font-medium text-gray-600">Income</th>
-                                                <th className="pb-3 font-medium text-gray-600">Expense</th>
-                                                <th className="pb-3 font-medium text-gray-600">Net</th>
-                                                <th className="pb-3 font-medium text-gray-600">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {staticCards.map((card) => (
-                                                <tr key={card.id} className="border-b border-gray-50">
-                                                    <td className="py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div 
-                                                                className="w-10 h-6 rounded"
-                                                                style={{ background: card.color }}
-                                                            ></div>
-                                                            <div>
-                                                                <p className="font-medium text-gray-900">{card.name}</p>
-                                                                <p className="text-sm text-gray-500">{card.card_number}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 text-gray-600">{card.type}</td>
-                                                    <td className="py-4 font-semibold text-gray-900">
-                                                        {eyesOpen ? formatCurrency(card.balance) : "****"}
-                                                    </td>
-                                                    <td className="py-4 text-green-600 font-medium">
-                                                        {formatCurrency(card.income)}
-                                                    </td>
-                                                    <td className="py-4 text-red-600 font-medium">
-                                                        {formatCurrency(card.expense)}
-                                                    </td>
-                                                    <td className={`py-4 font-medium ${(card.income - card.expense) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {formatCurrency(card.income - card.expense)}
-                                                    </td>
-                                                    <td className="py-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                                                                <Edit className="w-4 h-4 text-gray-600" />
-                                                            </button>
-                                                            <button className="p-1 hover:bg-red-50 rounded transition-colors">
-                                                                <Trash2 className="w-4 h-4 text-red-600" />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {cards.map((card) => (
+                                                <CardComponent key={card.id} card={card} isDesktop={true} />
                                             ))}
-                                        </tbody>
-                                    </table>
+                                        </div>
+                                    </div>
+
+                                    {/* Card Details Section */}
+                                    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-6">Cards Overview</h3>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full">
+                                                <thead>
+                                                    <tr className="text-left border-b border-gray-100">
+                                                        <th className="pb-3 font-medium text-gray-600">Card Name</th>
+                                                        <th className="pb-3 font-medium text-gray-600">Type</th>
+                                                        <th className="pb-3 font-medium text-gray-600">Balance</th>
+                                                        <th className="pb-3 font-medium text-gray-600">Income</th>
+                                                        <th className="pb-3 font-medium text-gray-600">Expense</th>
+                                                        <th className="pb-3 font-medium text-gray-600">Net</th>
+                                                        <th className="pb-3 font-medium text-gray-600">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {cards.map((card) => (
+                                                        <tr key={card.id} className="border-b border-gray-50">
+                                                            <td className="py-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div
+                                                                        className="w-10 h-6 rounded"
+                                                                        style={{ background: card.color }}
+                                                                    ></div>
+                                                                    <div>
+                                                                        <p className="font-medium text-gray-900">{card.name}</p>
+                                                                        <p className="text-sm text-gray-500">{card.card_number}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-4 text-gray-600">{card.type}</td>
+                                                            <td className="py-4 font-semibold text-gray-900">
+                                                                {eyesOpen ? formatAutoCurrency(card.balance, card.currency) : "****"}
+                                                            </td>
+                                                            <td className="py-4 text-green-600 font-medium">
+                                                                {formatAutoCurrency(card.income, card.currency)}
+                                                            </td>
+                                                            <td className="py-4 text-red-600 font-medium">
+                                                                {formatAutoCurrency(card.expense, card.currency)}
+                                                            </td>
+                                                            <td className={`py-4 font-medium ${card.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {formatAutoCurrency(card.net, card.currency)}
+                                                            </td>
+                                                            <td className="py-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                                        onClick={() => handleEditCard(card.id)}
+                                                                    >
+                                                                        <Edit className="w-4 h-4 text-gray-600" />
+                                                                    </button>
+                                                                    <button
+                                                                        className="p-1 hover:bg-red-50 rounded transition-colors"
+                                                                        onClick={() => handleDeleteCard(card.id)}
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4 text-red-600" />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-center py-16">
+                                    <div className="max-w-md mx-auto">
+                                        <CreditCard className="h-24 w-24 mx-auto mb-6 text-gray-300" />
+                                        <h3 className="text-2xl font-semibold text-gray-900 mb-2">No cards found</h3>
+                                        <p className="text-gray-500 mb-6">
+                                            Get started by adding your first payment card or account to track your finances.
+                                        </p>
+                                        <button
+                                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                                            onClick={() => router.visit(route('cards.create'))}
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                            Add Your First Card
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
             {selectedCard && (
-                <div 
+                <div
                     className="fixed inset-0 z-5"
                     onClick={() => setSelectedCard(null)}
                 ></div>

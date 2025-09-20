@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CardsController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ShowCardsController;
 use App\Http\Controllers\TransactionsController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -58,9 +59,10 @@ Route::get('/expense', function() {
     return Inertia::render('activity/expense/index');
 })->name('activity.expense');
 
-Route::get('/cards', function() {
-    return Inertia::render('cards/index');
-})->name('cards.index');
+Route::get('/cards', [ShowCardsController::class, 'showCards'])->name('cards.show');
+Route::get('/cards/create', [CardsController::class, 'create'])->name('cards.create');
+Route::get('/cards/{id}/edit', [CardsController::class, 'edit'])->name('cards.edit');
+Route::delete('/cards/{id}', [CardsController::class, 'destroy'])->name('cards.destroy');
 
 Route::delete('/cards/{card}', [CardsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])
