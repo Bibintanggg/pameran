@@ -9,9 +9,13 @@ import {
     SettingsIcon,
     EyeIcon,
     EyeClosedIcon,
+    LogOut,
+    User,
+    ChevronDown,
 } from "lucide-react"
 import clsx from "clsx"
-import { useActiveCard } from "@/context/ActiveCardContext" // Import context
+import { useActiveCard } from "@/context/ActiveCardContext"
+import { useState, useRef, useEffect } from "react" // Import tambahan untuk dropdown
 
 type SidebarProps = {
     auth: {
@@ -40,11 +44,24 @@ export default function Sidebar({
     expensePerCard,
 }: SidebarProps) {
     const { url } = usePage()
-
-    // GANTI: Gunakan context
     const { activeCardId } = useActiveCard();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // 🔹 helper navigateWithCard biar query param ikut
+    // Handle klik di luar dropdown untuk menutupnya
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false)
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [])
+
     const navigateWithCard = (href: string) => {
         const urlObj = new URL(href, window.location.origin)
         if (activeCardId) {
@@ -62,6 +79,10 @@ export default function Sidebar({
         const names = auth.user.name.split(" ")
         if (names.length >= 2) return names[0][0] + names[names.length - 1][0]
         return names[0][0]
+    }
+
+    const handleLogout = () => {
+        router.post(route('logout'))
     }
 
     const linkClass = (href: string) =>
@@ -87,9 +108,12 @@ export default function Sidebar({
                 </div>
             </div>
 
-            {/* User Info */}
-            <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center gap-4">
+            {/* User Info dengan Dropdown */}
+            <div className="p-6 border-b border-gray-100 relative" ref={dropdownRef}>
+                <div
+                    className="flex items-center gap-4 cursor-pointer"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
                     <Avatar className="h-14 w-14 ring-4 ring-blue-50">
                         <AvatarImage src={getAvatarUrl()} alt={auth.user.name} />
                         <AvatarFallback className="bg-blue-500 text-white font-semibold text-lg">
@@ -102,7 +126,33 @@ export default function Sidebar({
                         </h3>
                         <p className="text-sm text-gray-500">{auth.user.name}</p>
                     </div>
+                    <ChevronDown
+                        className={`h-5 w-5 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                    />
                 </div>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                    <div className="absolute top-full left-6 right-6 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <button
+                            onClick={() => {
+                                setIsDropdownOpen(false)
+                                navigateWithCard(route("profile.edit"))
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            <User className="h-4 w-4" />
+                            Profile
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Logout
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Card Info */}
@@ -232,6 +282,15 @@ export default function Sidebar({
                     </li>
                 </ul>
             </nav>
+
+            <footer className='flex flex-col leading-[0.50rem]'>
+                <p className="flex justify-center pb-4 text-black/30">
+                    © 2025 Bintang Yudha
+                </p>
+                <a href="https://instagram.com/bintang.ydha_" target="_blank" className="flex justify-center pb-4 text-black/30">
+                    instagram? click on this text
+                </a>
+            </footer>
         </div>
     )
 }

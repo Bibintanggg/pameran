@@ -11,6 +11,7 @@ export default function Register() {
         name: '',
         email: '',
         password: '',
+        phone_number: '',
         password_confirmation: '',
     });
 
@@ -59,6 +60,23 @@ export default function Register() {
                     />
 
                     <InputError message={errors.email} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="phone_number" value="Phone Number" />
+
+                    <TextInput
+                        id="phone_number"
+                        type="tel"
+                        name="phone_number"
+                        value={data.phone_number}
+                        className="mt-1 block w-full"
+                        autoComplete="username"
+                        onChange={(e) => setData('phone_number', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.phone_number} className="mt-2" />
                 </div>
 
                 <div className="mt-4">

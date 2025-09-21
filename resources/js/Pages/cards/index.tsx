@@ -290,17 +290,11 @@ export default function Cards() {
                             />
                         </div>
 
-                        {/* Add Card Button */}
-                        <button
-                            className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-xl p-4 mb-6 flex items-center justify-center gap-3 transition-colors"
-                            onClick={() => router.visit(route('cards.create'))}
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span className="font-medium">Add New Card</span>
-                        </button>
+                        <AddCards label="Add Cards"
+                        triggerClassName="h-[3.5rem]"/>
 
                         {/* Mobile Cards Grid */}
-                        <div className="space-y-4">
+                        <div className="space-y-4 mt-5">
                             {cards.length > 0 ? (
                                 cards.map((card) => (
                                     <CardComponent key={card.id} card={card} />
@@ -310,7 +304,8 @@ export default function Cards() {
                                     <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                     <p className="text-lg font-medium">No cards found</p>
                                     <p className="mb-4">Add your first card to get started</p>
-                                    <AddCards label="Add Card" />
+                                    <AddCards label="Add Card" 
+                                    triggerClassName="h-[3.5rem]"/>
                                 </div>
                             )}
                         </div>
@@ -362,7 +357,8 @@ export default function Cards() {
                                         <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         <span className="text-sm font-medium">Refresh</span>
                                     </button>
-                                    <AddCards label={"Add Card"} />
+                                    <AddCards label={"Add Card"} 
+                                    triggerClassName="h-[3.5rem] w-44 flex items-center gap-10"/>
                                 </div>
                             </div>
                         </div>
@@ -479,13 +475,10 @@ export default function Cards() {
                                         <p className="text-gray-500 mb-6">
                                             Get started by adding your first payment card or account to track your finances.
                                         </p>
-                                        <button
-                                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-                                            onClick={() => router.visit(route('cards.create'))}
-                                        >
-                                            <Plus className="h-5 w-5" />
-                                            Add Your First Card
-                                        </button>
+                                        <AddCards 
+                                        label="Add your first cards"
+                                        className="items-center flex justify-center gap-5"
+                                        triggerClassName="h-16 w-72"/>
                                     </div>
                                 </div>
                             )}
