@@ -23,16 +23,30 @@ import {
 import { useState } from "react";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 import AddCards from "@/Components/AddCards";
-import { 
-    AlertDialog, 
-    AlertDialogAction, 
-    AlertDialogCancel, 
-    AlertDialogContent, 
-    AlertDialogDescription, 
-    AlertDialogFooter, 
-    AlertDialogHeader, 
-    AlertDialogTitle, 
-    AlertDialogTrigger } from "@/Components/ui/alert-dialog";
+import { Input } from "@/Components/ui/input"
+import { Label } from "@/Components/ui/label"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger
+} from "@/Components/ui/alert-dialog";
+import { Button } from "@/Components/ui/button"
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/Components/ui/dialog"
 
 type Card = {
     id: number;
@@ -75,6 +89,7 @@ export default function Cards() {
     const [eyesOpen, setEyesOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isOpenDialog, setIsOpenDialog] = useState(false)
 
     const formatAutoCurrency = (amount: number, currencyId?: string) => {
         const currency = currencyMap[currencyId ?? 'as_dollar']; // fallback beneran ada
@@ -100,11 +115,11 @@ export default function Cards() {
     };
 
     const handleDeleteCard = (cardId: number) => {
-            router.delete(route('cards.destroy', {card: cardId}), {
-                onSuccess: () => {
-                    setSelectedCard(null);
-                }
-            });
+        router.delete(route('cards.destroy', { card: cardId }), {
+            onSuccess: () => {
+                setSelectedCard(null);
+            }
+        });
     };
 
     const handleEditCard = (cardId: number) => {
@@ -162,13 +177,40 @@ export default function Cards() {
 
             {selectedCard === card.id && (
                 <div className="absolute top-12 right-6 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10">
-                    <button
-                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
-                        onClick={() => router.visit(route('cards.show', card.id))}
-                    >
-                        <Eye className="w-4 h-4" />
-                        View Details
-                    </button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant={"link"} className="flex items-center"
+                            onClick={() => setIsOpenDialog(true)}>
+                                <Eye className="w-4 h-4" />
+                                <p>View Details</p>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Edit profile</DialogTitle>
+                                <DialogDescription>
+                                    Make changes to your profile here. Click save when you&apos;re
+                                    done.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4">
+                                <div className="grid gap-3">
+                                    <Label htmlFor="name-1">Name</Label>
+                                    <Input id="name-1" name="name" defaultValue="Pedro Duarte" />
+                                </div>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="username-1">Username</Label>
+                                    <Input id="username-1" name="username" defaultValue="@peduarte" />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button type="submit">Save changes</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                     <button
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
                         onClick={() => handleEditCard(card.id)}
@@ -291,7 +333,7 @@ export default function Cards() {
                         </div>
 
                         <AddCards label="Add Cards"
-                        triggerClassName="h-[3.5rem]"/>
+                            triggerClassName="h-[3.5rem]" />
 
                         {/* Mobile Cards Grid */}
                         <div className="space-y-4 mt-5">
@@ -304,8 +346,8 @@ export default function Cards() {
                                     <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                     <p className="text-lg font-medium">No cards found</p>
                                     <p className="mb-4">Add your first card to get started</p>
-                                    <AddCards label="Add Card" 
-                                    triggerClassName="h-[3.5rem]"/>
+                                    <AddCards label="Add Card"
+                                        triggerClassName="h-[3.5rem]" />
                                 </div>
                             )}
                         </div>
@@ -357,8 +399,8 @@ export default function Cards() {
                                         <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         <span className="text-sm font-medium">Refresh</span>
                                     </button>
-                                    <AddCards label={"Add Card"} 
-                                    triggerClassName="h-[3.5rem] w-44 flex items-center gap-10"/>
+                                    <AddCards label={"Add Card"}
+                                        triggerClassName="h-[3.5rem] w-44 flex items-center gap-10" />
                                 </div>
                             </div>
                         </div>
@@ -475,10 +517,10 @@ export default function Cards() {
                                         <p className="text-gray-500 mb-6">
                                             Get started by adding your first payment card or account to track your finances.
                                         </p>
-                                        <AddCards 
-                                        label="Add your first cards"
-                                        className="items-center flex justify-center gap-5"
-                                        triggerClassName="h-16 w-72"/>
+                                        <AddCards
+                                            label="Add your first cards"
+                                            className="items-center flex justify-center gap-5"
+                                            triggerClassName="h-16 w-72" />
                                     </div>
                                 </div>
                             )}
