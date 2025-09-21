@@ -9,8 +9,8 @@ export default function BottomNavbar() {
         { icon: <Home className="w-6 h-6" />, path: "/home" },
         { icon: <TrendingUp className="w-6 h-6" />, path: "/all-activity" },
         { icon: <PlusSquare className="w-6 h-6" />, path: "/tambah" },
-        { icon: <CreditCard className="w-6 h-6" />, path: "/transaksi" },
-        { icon: <Settings className="w-6 h-6" />, path: "/settings" },
+        { icon: <CreditCard className="w-6 h-6" />, path: "/cards" },
+        { icon: <Settings className="w-6 h-6" />, path: "/profile" },
     ]
 
     return (

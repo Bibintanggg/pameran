@@ -17,10 +17,22 @@ import {
     TrendingUp,
     ArrowUpRight,
     ArrowDownLeft,
-    RefreshCw
+    RefreshCw,
+    TrashIcon
 } from "lucide-react";
 import { useState } from "react";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
+import AddCards from "@/Components/AddCards";
+import { 
+    AlertDialog, 
+    AlertDialogAction, 
+    AlertDialogCancel, 
+    AlertDialogContent, 
+    AlertDialogDescription, 
+    AlertDialogFooter, 
+    AlertDialogHeader, 
+    AlertDialogTitle, 
+    AlertDialogTrigger } from "@/Components/ui/alert-dialog";
 
 type Card = {
     id: number;
@@ -69,7 +81,6 @@ export default function Cards() {
         return formatCurrency(amount, currency);
     };
 
-
     const getUserInitials = () => {
         const names = auth.user.name.split(' ');
         if (names.length >= 2) {
@@ -89,13 +100,11 @@ export default function Cards() {
     };
 
     const handleDeleteCard = (cardId: number) => {
-        if (confirm('Are you sure you want to delete this card?')) {
-            router.delete(route('cards.destroy', cardId), {
+            router.delete(route('cards.destroy', {card: cardId}), {
                 onSuccess: () => {
                     setSelectedCard(null);
                 }
             });
-        }
     };
 
     const handleEditCard = (cardId: number) => {
@@ -106,6 +115,15 @@ export default function Cards() {
         navigator.clipboard.writeText(cardNumber);
     };
 
+    const getCurrencyLabel = (value: string) => {
+        switch (value) {
+            case 'indonesian_rupiah': return "Indonesian Rupiah"
+            case 'baht_thailand': return "Baht Thailand"
+            case 'as_dollar': return 'AS Dollar'
+            default: "Indonesian Rupiah"
+        }
+    }
+
     const CardComponent = ({ card, isDesktop = false }: { card: Card; isDesktop?: boolean }) => (
         <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl`}>
             <div
@@ -114,7 +132,7 @@ export default function Cards() {
             >
                 <div className="flex justify-between items-start">
                     <div>
-                        <p className="text-sm opacity-80">{card.type}</p>
+                        <p className="text-sm opacity-80">{getCurrencyLabel(card.currency)}</p>
                         <h3 className="text-lg font-bold">{card.name}</h3>
                     </div>
                     <button
@@ -292,12 +310,7 @@ export default function Cards() {
                                     <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                     <p className="text-lg font-medium">No cards found</p>
                                     <p className="mb-4">Add your first card to get started</p>
-                                    <button
-                                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-                                        onClick={() => router.visit(route('cards.create'))}
-                                    >
-                                        Add Card
-                                    </button>
+                                    <AddCards label="Add Card" />
                                 </div>
                             )}
                         </div>
@@ -349,13 +362,7 @@ export default function Cards() {
                                         <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         <span className="text-sm font-medium">Refresh</span>
                                     </button>
-                                    <button
-                                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-                                        onClick={() => router.visit(route('cards.create'))}
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                        <span className="font-medium">Add Card</span>
-                                    </button>
+                                    <AddCards label={"Add Card"} />
                                 </div>
                             </div>
                         </div>
@@ -385,7 +392,7 @@ export default function Cards() {
                                                 <thead>
                                                     <tr className="text-left border-b border-gray-100">
                                                         <th className="pb-3 font-medium text-gray-600">Card Name</th>
-                                                        <th className="pb-3 font-medium text-gray-600">Type</th>
+                                                        {/* <th className="pb-3 font-medium text-gray-600">Type</th> */}
                                                         <th className="pb-3 font-medium text-gray-600">Balance</th>
                                                         <th className="pb-3 font-medium text-gray-600">Income</th>
                                                         <th className="pb-3 font-medium text-gray-600">Expense</th>
@@ -408,7 +415,7 @@ export default function Cards() {
                                                                     </div>
                                                                 </div>
                                                             </td>
-                                                            <td className="py-4 text-gray-600">{card.type}</td>
+                                                            {/* <td className="py-4 text-gray-600">{card.currency}</td> */}
                                                             <td className="py-4 font-semibold text-gray-900">
                                                                 {eyesOpen ? formatAutoCurrency(card.balance, card.currency) : "****"}
                                                             </td>
@@ -429,12 +436,32 @@ export default function Cards() {
                                                                     >
                                                                         <Edit className="w-4 h-4 text-gray-600" />
                                                                     </button>
-                                                                    <button
-                                                                        className="p-1 hover:bg-red-50 rounded transition-colors"
-                                                                        onClick={() => handleDeleteCard(card.id)}
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4 text-red-600" />
-                                                                    </button>
+                                                                    <AlertDialog>
+                                                                        <AlertDialogTrigger asChild>
+                                                                            <button className="hover:bg-black/5 transition-all duration-300 ease-in-out rounded-full w-5 h-5 flex items-center justify-center">
+                                                                                <TrashIcon size={15} color={"red"} />
+                                                                            </button>
+                                                                        </AlertDialogTrigger>
+                                                                        <AlertDialogContent>
+                                                                            <AlertDialogHeader>
+                                                                                <AlertDialogTitle>Delete this card?</AlertDialogTitle>
+                                                                                <AlertDialogDescription>
+                                                                                    This action cannot be undone. The card and its data will be permanently deleted.
+                                                                                </AlertDialogDescription>
+                                                                            </AlertDialogHeader>
+                                                                            <AlertDialogFooter>
+                                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                <AlertDialogAction asChild>
+                                                                                    <button
+                                                                                        onClick={() => handleDeleteCard(card.id)}
+                                                                                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                                                                    >
+                                                                                        Delete
+                                                                                    </button>
+                                                                                </AlertDialogAction>
+                                                                            </AlertDialogFooter>
+                                                                        </AlertDialogContent>
+                                                                    </AlertDialog>
                                                                 </div>
                                                             </td>
                                                         </tr>

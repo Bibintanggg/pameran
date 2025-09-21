@@ -1,4 +1,4 @@
-import Cards from "@/Components/AddCards"
+import AddCards from "@/Components/AddCards"
 import AddConvert from "@/Components/AddConvert"
 import AddExpense from "@/Components/AddExpense"
 import AddIncome from "@/Components/AddIncome"
@@ -209,7 +209,7 @@ export default function Home() {
 
                         <div className="mt-4 flex items-center gap-3 overflow-x-auto
                         scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                            <Cards label={"Cards"} />
+                            <AddCards label={"Cards"} />
 
                             {cards && cards.length > 0 ? (
                                 cards.map((card) => (
@@ -276,7 +276,7 @@ export default function Home() {
                         <div className="mt-8 overflow-y-auto">
                             <div className="flex items-center justify-between">
                                 <h1 className="text-lg font-medium">Recent Activity</h1>
-                                <button className="flex items-center gap-2 text-sm text-blue-500">
+                                <button onClick={() => router.visit(route('all-activity'))} className="flex items-center gap-2 text-sm text-blue-500">
                                     <p>See details</p>
                                     <ChevronRight />
                                 </button>
@@ -443,7 +443,8 @@ export default function Home() {
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-lg font-bold text-gray-900">Transactions</h3>
                                             <div className="flex items-center gap-3">
-                                                <button className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                                <button
+                                                className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                                                     View all
                                                 </button>
                                                 <button onClick={() => router.visit(route('all-activity'))} className="text-sm px-3 py-1 text-blue-600 hover:bg-gray-100 rounded-lg transition-colors">
@@ -471,7 +472,7 @@ export default function Home() {
                                     <QuickActionCard gradient={false} className="overflow-y-auto">
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="text-lg font-bold text-gray-900">Available Card</h3>
-                                            <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                                            <button onClick={() => router.visit(route('cards.show'))} className="text-blue-600 hover:text-blue-700 font-medium text-sm">
                                                 View all
                                             </button>
                                         </div>
@@ -502,7 +503,7 @@ export default function Home() {
                                             ) : (
                                                 <p className="text-gray-500 text-center py-6">No cards available</p>
                                             )}
-                                            <Cards label="Add Card" />
+                                            {/* <AddCards label="Add Card" /> */}
                                         </div>
                                     </QuickActionCard>
 

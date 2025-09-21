@@ -25,7 +25,7 @@ interface CardsProps {
     className?: string
 }
 
-export default function Cards({ label, className }: CardsProps) {
+export default function AddCards({ label, className }: CardsProps) {
     const [wallet, setWallet] = React.useState<string>("")
     const {data, setData, post, processing, errors, reset} = useForm({
         'currency': 'indonesian_rupiah',

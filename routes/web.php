@@ -60,9 +60,7 @@ Route::get('/expense', function() {
 })->name('activity.expense');
 
 Route::get('/cards', [ShowCardsController::class, 'showCards'])->name('cards.show');
-Route::get('/cards/create', [CardsController::class, 'create'])->name('cards.create');
 Route::get('/cards/{id}/edit', [CardsController::class, 'edit'])->name('cards.edit');
-Route::delete('/cards/{id}', [CardsController::class, 'destroy'])->name('cards.destroy');
 
 Route::delete('/cards/{card}', [CardsController::class, 'destroy'])
     ->middleware(['auth', 'verified'])

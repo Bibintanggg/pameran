@@ -875,7 +875,7 @@ class CardsController extends Controller
             'balance' => $validated['balance'] ?? 0
         ]);
 
-        return redirect()->route('home.index')->with('success', 'Cards berhasil ditambahkan');
+        return back()->with('success', 'Cards berhasil ditambahkan');
     }
 
     /**
@@ -914,6 +914,7 @@ class CardsController extends Controller
 
         $card->delete();
 
-        return redirect()->route('home.index')->with('success', 'Card berhasil dihapus');
+        // return redirect()->route('card.index')->with('success', 'Card berhasil dihapus');
+        return back()->with('success', 'Cards berhasil dihapus');
     }
 }
