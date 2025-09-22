@@ -80,6 +80,7 @@ export default function AllActivity() {
 
     const { activeCardId, setActiveCardId } = useActiveCard();
 
+
     const [filter, setFilter] = useState<"all" | "income" | "expense">(initialFilter as "all" | "income" | "expense");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
@@ -167,7 +168,6 @@ export default function AllActivity() {
             : chartDataForActiveCard.yearly;
     }, [chartDataForActiveCard, chartMode]);
 
-    // Hitung total income dan expense berdasarkan kartu aktif
     const calculatedTotalIncome = useMemo(() => {
         if (activeCardId === 0) return totalIncome;
         return incomePerCard[activeCardId] || 0;
@@ -178,7 +178,6 @@ export default function AllActivity() {
         return expensePerCard[activeCardId] || 0;
     }, [activeCardId, totalExpense, expensePerCard]);
 
-    // Hitung rates berdasarkan kartu aktif
     const calculatedIncomeRate = useMemo(() => {
         if (activeCardId === 0) return incomeRate;
         return ratesPerCard[activeCardId]?.income_rate || 0;
@@ -282,6 +281,11 @@ export default function AllActivity() {
     const netBalance = calculatedTotalIncome - calculatedTotalExpense;
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
     const netBalanceChange = Math.abs(calculatedIncomeRate - calculatedExpenseRate);
+
+    console.log("calculatedTotalExpense", calculatedTotalExpense);
+    console.log("activeCardId", activeCardId);
+    console.log("expensePerCard", expensePerCard);
+    console.log("totalExpense", totalExpense);
 
     return (
         <div className="min-h-screen bg-gray-50">

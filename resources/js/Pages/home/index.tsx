@@ -73,7 +73,7 @@ export default function Home() {
     };
 
     const [EyesOpen, setEyesOpen] = useState(false)
-    
+
     // GANTI: Gunakan context instead of local state
     const { activeCardId, setActiveCardId } = useActiveCard();
 
@@ -367,7 +367,7 @@ export default function Home() {
                                             <div className="flex gap-2">
                                                 <button
                                                     className={`text-sm px-3 py-1 rounded-lg transition-colors ${
-                                                        chartMode === 'monthly' ? 'bg-gray-800 text-white' : 
+                                                        chartMode === 'monthly' ? 'bg-gray-800 text-white' :
                                                         'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                         }`}
                                                     onClick={() => setChartMode('monthly')}
@@ -376,7 +376,7 @@ export default function Home() {
                                                 </button>
                                                 <button
                                                     className={`text-sm px-3 py-1 rounded-lg transition-colors ${
-                                                        chartMode === 'yearly' ? 'bg-gray-800 text-white' 
+                                                        chartMode === 'yearly' ? 'bg-gray-800 text-white'
                                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                         }`}
                                                     onClick={() => setChartMode('yearly')}

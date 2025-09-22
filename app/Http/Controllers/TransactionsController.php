@@ -101,7 +101,7 @@ class TransactionsController extends Controller
             'asset' => 'required|string',
             'category' => 'required|string',
             'type' => ['required', 'string', Rule::in(TransactionsType::values())],
-            'to_cards_id' => 'required|exists:cards,id'
+            'from_cards_id' => 'required|exists:cards,id'
         ]);
 
         // dd($data);
@@ -121,7 +121,7 @@ class TransactionsController extends Controller
             Transactions::create([
                 'user_id' => Auth::id(),
                 'type' => $data['type'],
-                'to_cards_id' => $data['to_cards_id'],
+                'from_cards_id' => $data['from_cards_id'],
                 'amount' => $data['amount'],
                 'asset' => $data['asset'],
                 'category' => $data['category'],
@@ -129,7 +129,7 @@ class TransactionsController extends Controller
                 'transaction_date' => $data['transaction_date'],
             ]);
 
-            $card = Cards::find($data['to_cards_id']); // Gunakan to_cards_id
+            $card = Cards::find($data['from_cards_id']); // Gunakan to_cards_id
             if ($card) {
                 if ($card) {
                     if ($card->balance < $data['amount']) {

@@ -69,9 +69,9 @@ class CardsController extends Controller
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
-            ->selectRaw('to_cards_id, SUM(CASE 
-            WHEN type = ? THEN amount 
-            WHEN type = ? THEN converted_amount 
+            ->selectRaw('to_cards_id, SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
             ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -81,10 +81,19 @@ class CardsController extends Controller
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $expensePerCard = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::EXPENSE->value)
-            ->selectRaw('to_cards_id, SUM(amount) as total')
-            ->groupBy('to_cards_id')
-            ->pluck('total', 'to_cards_id')
+            ->whereIn('type', [ 
+                TransactionsType::EXPENSE->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->selectRaw('from_cards_id, SUM(CASE
+        WHEN type = ? THEN amount
+        WHEN type = ? THEN amount
+        ELSE 0 END) as total', [
+                TransactionsType::EXPENSE->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->groupBy('from_cards_id')
+            ->pluck('total', 'from_cards_id')
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $currentIncome = Transactions::where('user_id', $userId)
@@ -93,9 +102,9 @@ class CardsController extends Controller
                 TransactionsType::CONVERT->value
             ])
             ->whereDate('created_at', now()->toDateString())
-            ->selectRaw('SUM(CASE 
-            WHEN type = ? THEN amount 
-            WHEN type = ? THEN converted_amount 
+            ->selectRaw('SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
             ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -103,7 +112,11 @@ class CardsController extends Controller
             ->value('total') ?? 0;
 
         $currentExpense = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::EXPENSE->value)
+            ->where(
+                'type',
+                TransactionsType::EXPENSE->value,
+                TransactionsType::CONVERT->value
+            )
             ->whereDate('created_at', now()->toDateString())
             ->sum('amount');
 
@@ -127,16 +140,15 @@ class CardsController extends Controller
         $expenseRateHigh = $incomeRateLow;
         $expenseRateLow  = $incomeRateHigh;
 
-        // Monthly dan yearly data sudah benar
         $monthlyData = Transactions::where('user_id', $userId)
             ->whereYear('transaction_date', $currentYear)
             ->selectRaw(
                 'to_cards_id,
             MONTH(transaction_date) as month,
-            SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
-                ELSE 0 
+            SUM(CASE
+                WHEN type = ? THEN amount
+                WHEN type = ? THEN converted_amount
+                ELSE 0
             END) as income,
             SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
                 [
@@ -164,10 +176,10 @@ class CardsController extends Controller
             ->selectRaw(
                 'to_cards_id,
             YEAR(transaction_date) as year,
-            SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
-                ELSE 0 
+            SUM(CASE
+                WHEN type = ? THEN amount
+                WHEN type = ? THEN converted_amount
+                ELSE 0
             END) as income,
             SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
                 [
@@ -279,9 +291,9 @@ class CardsController extends Controller
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
-            ->selectRaw('SUM(CASE 
-            WHEN type = ? THEN amount 
-            WHEN type = ? THEN converted_amount 
+            ->selectRaw('SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
             ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -289,17 +301,27 @@ class CardsController extends Controller
             ->value('total') ?? 0;
 
         $totalExpense = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::EXPENSE->value)
-            ->sum('amount');
+            ->whereIn('type', [
+                TransactionsType::EXPENSE->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->selectRaw('SUM(CASE
+        WHEN type = ? THEN amount
+        WHEN type = ? THEN amount
+        ELSE 0 END) as total', [
+                TransactionsType::EXPENSE->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->value('total') ?? 0;
 
         $incomePerCard = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
-            ->selectRaw('to_cards_id, SUM(CASE 
-            WHEN type = ? THEN amount 
-            WHEN type = ? THEN converted_amount 
+            ->selectRaw('to_cards_id, SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
             ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -309,10 +331,19 @@ class CardsController extends Controller
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $expensePerCard = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::EXPENSE->value)
-            ->selectRaw('to_cards_id, SUM(amount) as total')
-            ->groupBy('to_cards_id')
-            ->pluck('total', 'to_cards_id')
+            ->whereIn('type', [
+                TransactionsType::EXPENSE->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->selectRaw('from_cards_id, SUM(CASE
+        WHEN type = ? THEN amount
+        WHEN type = ? THEN amount
+        ELSE 0 END) as total', [
+                TransactionsType::EXPENSE->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->groupBy('from_cards_id')
+            ->pluck('total', 'from_cards_id')
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $ratesPerCard = collect();
@@ -334,17 +365,22 @@ class CardsController extends Controller
             ->whereYear('transaction_date', $currentYear)
             ->selectRaw(
                 'to_cards_id,
-            MONTH(transaction_date) as month,
-            SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
-                ELSE 0 
-            END) as income,
-            SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
+        MONTH(transaction_date) as month,
+        SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
+            ELSE 0
+        END) as income,
+        SUM(CASE 
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN amount
+            ELSE 0 
+        END) as expense',
                 [
                     TransactionsType::INCOME->value,
                     TransactionsType::CONVERT->value,
-                    TransactionsType::EXPENSE->value
+                    TransactionsType::EXPENSE->value,
+                    TransactionsType::CONVERT->value
                 ]
             )
             ->groupBy('to_cards_id', 'month')
@@ -366,17 +402,22 @@ class CardsController extends Controller
         $yearlyData = Transactions::where('user_id', $userId)
             ->selectRaw(
                 'to_cards_id,
-            YEAR(transaction_date) as year,
-            SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
-                ELSE 0 
-            END) as income,
-            SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as expense',
+        YEAR(transaction_date) as year,
+        SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
+            ELSE 0
+        END) as income,
+        SUM(CASE 
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN amount
+            ELSE 0 
+        END) as expense',
                 [
                     TransactionsType::INCOME->value,
                     TransactionsType::CONVERT->value,
-                    TransactionsType::EXPENSE->value
+                    TransactionsType::EXPENSE->value,
+                    TransactionsType::CONVERT->value
                 ]
             )
             ->groupBy('to_cards_id', 'year')
@@ -396,6 +437,7 @@ class CardsController extends Controller
 
         // calculate income expense buat metrics
         $totalTransactions = $totalIncome + $totalExpense;
+        // $expenseCard = $totalIncome ;
         $incomeRate = $totalTransactions > 0 ? round(($totalIncome / $totalTransactions) * 100, 2) : 0;
         $expenseRate = $totalTransactions > 0 ? round(($totalExpense / $totalTransactions) * 100, 2) : 0;
 
@@ -513,9 +555,9 @@ class CardsController extends Controller
 
         // Total income
         $totalIncome = $transactionsQuery->clone()
-            ->selectRaw('SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
+            ->selectRaw('SUM(CASE
+                WHEN type = ? THEN amount
+                WHEN type = ? THEN converted_amount
                 ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -528,9 +570,9 @@ class CardsController extends Controller
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
-            ->selectRaw('to_cards_id, SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
+            ->selectRaw('to_cards_id, SUM(CASE
+                WHEN type = ? THEN amount
+                WHEN type = ? THEN converted_amount
                 ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -545,9 +587,9 @@ class CardsController extends Controller
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
-            ->selectRaw('category, SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
+            ->selectRaw('category, SUM(CASE
+                WHEN type = ? THEN amount
+                WHEN type = ? THEN converted_amount
                 ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -569,10 +611,10 @@ class CardsController extends Controller
             ->whereYear('transaction_date', $currentYear)
             ->selectRaw(
                 'MONTH(transaction_date) as month,
-                SUM(CASE 
-                    WHEN type = ? THEN amount 
-                    WHEN type = ? THEN converted_amount 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN type = ? THEN amount
+                    WHEN type = ? THEN converted_amount
+                    ELSE 0
                 END) as income',
                 [
                     TransactionsType::INCOME->value,
@@ -601,10 +643,10 @@ class CardsController extends Controller
             ])
             ->selectRaw(
                 'YEAR(transaction_date) as year,
-                SUM(CASE 
-                    WHEN type = ? THEN amount 
-                    WHEN type = ? THEN converted_amount 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN type = ? THEN amount
+                    WHEN type = ? THEN converted_amount
+                    ELSE 0
                 END) as income',
                 [
                     TransactionsType::INCOME->value,
@@ -634,9 +676,9 @@ class CardsController extends Controller
                 TransactionsType::CONVERT->value
             ])
             ->whereYear('transaction_date', $currentYear - 1)
-            ->selectRaw('SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
+            ->selectRaw('SUM(CASE
+                WHEN type = ? THEN amount
+                WHEN type = ? THEN converted_amount
                 ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
@@ -897,10 +939,7 @@ class CardsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Cards $cards)
-    {
-        
-    }
+    public function update(Request $request, Cards $cards) {}
 
     /**
      * Remove the specified resource from storage.

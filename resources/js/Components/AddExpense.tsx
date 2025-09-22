@@ -51,7 +51,7 @@ export default function AddExpense({
         'asset': '',
         'category': '',
         'type': 'expense', // expense
-        'to_cards_id': activeCardId
+        'from_cards_id': activeCardId
     })
 
     const handleSubmit = (e: React.FormEvent) => {
