@@ -895,12 +895,6 @@ export default function AllActivity() {
                                                         <span className="font-medium">{cards.length}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-500">Total Balance:</span>
-                                                        <span className="font-medium">
-                                                            {formatAutoCurrency(cards.reduce((sum, card) => sum + (card.balance || 0), 0))}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
                                                         <span className="text-gray-500">Transactions:</span>
                                                         <span className="font-medium">{transactions.length}</span>
                                                     </div>
