@@ -18,7 +18,7 @@ import {
     CreditCard,
     RefreshCw
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Transaction } from "@/types/transaction";
 import { Card } from "@/types/card";
@@ -79,34 +79,46 @@ export default function AllActivity() {
     } = usePage().props as unknown as Props;
 
     const { activeCardId, setActiveCardId } = useActiveCard();
-
+    const { activeCardId: initialActiveCardId } = usePage().props as any;
 
     const [filter, setFilter] = useState<"all" | "income" | "expense">(initialFilter as "all" | "income" | "expense");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
 
+
     const activeCard = cards.find((card) => card.id === activeCardId); // DARI CONTEXT CARD AKTIF
 
     // Filter transaksi berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
-        if (activeCardId === 0) { // Jika semua kartu dipilih
-            return transactions.filter((t) => {
-                if (filter === "all") return true;
-                if (filter === "income") return t.type_label === "Income";
-                if (filter === "expense") return t.type_label === "Expense";
-                return true;
-            });
-        } else { // Jika kartu tertentu dipilih
-            return transactions.filter((t) => {
-                const matchesCard = t.to_cards_id === activeCardId;
-                if (!matchesCard) return false;
-                if (filter === "all") return true;
-                if (filter === "income") return t.type_label === "Income";
-                if (filter === "expense") return t.type_label === "Expense";
-                return true;
-            });
-        }
+        return transactions.filter((t) => {
+            // Filter berdasarkan card
+            let matchesCard = false;
+
+            if (activeCardId === 0) {
+                matchesCard = true; // Show all cards
+            } else {
+                // Filter berdasarkan tipe transaksi dan card yang sesuai
+                if (t.type === 'income' || t.type === 'convert') {
+                    matchesCard = t.to_cards_id === activeCardId;
+                } else if (t.type === 'expense') {
+                    matchesCard = t.from_cards_id === activeCardId;
+                }
+            }
+
+            if (!matchesCard) return false;
+
+            if (filter === "all") return true;
+            if (filter === "income") return t.type === "income" || t.type === "convert";
+            if (filter === "expense") return t.type === "expense";
+            return true;
+        });
     }, [transactions, activeCardId, filter]);
+
+    useEffect(() => {
+        if (initialActiveCardId && initialActiveCardId !== activeCardId) {
+            setActiveCardId(initialActiveCardId);
+        }
+    }, [initialActiveCardId]);
 
     // Data untuk chart berdasarkan kartu aktif
     const chartDataForActiveCard = useMemo(() => {
@@ -241,7 +253,8 @@ export default function AllActivity() {
 
         router.get(route('all-activity'), {
             filter: newFilter,
-            chartMode
+            chartMode,
+            activeCardId
         }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
@@ -256,7 +269,8 @@ export default function AllActivity() {
 
         router.get(route('all-activity'), {
             filter,
-            chartMode: newMode
+            chartMode: newMode,
+            activeCardId
         }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
@@ -269,7 +283,8 @@ export default function AllActivity() {
         setIsLoading(true);
         router.get(route('all-activity'), {
             filter,
-            chartMode
+            chartMode,
+            activeCardId
         }, {
             preserveState: false,
             onFinish: () => setIsLoading(false)
@@ -693,7 +708,7 @@ export default function AllActivity() {
                                                     View all
                                                 </button>
                                                 <button onClick={() => window.location.href = route("activity-income.export")}
-                                                className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                                    className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                                     Export
                                                 </button>
                                                 <Popover>
@@ -811,8 +826,8 @@ export default function AllActivity() {
                                                         <div
                                                             key={card.id}
                                                             className={`p-3 rounded-lg transition-colors cursor-pointer ${activeCardId === card.id
-                                                                    ? 'bg-blue-50 border border-blue-200'
-                                                                    : 'bg-gray-50 hover:bg-gray-100'
+                                                                ? 'bg-blue-50 border border-blue-200'
+                                                                : 'bg-gray-50 hover:bg-gray-100'
                                                                 }`}
                                                             onClick={() => setActiveCardId(card.id)}
                                                         >

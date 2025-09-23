@@ -82,7 +82,7 @@ export default function Home() {
     const activeRates = ratesPerCard?.[activeCardId] ?? { income_rate: 0, expense_rate: 0 };
 
     const filteredTransactions = useMemo(() => {
-        return transactions.filter((t: any) => t.to_cards_id === activeCardId);
+        return transactions.filter((t: any) => t.to_cards_id || t.from_cards_id === activeCardId);
     }, [transactions, activeCardId]);
 
     // ava helper
