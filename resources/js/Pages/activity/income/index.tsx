@@ -79,6 +79,8 @@ export default function Income() {
     } = usePage().props as unknown as Props;
 
     const { activeCardId, setActiveCardId } = useActiveCard();
+    const { activeCardId: initialActiveCardId } = usePage().props as any;
+
 
     const [filter, setFilter] = useState<"all" | "monthly" | "yearly">(initialFilter as "all" | "monthly" | "yearly");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
@@ -172,7 +174,7 @@ export default function Income() {
                     </div>
                 </div>
                 <div className={`p-3 rounded-xl ${color === 'green' ? 'bg-green-50' :
-                        color === 'blue' ? 'bg-blue-50' : 'bg-orange-50'
+                    color === 'blue' ? 'bg-blue-50' : 'bg-orange-50'
                     }`}>
                     {icon}
                 </div>
@@ -186,18 +188,21 @@ export default function Income() {
     };
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
-        if (isLoading) return;
-
         setIsLoading(true);
-        setChartMode(newMode);
-
-        router.get(route('income.activity'), {
+        router.get(route('income.index'), {
             filter,
             chartMode: newMode,
             activeCardId
         }, {
             preserveState: true,
-            onFinish: () => setIsLoading(false)
+            onFinish: () => {
+                console.log('Request finished');
+                setIsLoading(false);
+            },
+            onError: (error) => {
+                console.error('Request error:', error);
+                setIsLoading(false);
+            }
         });
     };
 
@@ -205,7 +210,7 @@ export default function Income() {
         if (isLoading) return;
 
         setIsLoading(true);
-        router.get(route('income.activity'), {
+        router.get(route('income.index'), {
             filter,
             chartMode,
             activeCardId
@@ -268,8 +273,8 @@ export default function Income() {
                                 <button
                                     onClick={() => setActiveCardId(0)}
                                     className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === 0
-                                            ? "bg-green-500 text-white"
-                                            : "bg-gray-100 text-gray-700"
+                                        ? "bg-green-500 text-white"
+                                        : "bg-gray-100 text-gray-700"
                                         }`}
                                 >
                                     All Cards
@@ -280,8 +285,8 @@ export default function Income() {
                                             key={card.id}
                                             onClick={() => setActiveCardId(card.id)}
                                             className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === card.id
-                                                    ? "bg-green-500 text-white"
-                                                    : "bg-gray-100 text-gray-700"
+                                                ? "bg-green-500 text-white"
+                                                : "bg-gray-100 text-gray-700"
                                                 }`}
                                         >
                                             {card.name}
@@ -670,7 +675,7 @@ export default function Income() {
                                                                 if (selected?.from && selected?.to) {
                                                                     setIsLoading(true);
 
-                                                                    router.get(route('income.activity'), {
+                                                                    router.get(route('income.index'), {
                                                                         filter,
                                                                         chartMode,
                                                                         activeCardId,
@@ -762,7 +767,7 @@ export default function Income() {
                                                                             <div>{formatAutoCurrency(value, activeCard?.currency)}</div>
                                                                             {/* <div className="text-xs text-gray-500">{percentage}% of total</div> */}
                                                                         </div>,
-                                                                        
+
                                                                     ];
                                                                 }}
                                                                 contentStyle={{
