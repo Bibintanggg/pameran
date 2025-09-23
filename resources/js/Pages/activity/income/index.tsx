@@ -36,6 +36,7 @@ type Props = {
         yearly: { label: string; income: number; target: number }[];
     };
     incomeByCategory: Record<string, number>;
+    incomeByCategoryPerCard: Record<number, Record<string, number>>;
     totalIncome: number;
     avgMonthlyIncome: number;
     growthRate: number;
@@ -67,6 +68,7 @@ export default function Income() {
         cards,
         chartData,
         incomeByCategory,
+        incomeByCategoryPerCard,
         totalIncome,
         avgMonthlyIncome,
         growthRate,
@@ -120,15 +122,23 @@ export default function Income() {
         return incomePerCard[activeCardId] || 0;
     }, [activeCardId, totalIncome, incomePerCard]);
 
+    const activeCardIncomeByCategory = useMemo(() => {
+        if (activeCardId === 0) {
+            return incomeByCategory; // Untuk "All Cards", gunakan yang universal
+        } else {
+            return incomeByCategoryPerCard[activeCardId] || {};
+        }
+    }, [activeCardId, incomeByCategory, incomeByCategoryPerCard]);
+
     // Transform incomeByCategory untuk chart pie
     const categoryChartData = useMemo(() => {
         const colors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', '#84CC16'];
-        return Object.entries(incomeByCategory).map(([category, amount], index) => ({
+        return Object.entries(activeCardIncomeByCategory).map(([category, amount], index) => ({
             name: category,
             value: amount,
             color: colors[index % colors.length]
         }));
-    }, [incomeByCategory]);
+    }, [activeCardIncomeByCategory]);
 
     const getUserInitials = () => {
         const names = auth.user.name.split(' ');
@@ -151,9 +161,8 @@ export default function Income() {
                 <div className="flex-1">
                     <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
                     <p className="text-2xl font-bold text-gray-900 mb-1">{value}</p>
-                    <div className={`flex items-center text-sm ${
-                        trend === 'up' ? 'text-green-600' : 'text-red-500'
-                    }`}>
+                    <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-600' : 'text-red-500'
+                        }`}>
                         {trend === 'up' ? (
                             <ArrowUpRight className="w-4 h-4 mr-1" />
                         ) : (
@@ -162,10 +171,9 @@ export default function Income() {
                         <span>{Math.abs(change)}%</span>
                     </div>
                 </div>
-                <div className={`p-3 rounded-xl ${
-                    color === 'green' ? 'bg-green-50' :
-                    color === 'blue' ? 'bg-blue-50' : 'bg-orange-50'
-                }`}>
+                <div className={`p-3 rounded-xl ${color === 'green' ? 'bg-green-50' :
+                        color === 'blue' ? 'bg-blue-50' : 'bg-orange-50'
+                    }`}>
                     {icon}
                 </div>
             </div>
@@ -185,7 +193,8 @@ export default function Income() {
 
         router.get(route('income.activity'), {
             filter,
-            chartMode: newMode
+            chartMode: newMode,
+            activeCardId
         }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
@@ -198,7 +207,8 @@ export default function Income() {
         setIsLoading(true);
         router.get(route('income.activity'), {
             filter,
-            chartMode
+            chartMode,
+            activeCardId
         }, {
             preserveState: false,
             onFinish: () => setIsLoading(false)
@@ -257,11 +267,10 @@ export default function Income() {
                             <div className="flex items-center gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <button
                                     onClick={() => setActiveCardId(0)}
-                                    className={`min-w-max px-4 py-2 rounded-lg transition-colors ${
-                                        activeCardId === 0
+                                    className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === 0
                                             ? "bg-green-500 text-white"
                                             : "bg-gray-100 text-gray-700"
-                                    }`}
+                                        }`}
                                 >
                                     All Cards
                                 </button>
@@ -270,11 +279,10 @@ export default function Income() {
                                         <button
                                             key={card.id}
                                             onClick={() => setActiveCardId(card.id)}
-                                            className={`min-w-max px-4 py-2 rounded-lg transition-colors ${
-                                                activeCardId === card.id
+                                            className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === card.id
                                                     ? "bg-green-500 text-white"
                                                     : "bg-gray-100 text-gray-700"
-                                            }`}
+                                                }`}
                                         >
                                             {card.name}
                                         </button>
@@ -311,7 +319,7 @@ export default function Income() {
                         </div>
 
                         {/* Income Categories */}
-                        {Object.keys(incomeByCategory).length > 0 && (
+                        {Object.keys(activeCardIncomeByCategory).length > 0 && (
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
                                 <h3 className="text-lg font-semibold mb-4">Income by Category</h3>
                                 <div className="space-y-3">
@@ -345,18 +353,16 @@ export default function Income() {
                                 <h3 className="text-lg font-semibold">Income Trend</h3>
                                 <div className="flex gap-2">
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                            chartMode === 'monthly' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'monthly' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}
                                         onClick={() => handleChartModeChange('monthly')}
                                         disabled={isLoading}
                                     >
                                         Monthly
                                     </button>
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                            chartMode === 'yearly' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'yearly' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}
                                         onClick={() => handleChartModeChange('yearly')}
                                         disabled={isLoading}
                                     >
@@ -460,7 +466,7 @@ export default function Income() {
                     activeCard={activeCard}
                     activeCardId={activeCardId}
                     EyesOpen={false}
-                    setEyesOpen={() => {}}
+                    setEyesOpen={() => { }}
                     incomePerCard={incomePerCard}
                     expensePerCard={{}}
                 />
@@ -542,18 +548,16 @@ export default function Income() {
                                             </h3>
                                             <div className="flex gap-2">
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                                        chartMode === 'monthly' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'monthly' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
                                                     onClick={() => handleChartModeChange('monthly')}
                                                     disabled={isLoading}
                                                 >
                                                     Monthly
                                                 </button>
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                                        chartMode === 'yearly' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'yearly' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
                                                     onClick={() => handleChartModeChange('yearly')}
                                                     disabled={isLoading}
                                                 >
@@ -669,6 +673,7 @@ export default function Income() {
                                                                     router.get(route('income.activity'), {
                                                                         filter,
                                                                         chartMode,
+                                                                        activeCardId,
                                                                         start_date: selected.from.toISOString().split('T')[0],
                                                                         end_date: selected.to.toISOString().split('T')[0],
                                                                     }, {
@@ -699,7 +704,7 @@ export default function Income() {
                                 {/* Desktop Sidebar Content */}
                                 <div className="space-y-6">
                                     {/* Income Categories */}
-                                    {Object.keys(incomeByCategory).length > 0 && (
+                                    {Object.keys(activeCardIncomeByCategory).length > 0 && (
                                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                             <h3 className="text-lg font-bold text-gray-900 mb-4">Income Categories</h3>
                                             <div className="space-y-4">
@@ -738,16 +743,34 @@ export default function Income() {
                                                                 innerRadius={40}
                                                                 outerRadius={80}
                                                                 dataKey="value"
+                                                                nameKey="name"
                                                             >
                                                                 {categoryChartData.map((entry, index) => (
                                                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                                                 ))}
                                                             </Pie>
                                                             <Tooltip
-                                                                formatter={(value: any) => [
-                                                                    formatAutoCurrency(value, activeCard?.currency),
-                                                                    'Amount'
-                                                                ]}
+                                                                formatter={(value: number, name: string, props: any) => {
+                                                                    const categoryName = props.payload.name; // Ambil nama kategori
+                                                                    const percentage = calculatedTotalIncome > 0
+                                                                        ? ((value / calculatedTotalIncome) * 100).toFixed(1)
+                                                                        : '0';
+
+                                                                    return [
+                                                                        <div key="tooltip-content">
+                                                                            <div className="font-semibold">{categoryName}</div>
+                                                                            <div>{formatAutoCurrency(value, activeCard?.currency)}</div>
+                                                                            {/* <div className="text-xs text-gray-500">{percentage}% of total</div> */}
+                                                                        </div>,
+                                                                        
+                                                                    ];
+                                                                }}
+                                                                contentStyle={{
+                                                                    backgroundColor: 'white',
+                                                                    border: '1px solid #E5E7EB',
+                                                                    borderRadius: '8px',
+                                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                                                }}
                                                             />
                                                         </PieChart>
                                                     </ResponsiveContainer>
@@ -768,9 +791,8 @@ export default function Income() {
                                                     return (
                                                         <div
                                                             key={card.id}
-                                                            className={`p-3 rounded-lg transition-colors cursor-pointer ${
-                                                                isActive ? 'bg-green-50 border border-green-200' : 'bg-gray-50 hover:bg-gray-100'
-                                                            }`}
+                                                            className={`p-3 rounded-lg transition-colors cursor-pointer ${isActive ? 'bg-green-50 border border-green-200' : 'bg-gray-50 hover:bg-gray-100'
+                                                                }`}
                                                             onClick={() => setActiveCardId(card.id)}
                                                         >
                                                             <div className="flex items-center justify-between mb-2">
@@ -817,14 +839,8 @@ export default function Income() {
                                                         <span className="font-medium">{cards.length}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-500">Total Income:</span>
-                                                        <span className="font-medium text-green-600">
-                                                            {formatAutoCurrency(Object.values(incomePerCard).reduce((sum, income) => sum + income, 0))}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
                                                         <span className="text-gray-500">Income Sources:</span>
-                                                        <span className="font-medium">{Object.keys(incomeByCategory).length}</span>
+                                                        <span className="font-medium">{Object.keys(activeCardIncomeByCategory).length}</span>
                                                     </div>
                                                 </div>
                                             </div>

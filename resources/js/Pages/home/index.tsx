@@ -82,7 +82,14 @@ export default function Home() {
     const activeRates = ratesPerCard?.[activeCardId] ?? { income_rate: 0, expense_rate: 0 };
 
     const filteredTransactions = useMemo(() => {
-        return transactions.filter((t: any) => t.to_cards_id || t.from_cards_id === activeCardId);
+        return transactions.filter((t: any) => {
+            if (t.type === 'income' || t.type === 'convert') {
+                return t.to_cards_id === activeCardId;
+            } else if (t.type === 'expense') {
+                return t.from_cards_id === activeCardId;
+            }
+            return false;
+        });
     }, [transactions, activeCardId]);
 
     // ava helper
@@ -366,18 +373,16 @@ export default function Home() {
                                             <h3 className="text-lg font-bold text-gray-900">Money Flow</h3>
                                             <div className="flex gap-2">
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${
-                                                        chartMode === 'monthly' ? 'bg-gray-800 text-white' :
-                                                        'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'monthly' ? 'bg-gray-800 text-white' :
+                                                            'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                         }`}
                                                     onClick={() => setChartMode('monthly')}
                                                 >
                                                     Monthly
                                                 </button>
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${
-                                                        chartMode === 'yearly' ? 'bg-gray-800 text-white'
-                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${chartMode === 'yearly' ? 'bg-gray-800 text-white'
+                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                         }`}
                                                     onClick={() => setChartMode('yearly')}
                                                 >
@@ -444,7 +449,7 @@ export default function Home() {
                                             <h3 className="text-lg font-bold text-gray-900">Transactions</h3>
                                             <div className="flex items-center gap-3">
                                                 <button
-                                                className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                                    className="text-sm px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                                                     View all
                                                 </button>
                                                 <button onClick={() => router.visit(route('all-activity'))} className="text-sm px-3 py-1 text-blue-600 hover:bg-gray-100 rounded-lg transition-colors">

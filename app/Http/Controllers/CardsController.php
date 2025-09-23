@@ -25,13 +25,22 @@ class CardsController extends Controller
     {
         $userId = Auth::id();
         $filter = $request->query('filter', 'monthly');
+        $activeCardId = $request->query('activeCardId');
         $currentYear = now()->year;
 
         $cards = Cards::where('user_id', $userId)->get();
 
-        $transactions = Transactions::where('user_id', $userId)
-            ->with('toCard', 'fromCard')
-            ->latest()
+        $transactionsQuery = Transactions::where('user_id', $userId)
+            ->with('toCard', 'fromCard');
+
+        if ($activeCardId) {
+            $transactionsQuery->where(function ($query) use ($activeCardId) {
+                $query->where('to_cards_id', $activeCardId)
+                    ->orWhere('from_cards_id', $activeCardId);
+            });
+        }
+
+        $transactions = $transactionsQuery->latest()
             ->get()
             ->map(function ($data) {
                 if ($data->type === TransactionsType::EXPENSE->value) {
@@ -70,6 +79,17 @@ class CardsController extends Controller
                 ];
             });
 
+        $currentIncomeQuery = Transactions::where('user_id', $userId)
+            ->whereIn('type', [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ])
+            ->whereDate('created_at', now()->toDateString());
+
+        if ($activeCardId) {
+            $currentIncomeQuery->where('to_cards_id', $activeCardId);
+        }
+
         $incomePerCard = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::INCOME->value,
@@ -102,34 +122,33 @@ class CardsController extends Controller
             ->pluck('total', 'from_cards_id')
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
-        $currentIncome = Transactions::where('user_id', $userId)
-            ->whereIn('type', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
-            ->whereDate('created_at', now()->toDateString())
-            ->selectRaw('SUM(CASE
+        $currentIncome = $currentIncomeQuery->selectRaw('SUM(CASE
         WHEN type = ? THEN amount
         WHEN type = ? THEN converted_amount
         ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
+            TransactionsType::INCOME->value,
+            TransactionsType::CONVERT->value
+        ])
             ->value('total') ?? 0;
 
-        $currentExpense = Transactions::where('user_id', $userId)
+        $currentExpenseQuery = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::EXPENSE->value,
                 TransactionsType::CONVERT->value
             ])
-            ->whereDate('created_at', now()->toDateString())
-            ->selectRaw('SUM(CASE
+            ->whereDate('created_at', now()->toDateString());
+
+        if ($activeCardId) {
+            $currentExpenseQuery->where('from_cards_id', $activeCardId);
+        }
+
+        $currentExpense = $currentExpenseQuery->selectRaw('SUM(CASE
         WHEN type = ? THEN amount
         WHEN type = ? THEN amount
         ELSE 0 END) as total', [
-                TransactionsType::EXPENSE->value,
-                TransactionsType::CONVERT->value
-            ])
+            TransactionsType::EXPENSE->value,
+            TransactionsType::CONVERT->value
+        ])
             ->value('total') ?? 0;
 
         $ratesPerCard = collect();
@@ -343,6 +362,7 @@ class CardsController extends Controller
             'expensePerCard'   => $expensePerCard,
             'ratesPerCard'     => $ratesPerCard,
             'filter'           => $filter,
+            'activeCardId'     => $activeCardId,
             'chartData'    => [
                 'monthly' => $monthlyChartData,
                 'yearly'  => $yearlyChartData,
@@ -803,10 +823,11 @@ class CardsController extends Controller
     {
         $userId = Auth::id();
 
-        $filter = $request->query('filter', 'all'); // all, monthly, yearly
-        $chartMode = $request->query('chartMode', 'monthly'); // monthly, yearly
+        $filter = $request->query('filter', 'all');
+        $chartMode = $request->query('chartMode', 'monthly');
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+        $activeCardId = $request->query('activeCardId');
 
         $cards = Cards::where('user_id', $userId)->get();
 
@@ -816,6 +837,11 @@ class CardsController extends Controller
                 TransactionsType::CONVERT->value
             ])
             ->with('toCard');
+
+        // Filter berdasarkan activeCardId
+        if ($activeCardId) {
+            $transactionsQuery->where('to_cards_id', $activeCardId);
+        }
 
         if ($startDate && $endDate) {
             $transactionsQuery->whereBetween('transaction_date', [
@@ -835,7 +861,6 @@ class CardsController extends Controller
                 $currency ??= Currency::INDONESIAN_RUPIAH->value;
                 $currencySymbol = Currency::from($currency)->symbol();
 
-                // Handle converted amount for CONVERT transactions
                 $displayAmount = $data->type === TransactionsType::CONVERT->value
                     ? $data->converted_amount
                     : $data->amount;
@@ -859,27 +884,36 @@ class CardsController extends Controller
                 ];
             });
 
-        // Total income
-        $totalIncome = $transactionsQuery->clone()
-            ->selectRaw('SUM(CASE
-                WHEN type = ? THEN amount
-                WHEN type = ? THEN converted_amount
-                ELSE 0 END) as total', [
+        // Total income dengan filter activeCardId
+        $totalIncomeQuery = Transactions::where('user_id', $userId)
+            ->whereIn('type', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
-            ])
+            ]);
+
+        if ($activeCardId) {
+            $totalIncomeQuery->where('to_cards_id', $activeCardId);
+        }
+
+        $totalIncome = $totalIncomeQuery->selectRaw('SUM(CASE
+    WHEN type = ? THEN amount
+    WHEN type = ? THEN converted_amount
+    ELSE 0 END) as total', [
+            TransactionsType::INCOME->value,
+            TransactionsType::CONVERT->value
+        ])
             ->value('total') ?? 0;
 
-        // Income per card
+        // Income per card (untuk sidebar)
         $incomePerCard = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
             ->selectRaw('to_cards_id, SUM(CASE
-                WHEN type = ? THEN amount
-                WHEN type = ? THEN converted_amount
-                ELSE 0 END) as total', [
+        WHEN type = ? THEN amount
+        WHEN type = ? THEN converted_amount
+        ELSE 0 END) as total', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
@@ -887,19 +921,24 @@ class CardsController extends Controller
             ->pluck('total', 'to_cards_id')
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
-        // Income by category
-        $incomeByCategory = Transactions::where('user_id', $userId)
+        // Income by category UNIVERSAL (untuk All Cards atau card aktif saat ini)
+        $incomeByCategoryQuery = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
-            ])
-            ->selectRaw('category, SUM(CASE
-                WHEN type = ? THEN amount
-                WHEN type = ? THEN converted_amount
-                ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
+            ]);
+
+        if ($activeCardId) {
+            $incomeByCategoryQuery->where('to_cards_id', $activeCardId);
+        }
+
+        $incomeByCategory = $incomeByCategoryQuery->selectRaw('category, SUM(CASE
+    WHEN type = ? THEN amount
+    WHEN type = ? THEN converted_amount
+    ELSE 0 END) as total', [
+            TransactionsType::INCOME->value,
+            TransactionsType::CONVERT->value
+        ])
             ->groupBy('category')
             ->get()
             ->mapWithKeys(function ($item) {
@@ -907,26 +946,83 @@ class CardsController extends Controller
                 return [$categoryLabel => (float) $item->total];
             });
 
-        // Monthly income data
+        // INCOME BY CATEGORY PER CARD (BARU) - untuk semua card termasuk All Cards
+        $incomeByCategoryPerCard = [];
+
+        // Hitung untuk "All Cards" (card_id = 0)
+        $allCardsCategoryQuery = Transactions::where('user_id', $userId)
+            ->whereIn('type', [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ]);
+
+        $allCardsCategories = $allCardsCategoryQuery->selectRaw('category, SUM(CASE
+    WHEN type = ? THEN amount
+    WHEN type = ? THEN converted_amount
+    ELSE 0 END) as total', [
+            TransactionsType::INCOME->value,
+            TransactionsType::CONVERT->value
+        ])
+            ->groupBy('category')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $categoryLabel = $item->category ? Category::from($item->category)->label() : 'Other';
+                return [$categoryLabel => (float) $item->total];
+            });
+
+        $incomeByCategoryPerCard[0] = $allCardsCategories->toArray();
+
+        // Untuk setiap card, hitung income by category
+        foreach ($cards as $card) {
+            $cardCategoryQuery = Transactions::where('user_id', $userId)
+                ->where('to_cards_id', $card->id)
+                ->whereIn('type', [
+                    TransactionsType::INCOME->value,
+                    TransactionsType::CONVERT->value
+                ]);
+
+            $cardCategories = $cardCategoryQuery->selectRaw('category, SUM(CASE
+        WHEN type = ? THEN amount
+        WHEN type = ? THEN converted_amount
+        ELSE 0 END) as total', [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ])
+                ->groupBy('category')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    $categoryLabel = $item->category ? Category::from($item->category)->label() : 'Other';
+                    return [$categoryLabel => (float) $item->total];
+                });
+
+            $incomeByCategoryPerCard[$card->id] = $cardCategories->toArray();
+        }
+
+        // Monthly income data dengan filter activeCardId
         $currentYear = now()->year;
-        $monthlyIncomeData = Transactions::where('user_id', $userId)
+        $monthlyIncomeDataQuery = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
-            ->whereYear('transaction_date', $currentYear)
-            ->selectRaw(
-                'MONTH(transaction_date) as month,
-                SUM(CASE
-                    WHEN type = ? THEN amount
-                    WHEN type = ? THEN converted_amount
-                    ELSE 0
-                END) as income',
-                [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]
-            )
+            ->whereYear('transaction_date', $currentYear);
+
+        if ($activeCardId) {
+            $monthlyIncomeDataQuery->where('to_cards_id', $activeCardId);
+        }
+
+        $monthlyIncomeData = $monthlyIncomeDataQuery->selectRaw(
+            'MONTH(transaction_date) as month,
+        SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
+            ELSE 0
+        END) as income',
+            [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ]
+        )
             ->groupBy('month')
             ->get()
             ->keyBy('month');
@@ -936,29 +1032,34 @@ class CardsController extends Controller
             return [
                 'month' => Carbon::create()->month($month)->format('M'),
                 'income' => $data->income ?? 0,
-                'target' => ($data->income ?? 0) * 1.1, // 10% target for visualization
+                'target' => ($data->income ?? 0) * 1.1,
                 'label' => Carbon::create()->month($month)->format('M'),
             ];
         });
 
-        // Yearly income data
-        $yearlyIncomeData = Transactions::where('user_id', $userId)
+        // Yearly income data dengan filter activeCardId
+        $yearlyIncomeDataQuery = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
-            ])
-            ->selectRaw(
-                'YEAR(transaction_date) as year,
-                SUM(CASE
-                    WHEN type = ? THEN amount
-                    WHEN type = ? THEN converted_amount
-                    ELSE 0
-                END) as income',
-                [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]
-            )
+            ]);
+
+        if ($activeCardId) {
+            $yearlyIncomeDataQuery->where('to_cards_id', $activeCardId);
+        }
+
+        $yearlyIncomeData = $yearlyIncomeDataQuery->selectRaw(
+            'YEAR(transaction_date) as year,
+        SUM(CASE
+            WHEN type = ? THEN amount
+            WHEN type = ? THEN converted_amount
+            ELSE 0
+        END) as income',
+            [
+                TransactionsType::INCOME->value,
+                TransactionsType::CONVERT->value
+            ]
+        )
             ->groupBy('year')
             ->get()
             ->sortBy('year');
@@ -967,33 +1068,38 @@ class CardsController extends Controller
             return [
                 'year' => $data->year,
                 'income' => $data->income ?? 0,
-                'target' => ($data->income ?? 0) * 1.1, // 10% target for visualization
+                'target' => ($data->income ?? 0) * 1.1,
                 'label' => (string) $data->year,
             ];
         });
 
-        // Calculate average monthly income
+        // Calculate average monthly income berdasarkan data yang difilter
         $avgMonthlyIncome = $totalIncome > 0 ? $totalIncome / 12 : 0;
 
-        // Calculate growth rate (compared to previous period)
-        $previousPeriodIncome = Transactions::where('user_id', $userId)
+        // Calculate growth rate dengan filter activeCardId
+        $previousPeriodIncomeQuery = Transactions::where('user_id', $userId)
             ->whereIn('type', [
                 TransactionsType::INCOME->value,
                 TransactionsType::CONVERT->value
             ])
-            ->whereYear('transaction_date', $currentYear - 1)
-            ->selectRaw('SUM(CASE
-                WHEN type = ? THEN amount
-                WHEN type = ? THEN converted_amount
-                ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
+            ->whereYear('transaction_date', $currentYear - 1);
+
+        if ($activeCardId) {
+            $previousPeriodIncomeQuery->where('to_cards_id', $activeCardId);
+        }
+
+        $previousPeriodIncome = $previousPeriodIncomeQuery->selectRaw('SUM(CASE
+    WHEN type = ? THEN amount
+    WHEN type = ? THEN converted_amount
+    ELSE 0 END) as total', [
+            TransactionsType::INCOME->value,
+            TransactionsType::CONVERT->value
+        ])
             ->value('total') ?? 0;
 
         $growthRate = $previousPeriodIncome > 0
             ? (($totalIncome - $previousPeriodIncome) / $previousPeriodIncome) * 100
-            : 0;
+            : ($totalIncome > 0 ? 100 : 0);
 
         return Inertia::render('activity/income/index', [
             'transactions' => $transactions,
@@ -1003,6 +1109,7 @@ class CardsController extends Controller
                 'yearly' => $yearlyChartData,
             ],
             'incomeByCategory' => $incomeByCategory,
+            'incomeByCategoryPerCard' => $incomeByCategoryPerCard, // Tambahkan ini
             'totalIncome' => $totalIncome,
             'avgMonthlyIncome' => $avgMonthlyIncome,
             'growthRate' => $growthRate,
@@ -1011,6 +1118,7 @@ class CardsController extends Controller
             'chartMode' => $chartMode,
             'startDate' => $startDate,
             'endDate' => $endDate,
+            'activeCardId' => $activeCardId,
             'auth' => [
                 'user' => [
                     'name' => Auth::user()->name,
