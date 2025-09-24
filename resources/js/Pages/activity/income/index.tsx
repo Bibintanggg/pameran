@@ -20,7 +20,7 @@ import {
     Wallet,
     PlusCircle
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { Transaction } from "@/types/transaction";
 import { Card } from "@/types/card";
@@ -51,6 +51,7 @@ type Props = {
     };
     startDate: string | null;
     endDate: string | null;
+    activeCardId: number;
 };
 
 interface MetricCardProps {
@@ -75,11 +76,11 @@ export default function Income() {
         incomePerCard,
         auth,
         filter: initialFilter,
-        chartMode: initialChartMode
+        chartMode: initialChartMode,
+        activeCardId: serverActiveCardId
     } = usePage().props as unknown as Props;
 
     const { activeCardId, setActiveCardId } = useActiveCard();
-    const { activeCardId: initialActiveCardId } = usePage().props as any;
 
 
     const [filter, setFilter] = useState<"all" | "monthly" | "yearly">(initialFilter as "all" | "monthly" | "yearly");
@@ -87,6 +88,12 @@ export default function Income() {
     const [isLoading, setIsLoading] = useState(false);
 
     const activeCard = cards.find((card) => card.id === activeCardId);
+
+    useEffect(() => {
+        if (serverActiveCardId !== undefined && serverActiveCardId !== activeCardId) {
+            setActiveCardId(serverActiveCardId);
+        }
+    }, [serverActiveCardId, setActiveCardId]);
 
     // Filter transaksi untuk income saja berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
@@ -201,12 +208,15 @@ export default function Income() {
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
         setIsLoading(true);
+        setChartMode(newMode);
+
         router.get(route('income.index'), {
             filter,
             chartMode: newMode,
             activeCardId
         }, {
-            preserveState: true,
+            preserveState: false,
+            replace: true,
             onFinish: () => {
                 console.log('Request finished');
                 setIsLoading(false);
@@ -214,6 +224,30 @@ export default function Income() {
             onError: (error) => {
                 console.error('Request error:', error);
                 setIsLoading(false);
+                setChartMode(initialChartMode)
+            }
+        });
+    };
+
+    const handleCardChange = (cardId: number) => {
+        if (cardId === activeCardId) return; // Jangan request jika sama
+
+        setIsLoading(true);
+        setActiveCardId(cardId);
+
+        router.get(route('income.index'), {
+            filter,
+            chartMode,
+            activeCardId: cardId // Langsung gunakan cardId yang baru
+        }, {
+            preserveState: false,
+            replace: true,
+            onFinish: () => setIsLoading(false),
+            onError: (error) => {
+                console.error('Card change error:', error);
+                setIsLoading(false);
+                // Rollback activeCardId jika error
+                setActiveCardId(activeCardId);
             }
         });
     };
@@ -228,6 +262,7 @@ export default function Income() {
             activeCardId
         }, {
             preserveState: false,
+            replace: true,
             onFinish: () => setIsLoading(false)
         });
     };
@@ -283,7 +318,7 @@ export default function Income() {
                         <div className="mb-4">
                             <div className="flex items-center gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <button
-                                    onClick={() => setActiveCardId(0)}
+                                    onClick={() => handleCardChange(0)}
                                     className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === 0
                                         ? "bg-green-500 text-white"
                                         : "bg-gray-100 text-gray-700"
@@ -295,7 +330,7 @@ export default function Income() {
                                     cards.map((card) => (
                                         <button
                                             key={card.id}
-                                            onClick={() => setActiveCardId(card.id)}
+                                            onClick={() => handleCardChange(card.id)}
                                             className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === card.id
                                                 ? "bg-green-500 text-white"
                                                 : "bg-gray-100 text-gray-700"
@@ -810,7 +845,7 @@ export default function Income() {
                                                             key={card.id}
                                                             className={`p-3 rounded-lg transition-colors cursor-pointer ${isActive ? 'bg-green-50 border border-green-200' : 'bg-gray-50 hover:bg-gray-100'
                                                                 }`}
-                                                            onClick={() => setActiveCardId(card.id)}
+                                                            onClick={() => handleCardChange(card.id)}
                                                         >
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <div className="flex items-center gap-2">
