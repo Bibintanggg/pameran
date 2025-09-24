@@ -43,7 +43,7 @@ type Props = {
     auth: {
         user: {
             name: string;
-            avatar: string | null;
+            avatar: string;
         }
     };
     incomePerCard: Record<number, number>;
@@ -77,6 +77,7 @@ export default function AllActivity() {
         incomePerCard,
         expensePerCard
     } = usePage().props as unknown as Props;
+
 
     const { activeCardId, setActiveCardId } = useActiveCard();
     const { activeCardId: initialActiveCardId } = usePage().props as any;
@@ -239,6 +240,8 @@ export default function AllActivity() {
             </div>
         </div>
     );
+
+    console.log("Sidebar auth.user:", auth.user);
 
     const formatAutoCurrency = (amount: number, currencyId?: number) => {
         const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
