@@ -150,6 +150,18 @@ export default function Income() {
         return names[0][0];
     };
 
+    // Hitung average monthly income berdasarkan kartu aktif
+    const calculatedAvgMonthlyIncome = useMemo(() => {
+        if (activeCardId === 0) {
+            // Untuk "All Cards", gunakan avgMonthlyIncome dari backend
+            return avgMonthlyIncome;
+        } else {
+            // Untuk card spesifik, hitung dari incomePerCard dibagi 12
+            const cardIncome = incomePerCard[activeCardId] || 0;
+            return cardIncome / 12;
+        }
+    }, [activeCardId, avgMonthlyIncome, incomePerCard]);
+
     const currentDate = new Date().toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -317,7 +329,7 @@ export default function Income() {
                                     <TrendingUp className="w-4 h-4 text-blue-500" />
                                 </div>
                                 <p className="text-lg font-bold text-blue-900">
-                                    {formatAutoCurrency(avgMonthlyIncome, activeCard?.currency)}
+                                    {formatAutoCurrency(calculatedAvgMonthlyIncome, activeCard?.currency)}
                                 </p>
                                 <p className="text-xs text-blue-600">+8.5%</p>
                             </div>
@@ -527,7 +539,7 @@ export default function Income() {
                                 />
                                 <MetricCard
                                     title="Average Monthly"
-                                    value={formatAutoCurrency(avgMonthlyIncome, activeCard?.currency)}
+                                    value={formatAutoCurrency(calculatedAvgMonthlyIncome, activeCard?.currency)}
                                     change={8.5}
                                     trend="up"
                                     color="blue"
@@ -871,7 +883,7 @@ export default function Income() {
                                                     <span className="font-medium text-blue-900">Monthly Average</span>
                                                 </div>
                                                 <span className="font-semibold text-blue-900">
-                                                    {formatAutoCurrency(avgMonthlyIncome, activeCard?.currency)}
+                                                    {formatAutoCurrency(calculatedAvgMonthlyIncome, activeCard?.currency)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">

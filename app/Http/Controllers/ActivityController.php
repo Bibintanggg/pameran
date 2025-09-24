@@ -897,9 +897,31 @@ class ActivityController extends Controller
         });
 
         // Calculate average monthly income berdasarkan data yang difilter
-        $avgMonthlyIncome = $monthlyIncomeData->count() > 0
-            ? $monthlyIncomeData->avg('income')
-            : 0;
+       // SOLUSI SIMPLE - Pastikan benar-benar per card
+$avgMonthlyIncome = 0;
+
+if ($activeCardId === 0 || $activeCardId === null) {
+    // All Cards: gunakan totalIncome yang sudah dihitung sebelumnya, bagi 12
+    $avgMonthlyIncome = $totalIncome / 12;
+} else {
+    // Specific Card: gunakan incomePerCard untuk card tersebut, bagi 12
+    $cardIncome = $incomePerCard[$activeCardId] ?? 0;
+    $avgMonthlyIncome = $cardIncome / 12;
+}
+
+// Jika ada date range, adjust perhitungan
+if ($startDate && $endDate) {
+    $start = Carbon::parse($startDate);
+    $end = Carbon::parse($endDate);
+    $monthsDiff = $start->diffInMonths($end) + 1;
+
+    if ($activeCardId === 0 || $activeCardId === null) {
+        $avgMonthlyIncome = $totalIncome / $monthsDiff;
+    } else {
+        $cardIncome = $incomePerCard[$activeCardId] ?? 0;
+        $avgMonthlyIncome = $cardIncome / $monthsDiff;
+    }
+}
 
         // Calculate growth rate dengan filter activeCardId
         $previousPeriodIncomeQuery = Transactions::where('user_id', $userId)
