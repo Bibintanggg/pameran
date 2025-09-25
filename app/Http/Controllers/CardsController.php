@@ -408,21 +408,19 @@ class CardsController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Cards $cards)
     {
         $validated = $request->validate([
-
+            'name' => 'required|string|max:30',
+            'card_number' => 'nullable|string|max:100',
+            'balance' => 'nullable|numeric|min:0'
         ]);
+
+        $cards->update($validated);
+
+        return back()->with('success', 'Cards berhasil diperbarui');
     }
 
     /**

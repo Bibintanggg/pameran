@@ -47,6 +47,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/Components/ui/dialog"
+import EditCards from "@/Components/EditCards";
 
 type Card = {
     id: number;
@@ -122,9 +123,9 @@ export default function Cards() {
         });
     };
 
-    const handleEditCard = (cardId: number) => {
-        router.visit(route('cards.edit', cardId));
-    };
+    // const handleEditCard = (cardId: number) => {
+    //     router.visit(route('cards.edit', cardId));
+    // };
 
     const copyCardNumber = (cardNumber: string) => {
         navigator.clipboard.writeText(cardNumber);
@@ -213,10 +214,9 @@ export default function Cards() {
                     </Dialog>
                     <button
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
-                        onClick={() => handleEditCard(card.id)}
+                        // onClick={() => handleEditCard(card.id)}
                     >
-                        <Edit className="w-4 h-4" />
-                        Edit Card
+                        <EditCards/>
                     </button>
                     <button
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
@@ -470,9 +470,10 @@ export default function Cards() {
                                                                 <div className="flex items-center gap-2">
                                                                     <button
                                                                         className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                                                        onClick={() => handleEditCard(card.id)}
+                                                                        // onClick={() => handleEditCard(card.id)}
                                                                     >
-                                                                        <Edit className="w-4 h-4 text-gray-600" />
+                                                                        <EditCards/>
+                                                                        {/* <Edit className="w-4 h-4 text-gray-600" /> */}
                                                                     </button>
                                                                     <AlertDialog>
                                                                         <AlertDialogTrigger asChild>
