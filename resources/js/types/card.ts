@@ -3,5 +3,6 @@ export type Card = {
     userId: number
     name: string
     balance: number
-    currency: 'IDR' | 'USD' | 'THB'
+    currency: 'IDR' | 'USD' | 'THB',
+    card_number: string
 }

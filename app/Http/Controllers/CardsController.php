@@ -414,11 +414,15 @@ class CardsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:30',
-            'card_number' => 'nullable|string|max:100',
-            'balance' => 'nullable|numeric|min:0'
+            'card_number' => 'required|string|max:100',
+            // 'balance' => 'nullable|numeric|min:0'
         ]);
 
-        $cards->update($validated);
+        $cards->update([
+        'name' => $validated['name'],
+        'card_number' => $validated['card_number'],
+        // 'balance' => $validated['balance'] ?? $cards->balance 
+    ]);
 
         return back()->with('success', 'Cards berhasil diperbarui');
     }

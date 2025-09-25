@@ -20,7 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/add-cards', [CardsController::class, 'store'])->name('cards.store');
     Route::get('/cards', [ShowCardsController::class, 'showCards'])->name('cards.show');
-    Route::put('/cards', [CardsController::class, 'update'])->name('cards.update');
+    Route::put('/cards/{cards}', [CardsController::class, 'update'])->name('cards.update');
     Route::delete('/cards/{card}', [CardsController::class, 'destroy'])->name('cards.destroy');
 
     Route::get('/all-activity', [ActivityController::class, 'allActivity'])->name('all-activity');

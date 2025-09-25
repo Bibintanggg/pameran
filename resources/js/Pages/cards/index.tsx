@@ -216,7 +216,7 @@ export default function Cards() {
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
                         // onClick={() => handleEditCard(card.id)}
                     >
-                        <EditCards/>
+                        <EditCards card={card}/>
                     </button>
                     <button
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
@@ -472,7 +472,7 @@ export default function Cards() {
                                                                         className="p-1 hover:bg-gray-100 rounded transition-colors"
                                                                         // onClick={() => handleEditCard(card.id)}
                                                                     >
-                                                                        <EditCards/>
+                                                                        <EditCards card={card}/>
                                                                         {/* <Edit className="w-4 h-4 text-gray-600" /> */}
                                                                     </button>
                                                                     <AlertDialog>
