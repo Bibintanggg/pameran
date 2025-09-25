@@ -22,7 +22,7 @@ import {
     Receipt,
     Target
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { Transaction } from "@/types/transaction";
 import { Card } from "@/types/card";
@@ -52,6 +52,7 @@ type Props = {
     };
     startDate: string | null;
     endDate: string | null;
+    activeCardId?: number
 };
 
 interface MetricCardProps {
@@ -75,7 +76,8 @@ export default function Expense() {
         expensePerCard,
         auth,
         filter: initialFilter,
-        chartMode: initialChartMode
+        chartMode: initialChartMode,
+        activeCardId: initialActiveCardId
     } = usePage().props as unknown as Props;
 
     const { activeCardId, setActiveCardId } = useActiveCard();
@@ -86,6 +88,12 @@ export default function Expense() {
 
     const activeCard = cards.find((card) => card.id === activeCardId);
 
+    useEffect(() => {
+        if (initialActiveCardId && initialActiveCardId !== activeCardId) {
+            setActiveCardId(initialActiveCardId);
+        }
+    }, [initialActiveCardId, activeCardId, setActiveCardId]);
+
     // Filter transaksi untuk expense saja berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
         const expenseTransactions = transactions.filter(t =>
@@ -95,7 +103,7 @@ export default function Expense() {
         if (activeCardId === 0) {
             return expenseTransactions;
         } else {
-            return expenseTransactions.filter(t => t.to_cards_id === activeCardId);
+            return expenseTransactions.filter(t => t.from_cards_id === activeCardId);
         }
     }, [transactions, activeCardId]);
 
@@ -119,6 +127,14 @@ export default function Expense() {
         if (activeCardId === 0) return totalExpense;
         return expensePerCard[activeCardId] || 0;
     }, [activeCardId, totalExpense, expensePerCard]);
+
+    const calculatedAvgMonthlyExpense = useMemo(() => {
+        return avgMonthlyExpense;
+    }, [avgMonthlyExpense]);
+
+    const calculatedExpenseGrowthRate = useMemo(() => {
+        return expenseGrowthRate;
+    }, [expenseGrowthRate]);
 
     // Transform expenseByCategory untuk chart pie
     const categoryChartData = useMemo(() => {
@@ -151,9 +167,8 @@ export default function Expense() {
                 <div className="flex-1">
                     <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
                     <p className="text-2xl font-bold text-gray-900 mb-1">{value}</p>
-                    <div className={`flex items-center text-sm ${
-                        trend === 'up' ? 'text-red-600' : 'text-green-600'
-                    }`}>
+                    <div className={`flex items-center text-sm ${trend === 'up' ? 'text-red-600' : 'text-green-600'
+                        }`}>
                         {trend === 'up' ? (
                             <ArrowDownLeft className="w-4 h-4 mr-1" />
                         ) : (
@@ -162,19 +177,30 @@ export default function Expense() {
                         <span>{Math.abs(change)}%</span>
                     </div>
                 </div>
-                <div className={`p-3 rounded-xl ${
-                    color === 'red' ? 'bg-red-50' :
+                <div className={`p-3 rounded-xl ${color === 'red' ? 'bg-red-50' :
                     color === 'orange' ? 'bg-orange-50' : 'bg-blue-50'
-                }`}>
+                    }`}>
                     {icon}
                 </div>
             </div>
         </div>
     );
 
-    const formatAutoCurrency = (amount: number, currencyId?: number) => {
-        const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
-        return formatCurrency(amount, currency);
+    const formatAutoCurrency = (amount: number, currencyId?: number | string) => {
+        // Jika ada currencyId yang explicit, gunakan itu
+        if (currencyId) {
+            const currency = currencyMap[currencyId];
+            return formatCurrency(amount, currency);
+        }
+
+        // Jika tidak, gunakan currency dari active card
+        if (activeCardId !== 0 && activeCard) {
+            const currency = currencyMap[activeCard.currency];
+            return formatCurrency(amount, currency);
+        }
+
+        // Fallback ke IDR
+        return formatCurrency(amount, currencyMap['indonesian_rupiah']);
     };
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
@@ -183,11 +209,13 @@ export default function Expense() {
         setIsLoading(true);
         setChartMode(newMode);
 
-        router.get(route('expense.activity'), {
+        router.get(route('expense.index'), {
             filter,
-            chartMode: newMode
+            chartMode: newMode,
+            activeCardId
         }, {
             preserveState: true,
+            replace: true,
             onFinish: () => setIsLoading(false)
         });
     };
@@ -196,11 +224,29 @@ export default function Expense() {
         if (isLoading) return;
 
         setIsLoading(true);
-        router.get(route('expense.activity'), {
+        router.get(route('expense.index'), {
             filter,
-            chartMode
+            chartMode,
+            activeCardId
         }, {
             preserveState: false,
+            onFinish: () => setIsLoading(false)
+        });
+    };
+
+    const handleCardChange = (cardId: number) => {
+        if (isLoading) return;
+
+        setActiveCardId(cardId);
+        setIsLoading(true);
+
+        router.get(route('expense.index'), {
+            filter,
+            chartMode,
+            activeCardId: cardId
+        }, {
+            preserveState: true,
+            replace: true,
             onFinish: () => setIsLoading(false)
         });
     };
@@ -260,12 +306,11 @@ export default function Expense() {
                         <div className="mb-4">
                             <div className="flex items-center gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <button
-                                    onClick={() => setActiveCardId(0)}
-                                    className={`min-w-max px-4 py-2 rounded-lg transition-colors ${
-                                        activeCardId === 0
-                                            ? "bg-red-500 text-white"
-                                            : "bg-gray-100 text-gray-700"
-                                    }`}
+                                    onClick={() => handleCardChange(0)}
+                                    className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === 0
+                                        ? "bg-red-500 text-white"
+                                        : "bg-gray-100 text-gray-700"
+                                        }`}
                                 >
                                     All Cards
                                 </button>
@@ -273,12 +318,11 @@ export default function Expense() {
                                     cards.map((card) => (
                                         <button
                                             key={card.id}
-                                            onClick={() => setActiveCardId(card.id)}
-                                            className={`min-w-max px-4 py-2 rounded-lg transition-colors ${
-                                                activeCardId === card.id
-                                                    ? "bg-red-500 text-white"
-                                                    : "bg-gray-100 text-gray-700"
-                                            }`}
+                                            onClick={() => handleCardChange(card.id)}
+                                            className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === card.id
+                                                ? "bg-red-500 text-white"
+                                                : "bg-gray-100 text-gray-700"
+                                                }`}
                                         >
                                             {card.name}
                                         </button>
@@ -299,7 +343,7 @@ export default function Expense() {
                                 <p className="text-lg font-bold text-red-900">
                                     {formatAutoCurrency(calculatedTotalExpense, activeCard?.currency)}
                                 </p>
-                                <p className="text-xs text-red-600">{expenseGrowthRate >= 0 ? '+' : ''}{expenseGrowthRate.toFixed(1)}%</p>
+                                <p className="text-xs text-red-600">{calculatedExpenseGrowthRate >= 0 ? '+' : ''}{calculatedExpenseGrowthRate.toFixed(1)}%</p>
                             </div>
 
                             <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
@@ -308,7 +352,7 @@ export default function Expense() {
                                     <TrendingDown className="w-4 h-4 text-orange-500" />
                                 </div>
                                 <p className="text-lg font-bold text-orange-900">
-                                    {formatAutoCurrency(avgMonthlyExpense, activeCard?.currency)}
+                                    {formatAutoCurrency(calculatedAvgMonthlyExpense, activeCard?.currency)}
                                 </p>
                                 <p className="text-xs text-orange-600">±5.2%</p>
                             </div>
@@ -364,18 +408,16 @@ export default function Expense() {
                                 <h3 className="text-lg font-semibold">Expense Trend</h3>
                                 <div className="flex gap-2">
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                            chartMode === 'monthly' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'monthly' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}
                                         onClick={() => handleChartModeChange('monthly')}
                                         disabled={isLoading}
                                     >
                                         Monthly
                                     </button>
                                     <button
-                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                            chartMode === 'yearly' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'yearly' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}
                                         onClick={() => handleChartModeChange('yearly')}
                                         disabled={isLoading}
                                     >
@@ -481,7 +523,7 @@ export default function Expense() {
                     activeCard={activeCard}
                     activeCardId={activeCardId}
                     EyesOpen={false}
-                    setEyesOpen={() => {}}
+                    setEyesOpen={() => { }}
                     incomePerCard={{}}
                     expensePerCard={expensePerCard}
                 />
@@ -530,14 +572,14 @@ export default function Expense() {
                                 <MetricCard
                                     title="Total Expense"
                                     value={formatAutoCurrency(calculatedTotalExpense, activeCard?.currency)}
-                                    change={Math.abs(expenseGrowthRate)}
-                                    trend={expenseGrowthRate >= 0 ? "up" : "down"}
+                                    change={Math.abs(calculatedExpenseGrowthRate)}
+                                    trend={calculatedExpenseGrowthRate >= 0 ? "up" : "down"}
                                     color="red"
                                     icon={<ArrowDownLeft className="w-6 h-6 text-red-600" />}
                                 />
                                 <MetricCard
                                     title="Monthly Average"
-                                    value={formatAutoCurrency(avgMonthlyExpense, activeCard?.currency)}
+                                    value={formatAutoCurrency(calculatedAvgMonthlyExpense, activeCard?.currency)}
                                     change={5.2}
                                     trend="up"
                                     color="orange"
@@ -578,18 +620,16 @@ export default function Expense() {
                                             </h3>
                                             <div className="flex gap-2">
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                                        chartMode === 'monthly' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'monthly' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
                                                     onClick={() => handleChartModeChange('monthly')}
                                                     disabled={isLoading}
                                                 >
                                                     Monthly
                                                 </button>
                                                 <button
-                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                                                        chartMode === 'yearly' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                    }`}
+                                                    className={`text-sm px-3 py-1 rounded-lg transition-colors disabled:opacity-50 ${chartMode === 'yearly' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
                                                     onClick={() => handleChartModeChange('yearly')}
                                                     disabled={isLoading}
                                                 >
@@ -805,10 +845,9 @@ export default function Expense() {
                                                     return (
                                                         <div
                                                             key={card.id}
-                                                            className={`p-3 rounded-lg transition-colors cursor-pointer ${
-                                                                isActive ? 'bg-red-50 border border-red-200' : 'bg-gray-50 hover:bg-gray-100'
-                                                            }`}
-                                                            onClick={() => setActiveCardId(card.id)}
+                                                            className={`p-3 rounded-lg transition-colors cursor-pointer ${isActive ? 'bg-red-50 border border-red-200' : 'bg-gray-50 hover:bg-gray-100'
+                                                                }`}
+                                                            onClick={() => handleCardChange(card.id)}
                                                         >
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <div className="flex items-center gap-2">
@@ -854,12 +893,6 @@ export default function Expense() {
                                                         <span className="font-medium">{cards.length}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-500">Total Expense:</span>
-                                                        <span className="font-medium text-red-600">
-                                                            {formatAutoCurrency(Object.values(expensePerCard).reduce((sum, expense) => sum + expense, 0))}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
                                                         <span className="text-gray-500">Categories:</span>
                                                         <span className="font-medium">{Object.keys(expenseByCategory).length}</span>
                                                     </div>
@@ -887,7 +920,7 @@ export default function Expense() {
                                                     <span className="font-medium text-orange-900">Monthly Average</span>
                                                 </div>
                                                 <span className="font-semibold text-orange-900">
-                                                    {formatAutoCurrency(avgMonthlyExpense, activeCard?.currency)}
+                                                    {formatAutoCurrency(calculatedAvgMonthlyExpense, activeCard?.currency)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
@@ -895,8 +928,8 @@ export default function Expense() {
                                                     <DollarSign className="w-5 h-5 text-yellow-600" />
                                                     <span className="font-medium text-yellow-900">Growth Rate</span>
                                                 </div>
-                                                <span className={`font-semibold ${expenseGrowthRate >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                                    {expenseGrowthRate >= 0 ? '+' : ''}{expenseGrowthRate.toFixed(1)}%
+                                                <span className={`font-semibold ${calculatedExpenseGrowthRate >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                                    {calculatedExpenseGrowthRate >= 0 ? '+' : ''}{calculatedExpenseGrowthRate.toFixed(1)}%
                                                 </span>
                                             </div>
 

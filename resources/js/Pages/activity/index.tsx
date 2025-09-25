@@ -257,7 +257,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter: newFilter,
             chartMode,
-            activeCardId
+            // activeCardId
         }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
@@ -273,7 +273,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode: newMode,
-            activeCardId
+            // activeCardId
         }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
@@ -287,7 +287,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode,
-            activeCardId
+            // activeCardId
         }, {
             preserveState: false,
             onFinish: () => setIsLoading(false)
