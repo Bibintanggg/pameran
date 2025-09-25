@@ -683,7 +683,7 @@ export default function Expense() {
                                                         fillOpacity={1}
                                                         fill="url(#colorExpense)"
                                                     />
-                                                    {mergedChartData[0]?.budget && (
+                                                    {/* {mergedChartData[0]?.budget && (
                                                         <Area
                                                             type="monotone"
                                                             dataKey="budget"
@@ -692,7 +692,7 @@ export default function Expense() {
                                                             strokeDasharray="5 5"
                                                             fill="none"
                                                         />
-                                                    )}
+                                                    )} */}
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -743,7 +743,7 @@ export default function Expense() {
                                                                 if (selected?.from && selected?.to) {
                                                                     setIsLoading(true);
 
-                                                                    router.get(route('expense.activity'), {
+                                                                    router.get(route('expense.index'), {
                                                                         filter,
                                                                         chartMode,
                                                                         start_date: selected.from.toISOString().split('T')[0],
