@@ -39,7 +39,7 @@ export default function EditCards({ card }: {card: Card}) {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <button className={`w-10 h-10 rounded-full  flex items-center justify-center`}>
+                <button className={`w-4 h-4 rounded-full flex items-center justify-center`}>
                     <Edit className="w-4 h-4 text-gray-600" />
                 </button>
             </DialogTrigger>

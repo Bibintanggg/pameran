@@ -71,7 +71,7 @@ export default function Sidebar({
     }
 
     const getAvatarUrl = () => {
-    return auth.user.avatar ? `/storage/${auth.user.avatar}` : "/default-avatar.png"
+    return auth.user.avatar ? `/storage/${auth.user.avatar}` : ""
 }
 
     const getUserInitials = () => {
