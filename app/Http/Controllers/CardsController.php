@@ -365,6 +365,12 @@ class CardsController extends Controller
                 'monthly' => $monthlyChartData,
                 'yearly'  => $yearlyChartData,
             ],
+            'auth' => [
+                'user' => [
+                    'name' => Auth::user()->name,
+                    'avatar' => Auth::user()->avatar,
+                ]
+            ]
         ]);
     }
 

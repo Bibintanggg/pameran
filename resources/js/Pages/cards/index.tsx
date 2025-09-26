@@ -79,7 +79,7 @@ type Props = {
     auth: {
         user: {
             name: string;
-            avatar: string | null;
+            avatar: string;
         }
     };
 };
