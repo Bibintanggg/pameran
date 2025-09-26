@@ -227,19 +227,35 @@ export default function Cards() {
                             <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label className="text-right">Card Name:</Label>
-                                    <Input>{card.name}</Input>
+                                    <Input
+                                        className="col-span-3"
+                                        value={card.name}
+                                        readOnly
+                                    />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label className="text-right">Balance:</Label>
-                                    <span className="col-span-3">{formatAutoCurrency(card.balance, card.currency)}</span>
+                                     <Input
+                                        className="col-span-3"
+                                        value={formatAutoCurrency(card.balance, card.currency)}
+                                        readOnly
+                                    />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label className="text-right">Income:</Label>
-                                    <span className="col-span-3 text-green-600">{formatAutoCurrency(card.income || 0, card.currency)}</span>
+                                    <Input
+                                        className="col-span-3"
+                                        value={formatAutoCurrency(card.income || 0, card.currency)}
+                                        readOnly
+                                    />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label className="text-right">Expense:</Label>
-                                    <span className="col-span-3 text-red-600">{formatAutoCurrency(card.expense || 0, card.currency)}</span>
+                                    <Input
+                                        className="col-span-3"
+                                        value={formatAutoCurrency(card.expense || 0, card.currency)}
+                                        readOnly
+                                    />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label className="text-right">Net:</Label>
