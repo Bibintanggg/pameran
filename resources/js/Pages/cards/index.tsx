@@ -20,7 +20,7 @@ import {
     RefreshCw,
     TrashIcon
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 import AddCards from "@/Components/AddCards";
 import { Input } from "@/Components/ui/input"
@@ -91,9 +91,26 @@ export default function Cards() {
     const [selectedCard, setSelectedCard] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isOpenDialog, setIsOpenDialog] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const formatAutoCurrency = (amount: number, currencyId?: string) => {
-        const currency = currencyMap[currencyId ?? 'as_dollar']; // fallback beneran ada
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setSelectedCard(null);
+            }
+        }
+
+        if (selectedCard) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [selectedCard]);
+
+    const formatAutoCurrency = (amount: number, currencyId?: number) => {
+        const currency = currencyMap[currencyId ?? 'as_dollar'];
         return formatCurrency(amount, currency);
     };
 
@@ -177,7 +194,7 @@ export default function Cards() {
             </div>
 
             {selectedCard === card.id && (
-                <div className="absolute top-12 right-6 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10">
+                <div className="absolute top-12 right-6 bg-white rounded-lg shadow-xl border border-gray-200 py-2">
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant={"link"} className="flex items-center"
@@ -216,7 +233,7 @@ export default function Cards() {
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
                         // onClick={() => handleEditCard(card.id)}
                     >
-                        <EditCards card={card}/>
+                        <EditCards card={card.id}/>
                     </button>
                     <button
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"

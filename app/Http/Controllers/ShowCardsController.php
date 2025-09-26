@@ -50,9 +50,9 @@ class ShowCardsController extends Controller
 
         $expensePerCard = Transactions::where('user_id', $userId)
             ->where('type', TransactionsType::EXPENSE->value)
-            ->selectRaw('to_cards_id, SUM(amount) as total')
-            ->groupBy('to_cards_id')
-            ->pluck('total', 'to_cards_id')
+            ->selectRaw('from_cards_id, SUM(amount) as total')
+            ->groupBy('from_cards_id')
+            ->pluck('total', 'from_cards_id')
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $cardsWithStats = $cards->map(function ($card) use ($incomePerCard, $expensePerCard) {
@@ -120,7 +120,7 @@ class ShowCardsController extends Controller
             'auth' => [
                 'user' => [
                     'name' => Auth::user()->name,
-                    'avatar' => null,
+                    'avatar' => Auth::user()->avatar,
                 ]
             ]
         ]);
