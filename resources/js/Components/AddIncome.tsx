@@ -65,23 +65,6 @@ export default function AddIncome({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!data.transaction_date) {
-            alert('Please select a date');
-            return;
-        }
-        if (!data.amount || data.amount <= 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
-        if (!data.asset) {
-            alert('Please select an asset');
-            return;
-        }
-        if (!data.category) {
-            alert('Please select a category');
-            return;
-        }
-
         post(route('transactions.storeincome'), {
             onSuccess: () => {
                 reset();

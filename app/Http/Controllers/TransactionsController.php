@@ -58,14 +58,23 @@ class TransactionsController extends Controller
             'category' => 'required|string',
             'type' => ['required', 'string', Rule::in(TransactionsType::values())],
             'to_cards_id' => 'required|exists:cards,id',
+        ], [
+            'amount.required' => 'Amount is required',
+            'amount.min' => 'Amount must be greater than 0',
+            'asset.required' => 'Asset is required',
+            'category.required' => 'Category is required',
+            'transaction_date.required' => 'Date is required',
+            'to_cards_id.required' => 'Card destination is required',
         ]);
 
+        $validIncomeCategories = [
+            Category::SALLARY->value,
+            Category::ALLOWANCE->value,
+            Category::BUSINESS->value
+        ];
+
         if ($validated['type'] === TransactionsType::INCOME->value) {
-            if (!in_array($validated['category'], [
-                Category::SALLARY->value,
-                Category::ALLOWANCE->value,
-                Category::BUSINESS->value
-            ])) {
+            if (!in_array($validated['category'], $validIncomeCategories)) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
 
