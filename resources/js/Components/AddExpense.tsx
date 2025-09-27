@@ -28,6 +28,7 @@ import { ChevronDownIcon } from "lucide-react"
 import { Calendar as CalendarIcon } from "lucide-react"
 import React from "react"
 import { useForm } from "@inertiajs/react"
+import { useToast } from "@/hooks/use-toast"
 
 interface ExpenseProps {
     label: string,
@@ -44,6 +45,8 @@ export default function AddExpense({
     const [category, setCategory] = React.useState<string>("")
     const [isOpen, setIsOpen] = React.useState(false)
 
+    const { toast } = useToast()
+
     const {data, setData, post, processing, errors, reset} = useForm({
         'transaction_date': '',
         'amount': 0,
@@ -58,9 +61,20 @@ export default function AddExpense({
         e.preventDefault();
         post(route('transactions.store-expense'), {
             onSuccess: () => {
-                setDate(undefined); 
+                setDate(undefined);
                 setIsOpen(false)
                 reset();
+                toast({
+                    title: "Success!",
+                    description: "Your expense has been saved successfully."
+                })
+            },
+            onError: (errors) => {
+                toast({
+                    title: "Error",
+                    description: "Please check the required fields.",
+                    variant: "destructive",
+                })
             }
         })
     }
@@ -73,7 +87,7 @@ export default function AddExpense({
                 default: return "Select Your Asset";
             }
         }
-    
+
     const getCategoryLabel = (value: string) => {
         switch(value) {
             case 'food_drinks' : return "Food & Drinks"
@@ -122,9 +136,9 @@ export default function AddExpense({
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
-                                        <Calendar 
-                                        mode="single" 
-                                        selected={date} 
+                                        <Calendar
+                                        mode="single"
+                                        selected={date}
                                         onSelect={(d) => {
                                             setDate(d)
                                             setData('transaction_date', d ? d.toISOString().split("T")[0] : "")
@@ -211,15 +225,15 @@ export default function AddExpense({
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <button 
-                                type="button" 
+                                <button
+                                type="button"
                                 onClick={() => setIsOpen(false)}
                                 className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end">
                                     Back
                                 </button>
 
-                                <button 
-                                type="submit" 
+                                <button
+                                type="submit"
                                 disabled={processing}
                                 className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end">
                                     {processing ? "Savings..." : "Save changes"}

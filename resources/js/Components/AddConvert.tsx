@@ -4,6 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "./ui/button"
 import { useEffect, useState } from "react"
 import { usePage, router } from "@inertiajs/react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Card {
     id: number
@@ -24,6 +25,8 @@ export default function AddConvert({ label }: { label: string }) {
 
     const [rate, setRate] = useState<number | null>(null)
     const [convertedAmount, setConvertedAmount] = useState<number | null>(null)
+
+    const { toast } = useToast()
 
     const getCurrencySymbol = (currency: string) => {
         const symbols: Record<string, string> = { 'indonesian_rupiah': 'Rp', 'baht_thailand': '฿', 'as_dollar': '$' }
@@ -74,6 +77,17 @@ export default function AddConvert({ label }: { label: string }) {
                 setAmount("")
                 setNotes("")
                 setIsOpen(false)
+                toast({
+                    title: "Success!",
+                    description: "Your convert has been saved successfully."
+                })
+            },
+            onError: (errors) => {
+                toast({
+                    title: "Error",
+                    description: "Please check the required fields.",
+                    variant: "destructive",
+                })
             }
         })
     }

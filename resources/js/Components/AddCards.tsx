@@ -17,6 +17,7 @@ import {
 import { Button } from "./ui/button"
 import React from "react"
 import { useForm } from "@inertiajs/react"
+import { useToast } from "@/hooks/use-toast"
 
 interface CardsProps {
     label: string
@@ -27,9 +28,9 @@ interface CardsProps {
     dialogClassName?: string
 }
 
-export default function AddCards({ 
-    label, 
-    className = "", 
+export default function AddCards({
+    label,
+    className = "",
     triggerClassName = "",
     iconClassName = "",
     labelClassName = "",
@@ -43,11 +44,24 @@ export default function AddCards({
         'balance': ''
     })
 
+    const { toast } = useToast()
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         post(route('cards.store'), {
             onSuccess: () => {
                 reset()
+                toast({
+                    title: "Success!",
+                    description: "Your card has been saved successfully."
+                })
+            },
+            onError: (errors) => {
+                toast({
+                    title: "Error",
+                    description: "Please check the required fields.",
+                    variant: "destructive",
+                })
             }
         })
     }
@@ -109,7 +123,7 @@ export default function AddCards({
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-8">
                                     <p>Card Name</p>
                                     <input
@@ -133,8 +147,8 @@ export default function AddCards({
                                 </div>
 
                                 <div className="flex items-center justify-between">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end"
                                         onClick={() => reset()}
                                     >

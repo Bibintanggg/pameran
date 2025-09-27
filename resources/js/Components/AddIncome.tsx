@@ -20,12 +20,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/Components/ui/popover"
-import { AlertCircleIcon, CheckCircle2Icon, PopcornIcon } from "lucide-react"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/Components/ui/alert"
 import { Button } from "./ui/button"
 import { PlusSquareIcon } from "lucide-react"
 import { Calendar as CalendarIcon } from "lucide-react"
