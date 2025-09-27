@@ -14,11 +14,18 @@ import {
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu"
 import { Calendar } from "@/Components/ui/calendar"
+import { useToast } from "@/hooks/use-toast"
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/Components/ui/popover"
+import { AlertCircleIcon, CheckCircle2Icon, PopcornIcon } from "lucide-react"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/Components/ui/alert"
 import { Button } from "./ui/button"
 import { PlusSquareIcon } from "lucide-react"
 import { Calendar as CalendarIcon } from "lucide-react"
@@ -36,6 +43,8 @@ export default function AddIncome({
 }: IncomeProps) {
     const [date, setDate] = React.useState<Date>()
     const [isOpen, setIsOpen] = React.useState(false)
+
+    const { toast } = useToast()
 
     const { data, setData, post, processing, errors, reset } = useForm({
         'transaction_date': '',
@@ -73,9 +82,18 @@ export default function AddIncome({
                 setIsOpen(false);
                 reset();
                 setDate(undefined);
+                toast({
+                    title: "Success!",
+                    description: "Your income has been saved successfully.",
+                })
             },
             onError: (errors) => {
-                console.log('Validation errors:', errors);
+                // console.log('Validation errors:', errors);
+                toast({
+                    title: "Error",
+                    description: "Please check the required fields.",
+                    variant: "destructive",
+                })
             }
         })
     }
