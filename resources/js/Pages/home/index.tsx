@@ -8,6 +8,7 @@ import CardIndex from "@/Components/CardIndex"
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar"
 import { PageProps } from "@/types"
 import { router, usePage } from "@inertiajs/react"
+import FlashMessage from '@/Components/FlashMessage';
 import {
     EyeClosedIcon,
     EyeIcon,
@@ -164,6 +165,7 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <FlashMessage />
             {/* mobile layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
@@ -330,6 +332,7 @@ export default function Home() {
                                             <Filter className="w-5 h-5 text-gray-600" />
                                         </button>
                                     </div>
+                                    <FlashMessage />
                                 </div>
                             </div>
                         </div>
