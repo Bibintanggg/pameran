@@ -35,7 +35,6 @@ export default function EditCards({ card }: {card: Card}) {
         })
     }
 
-
     return (
         <Dialog>
             <DialogTrigger asChild>

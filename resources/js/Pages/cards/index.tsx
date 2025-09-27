@@ -18,10 +18,18 @@ import {
     ArrowUpRight,
     ArrowDownLeft,
     RefreshCw,
-    TrashIcon
+    TrashIcon,
+    AlertCircleIcon,
+    CheckCircle2Icon,
+    PopcornIcon
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/Components/ui/alert"
 import AddCards from "@/Components/AddCards";
 import { Input } from "@/Components/ui/input"
 import { Label } from "@/Components/ui/label"
@@ -45,9 +53,9 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/Components/ui/dialog"
 import EditCards from "@/Components/EditCards";
+import CardComponent, { CardComponentRef } from "@/Components/CardComponent";
 
 type Card = {
     id: number;
@@ -90,37 +98,35 @@ export default function Cards() {
     const [eyesOpen, setEyesOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [isOpenDialog, setIsOpenDialog] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [openDialogCardId, setOpenDialogCardId] = useState<number | null>(null);
+    const dropdownRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
+    const cardComponentRefs = useRef<{ [key: number]: CardComponentRef | null }>({});
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                // kasih delay dikit biar Radix sempet reset fokus
-                setTimeout(() => {
-                    if (document.activeElement instanceof HTMLElement) {
-                        document.activeElement.blur();
-                    }
-                    setSelectedCard(null);
-                }, 10);
+            const isOutsideAll = Object.values(dropdownRefs.current).every(ref => {
+                return ref && !ref.contains(event.target as Node);
+            });
+
+            const isOutsideAllButtons = Object.values(buttonRefs.current).every(ref => {
+                return ref && !ref.contains(event.target as Node);
+            });
+
+            if (isOutsideAll && isOutsideAllButtons && selectedCard) {
+                setSelectedCard(null);
             }
         }
 
-        if (selectedCard) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
+        document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [selectedCard]);
 
-
-
-    const formatAutoCurrency = (amount: number, currencyId?: number) => {
-        const currency = currencyMap[currencyId ?? 'as_dollar']; // fallback beneran ada
-        return formatCurrency(amount, currency);
+    const formatAutoCurrency = (amount: number, currency?: string) => {
+        const currencyKey = currency ?? 'as_dollar';
+        return formatCurrency(amount, currencyMap[currencyKey]);
     };
 
     const getUserInitials = () => {
@@ -149,177 +155,88 @@ export default function Cards() {
         });
     };
 
-    const copyCardNumber = (cardNumber: string) => {
-        navigator.clipboard.writeText(cardNumber);
+    const handleViewDetails = (cardId: number) => {
+        setOpenDialogCardId(cardId);
+        setSelectedCard(null);
     };
 
     const getCurrencyLabel = (value: string) => {
         switch (value) {
-            case 'indonesian_rupiah': return "Indonesian Rupiah"
-            case 'baht_thailand': return "Baht Thailand"
-            case 'as_dollar': return 'AS Dollar'
-            default: "Indonesian Rupiah"
+            case 'indonesian_rupiah': return "Indonesian Rupiah";
+            case 'baht_thailand': return "Baht Thailand";
+            case 'as_dollar': return 'AS Dollar';
+            default: return "Indonesian Rupiah";
         }
-    }
+    };
 
-    const CardComponent = ({ card, isDesktop = false }: { card: Card; isDesktop?: boolean }) => (
-        <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-visible cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl`}>
-            <div
-                className="absolute inset-0 p-6 flex flex-col justify-between text-white rounded-2xl overflow-hidden"
-                style={{ background: card.color }}
-            >
-                <div className="flex justify-between items-start">
-                    <div>
-                        <p className="text-sm opacity-80">{getCurrencyLabel(card.currency)}</p>
-                        <h3 className="text-lg font-bold">{card.name}</h3>
-                    </div>
-                    <button
-                        className="p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors z-10"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedCard(selectedCard === card.id ? null : card.id);
-                        }}
-                    >
-                        <MoreVertical className="w-5 h-5" />
-                    </button>
-                </div>
+    // View Details Dialog Component
+    const ViewDetailsDialog = () => {
+        if (!openDialogCardId) return null;
 
-                <div>
-                    <p className="text-sm opacity-80 mb-2">{card.card_number}</p>
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <p className="text-sm opacity-80">Balance</p>
-                            <p className="text-2xl font-bold">
-                                {eyesOpen ? formatAutoCurrency(card.balance, card.currency) : "****"}
-                            </p>
+        const card = cards.find(c => c.id === openDialogCardId);
+        if (!card) return null;
+
+        return (
+            <Dialog open={!!openDialogCardId} onOpenChange={(open) => !open && setOpenDialogCardId(null)}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Card Details</DialogTitle>
+                        <DialogDescription>
+                            Details for {card.name}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Card Name:</Label>
+                            <Input
+                                className="col-span-3"
+                                value={card.name}
+                                readOnly
+                            />
                         </div>
-                        <CreditCard className="w-8 h-8 opacity-60" />
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Balance:</Label>
+                            <Input
+                                className="col-span-3"
+                                value={formatAutoCurrency(card.balance, card.currency)}
+                                readOnly
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Income:</Label>
+                            <Input
+                                className="col-span-3"
+                                value={formatAutoCurrency(card.income || 0, card.currency)}
+                                readOnly
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Expense:</Label>
+                            <Input
+                                className="col-span-3"
+                                value={formatAutoCurrency(card.expense || 0, card.currency)}
+                                readOnly
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Net:</Label>
+                            <span className={`col-span-3 ${(card.net || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatAutoCurrency(card.net || 0, card.currency)}
+                            </span>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            {selectedCard === card.id && (
-                <div
-                    ref={dropdownRef}
-                    className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-[200px]"
-                    style={{ zIndex: 9999 }}
-                >
-                    <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
-                        <DialogTrigger asChild>
-                            <button
-                                className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsOpenDialog(true);
-                                }}
-                            >
-                                <Eye className="w-4 h-4" />
-                                <span>View Details</span>
-                            </button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Card Details</DialogTitle>
-                                <DialogDescription>
-                                    Details for {card.name}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">Card Name:</Label>
-                                    <Input
-                                        className="col-span-3"
-                                        value={card.name}
-                                        readOnly
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">Balance:</Label>
-                                     <Input
-                                        className="col-span-3"
-                                        value={formatAutoCurrency(card.balance, card.currency)}
-                                        readOnly
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">Income:</Label>
-                                    <Input
-                                        className="col-span-3"
-                                        value={formatAutoCurrency(card.income || 0, card.currency)}
-                                        readOnly
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">Expense:</Label>
-                                    <Input
-                                        className="col-span-3"
-                                        value={formatAutoCurrency(card.expense || 0, card.currency)}
-                                        readOnly
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">Net:</Label>
-                                    <span className={`col-span-3 ${(card.net || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {formatAutoCurrency(card.net || 0, card.currency)}
-                                    </span>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button variant="outline">Close</Button>
-                                </DialogClose>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
-                    <div className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items- gap-3 text-sm text-gray-700">
-                        <EditCards card={card.id} />
-                        <p>Edit Cards</p>
-                    </div>
-
-                    <button
-                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            copyCardNumber(card.card_number);
-                            setSelectedCard(null);
-                        }}
-                    >
-                        <Copy className="w-4 h-4" />
-                        Copy Number
-                    </button>
-
-                    <hr className="my-2" />
-
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <button className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-3 text-sm text-red-600">
-                                <Trash2 className="w-4 h-4" />
-                                Delete Card
-                            </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Card</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Are you sure you want to delete "{card.name}"? This action cannot be undone.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => setSelectedCard(null)}>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={() => handleDeleteCard(card.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                >
-                                    Delete
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </div>
-            )}
-        </div>
-    );
+                    <DialogFooter>
+                        <Button
+                            onClick={() => setOpenDialogCardId(null)}
+                            variant="outline"
+                        >
+                            Close
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+    };
 
     const StatsCard = ({ title, amount, change, icon, isPositive, isAmount = true }: {
         title: string;
@@ -348,13 +265,13 @@ export default function Cards() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Mobile Layout */}
+            <ViewDetailsDialog />
+
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
                     <BottomNavbar />
 
                     <div className="flex-1 overflow-y-auto p-6">
-                        {/* Mobile Header */}
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-10 w-10">
@@ -415,22 +332,33 @@ export default function Cards() {
                             />
                         </div>
 
-                        <AddCards label="Add Cards"
-                            triggerClassName="h-[3.5rem]" />
+                        <AddCards label="Add Cards" triggerClassName="h-[3.5rem]" />
 
                         {/* Mobile Cards Grid */}
-                        <div className="space-y-4 mt-5" style={{ position: 'relative', zIndex: 1 }}>
+                        <div className="space-y-4 mt-5">
                             {cards.length > 0 ? (
                                 cards.map((card) => (
-                                    <CardComponent key={card.id} card={card} />
+                                    <CardComponent
+                                        key={card.id}
+                                        ref={el => cardComponentRefs.current[card.id] = el}
+                                        card={card}
+                                        eyesOpen={eyesOpen}
+                                        onViewDetails={handleViewDetails}
+                                        onDeleteCard={handleDeleteCard}
+                                        formatAutoCurrency={formatAutoCurrency}
+                                        getCurrencyLabel={getCurrencyLabel}
+                                        dropdownRefs={dropdownRefs}
+                                        buttonRefs={buttonRefs}
+                                        selectedCard={selectedCard}
+                                        setSelectedCard={setSelectedCard}
+                                    />
                                 ))
                             ) : (
                                 <div className="text-center py-8 text-gray-500">
                                     <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                     <p className="text-lg font-medium">No cards found</p>
                                     <p className="mb-4">Add your first card to get started</p>
-                                    <AddCards label="Add Card"
-                                        triggerClassName="h-[3.5rem]" />
+                                    <AddCards label="Add Card" triggerClassName="h-[3.5rem]" />
                                 </div>
                             )}
                         </div>
@@ -482,8 +410,7 @@ export default function Cards() {
                                         <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         <span className="text-sm font-medium">Refresh</span>
                                     </button>
-                                    <AddCards label={"Add Card"}
-                                        triggerClassName="h-[3.5rem] w-44 flex items-center gap-10" />
+                                    <AddCards label={"Add Card"} triggerClassName="h-[3.5rem] w-44 flex items-center gap-10" />
                                 </div>
                             </div>
                         </div>
@@ -498,9 +425,23 @@ export default function Cards() {
                                             <p className="text-gray-500">{statistics.totalCards} cards total</p>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ position: 'relative', zIndex: 1 }}>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {cards.map((card) => (
-                                                <CardComponent key={card.id} card={card} isDesktop={true} />
+                                                <CardComponent
+                                                    key={card.id}
+                                                    ref={el => cardComponentRefs.current[card.id] = el}
+                                                    card={card}
+                                                    isDesktop={true}
+                                                    eyesOpen={eyesOpen}
+                                                    onViewDetails={handleViewDetails}
+                                                    onDeleteCard={handleDeleteCard}
+                                                    formatAutoCurrency={formatAutoCurrency}
+                                                    getCurrencyLabel={getCurrencyLabel}
+                                                    dropdownRefs={dropdownRefs}
+                                                    buttonRefs={buttonRefs}
+                                                    selectedCard={selectedCard}
+                                                    setSelectedCard={setSelectedCard}
+                                                />
                                             ))}
                                         </div>
                                     </div>
@@ -550,7 +491,7 @@ export default function Cards() {
                                                             <td className="py-4">
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="flex items-center">
-                                                                        <EditCards card={card.id} />
+                                                                        <EditCards card={card} />
                                                                     </div>
                                                                     <AlertDialog>
                                                                         <AlertDialogTrigger asChild>
