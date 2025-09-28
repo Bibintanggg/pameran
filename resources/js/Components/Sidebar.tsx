@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import clsx from "clsx"
 import { useActiveCard } from "@/context/ActiveCardContext"
-import { useState, useRef, useEffect } from "react" 
+import { useState, useRef, useEffect } from "react"
 
 type SidebarProps = {
     auth: {
@@ -25,6 +25,7 @@ type SidebarProps = {
         }
     }
     activeCard?: {
+        id: number;
         name?: string
         balance?: number
         currency?: string
@@ -49,7 +50,6 @@ export default function Sidebar({
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // Handle klik di luar dropdown untuk menutupnya
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -72,8 +72,8 @@ export default function Sidebar({
     }
 
     const getAvatarUrl = () => {
-    return auth.user.avatar ? `/storage/${auth.user.avatar}` : ""
-}
+        return auth.user.avatar ? `/storage/${auth.user.avatar}` : ""
+    }
 
     const getUserInitials = () => {
         const names = auth.user.name.split(" ")
@@ -108,7 +108,6 @@ export default function Sidebar({
                 </div>
             </div>
 
-            {/* User Info dengan Dropdown */}
             <div className="p-6 border-b border-gray-100 relative" ref={dropdownRef}>
                 <div
                     className="flex items-center gap-4 cursor-pointer"
@@ -214,29 +213,33 @@ export default function Sidebar({
                         <span className="text-sm text-gray-600">Total Income</span>
                         <span className="font-semibold text-green-600">
                             {formatCurrency(
-                                incomePerCard[activeCardId] ?? 0,
+                                activeCardId !== null ? incomePerCard?.[activeCardId] ?? 0 : 0,
                                 currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                             )}
                         </span>
+
                     </div>
                     <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">Total Expense</span>
                         <span className="font-semibold text-red-500">
                             {formatCurrency(
-                                expensePerCard[activeCardId] ?? 0,
+                                activeCard ? expensePerCard[activeCard.id] ?? 0 : 0,
                                 currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                             )}
                         </span>
+
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span className="text-sm font-semibold text-gray-800">Balance</span>
                         <span className="font-bold text-gray-900">
                             {formatCurrency(
-                                (incomePerCard[activeCardId] ?? 0) -
-                                (expensePerCard[activeCardId] ?? 0),
-                                currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
+                                (activeCardId !== null
+                                    ? (incomePerCard?.[activeCardId] ?? 0) - (expensePerCard?.[activeCardId] ?? 0)
+                                    : 0),
+                                currencyMap[activeCard?.currency ?? "indonesian_rupiah"]
                             )}
                         </span>
+
                     </div>
                 </div>
             </div>
