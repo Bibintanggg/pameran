@@ -62,6 +62,28 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
     const [showAlert, setShowAlert] = useState(false);
     const alertTimeoutRef = useRef<NodeJS.Timeout>();
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (selectedCard === card.id) {
+                const dropdown = dropdownRefs.current[card.id];
+                const button = buttonRefs.current[card.id];
+
+                if (dropdown && !dropdown.contains(event.target as Node) &&
+                    button && !button.contains(event.target as Node)) {
+                    setSelectedCard(null);
+                }
+            }
+        };
+
+        if (selectedCard === card.id) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [selectedCard, card.id, setSelectedCard]);
+
     useImperativeHandle(ref, () => ({
         resetAlert: () => {
             setShowAlert(false);
@@ -78,8 +100,6 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
     };
 
     const copyCardNumber = async (cardNumber: string) => {
-        try {
-            console.log("Copying card number for card:", card.id);
             await navigator.clipboard.writeText(cardNumber);
 
             if (alertTimeoutRef.current) {
@@ -89,15 +109,9 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
             setShowAlert(true);
             setSelectedCard(null);
 
-            console.log("Alert set to true for card:", card.id);
-
             alertTimeoutRef.current = setTimeout(() => {
                 setShowAlert(false);
-                console.log("Alert hidden for card:", card.id);
             }, 3000);
-        } catch (error) {
-            console.error("Failed to copy:", error);
-        }
     };
 
     useEffect(() => {
@@ -107,10 +121,6 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
             }
         };
     }, []);
-
-    useEffect(() => {
-        console.log(`Card ${card.id} - Alert state:`, showAlert);
-    }, [showAlert, card.id]);
 
     return (
         <>
@@ -163,28 +173,24 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                     <div
                         ref={el => dropdownRefs.current[card.id] = el}
                         className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-40 min-w-[200px]"
+                        onClick={(e) => e.stopPropagation()} // Tambahkan ini
                     >
                         <button
                             className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onViewDetails(card.id);
+                                setSelectedCard(null); // Tutup dropdown setelah action
                             }}
                         >
                             <Eye className="w-4 h-4" />
                             <span>View Details</span>
                         </button>
 
-                        <div
-                            className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedCard(null);
-                            }}
-                        >
-                            <EditCards card={card} onClose={() => setSelectedCard(null)} />
-                            <span>Edit Cards</span>
-                        </div>
+                        <EditCards
+                            card={card}
+                            onClose={() => setSelectedCard(null)}
+                        />
 
                         <button
                             className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700"
@@ -209,7 +215,7 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                                     Delete Card
                                 </button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Card</AlertDialogTitle>
                                     <AlertDialogDescription>
@@ -219,7 +225,10 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                                 <AlertDialogFooter>
                                     <AlertDialogCancel onClick={() => setSelectedCard(null)}>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
-                                        onClick={() => onDeleteCard(card.id)}
+                                        onClick={() => {
+                                            onDeleteCard(card.id);
+                                            setSelectedCard(null);
+                                        }}
                                         className="bg-red-600 hover:bg-red-700"
                                     >
                                         Delete

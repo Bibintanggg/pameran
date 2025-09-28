@@ -1,41 +1,44 @@
-import { Edit, PlusIcon } from "lucide-react"
+import { useState } from 'react'
+import { Edit } from "lucide-react"
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogDescription,
-    DialogTrigger,
 } from "@/Components/ui/dialog"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/Components/ui/dropdown-menu"
-import { AlertDialogHeader } from "./ui/alert-dialog"
-import { Button } from "./ui/button"
 import { useForm } from "@inertiajs/react"
 import { Card } from "@/types/card"
 import { useToast } from "@/hooks/use-toast"
 
-export default function EditCards({ card }: {card: Card}) {
+export default function EditCards({ card, onClose }: { card: Card; onClose: () => void }) {
     const { toast } = useToast()
     const { data, setData, put, errors, processing, reset } = useForm({
-        // 'currency': 'indonesian_rupiah',
         name: card.name,
         card_number: card.card_number,
     })
+
+    const [open, setOpen] = useState(false)
+
+    const handleOpen = (e: React.MouseEvent) => {
+        e.stopPropagation() // Tambahkan ini untuk mencegah event bubbling
+        setOpen(true)
+    }
+
+    const handleClose = () => {
+        setOpen(false)
+        onClose() // Ini akan menutup dropdown juga
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         put(route('cards.update', card.id), {
             onSuccess: () => {
                 reset()
+                handleClose()
                 toast({
                     title: "Success!",
-                    description: "Your card has been change successfully.",
+                    description: "Your card has been updated successfully.",
                 })
             },
             onError: (errors) => {
@@ -48,66 +51,81 @@ export default function EditCards({ card }: {card: Card}) {
         })
     }
 
+    // Tambahkan handler untuk mencegah dialog close saat click di dalam content
+    const handleDialogContentClick = (e: React.MouseEvent) => {
+        e.stopPropagation()
+    }
+
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <button className={`w-4 h-4 rounded-full flex items-center justify-center`}>
-                    <Edit className="w-4 h-4 text-gray-600" />
-                </button>
-            </DialogTrigger>
+        <>
+            <button
+                className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 cursor-pointer"
+                onClick={handleOpen} // Sudah diubah untuk include stopPropagation
+            >
+                <Edit className="w-4 h-4 text-gray-600" />
+                <span>Edit Cards</span>
+            </button>
 
-            <DialogContent className={`w-96 rounded-lg`}>
-                <AlertDialogHeader>
-                    <DialogTitle className="text-start">Edit Cards</DialogTitle>
-                    <DialogDescription className="text-start">
-                        Fill in the details below to create a new card, then click Save when you're done.
-                    </DialogDescription>
-                </AlertDialogHeader>
-
-                <form className="space-y-3"
-                    onSubmit={handleSubmit}
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent
+                    className="w-96 rounded-lg"
+                    onClick={handleDialogContentClick} // Tambahkan ini
                 >
-                    <div className="flex items-center gap-8">
-                        <p>Card Name</p>
-                        <input
-                            type="text"
-                            value={data.name}
-                            onChange={(e) => setData("name", e.target.value)}
-                            placeholder={`example. IDR, THB, etc`}
-                            className="w-full border border-black/10 rounded p-2"
-                        />
-                    </div>
+                    <DialogHeader>
+                        <DialogTitle className="text-start">Edit Cards</DialogTitle>
+                        <DialogDescription className="text-start">
+                            Fill in the details below to edit your card, then click Save when you're done.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                    <div className="flex items-center gap-8">
-                        <p>Card Number</p>
-                        <input
-                            type="number"
-                            value={data.card_number}
-                            onChange={(e) => setData('card_number', e.target.value)}
-                            placeholder={`example. 6203... (min 10digit)`}
-                            className="w-full border border-black/10 rounded p-2"
-                        />
-                    </div>
+                    <form className="space-y-3" onSubmit={handleSubmit}>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Card Name</label>
+                            <input
+                                type="text"
+                                value={data.name}
+                                onChange={(e) => setData("name", e.target.value)}
+                                placeholder="e.g., My Card"
+                                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onClick={(e) => e.stopPropagation()} // Tambahkan ini
+                            />
+                            {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
+                        </div>
 
-                    <div className="flex items-center justify-between">
-                        <button
-                            type="button"
-                            className="w-20 bg-red-600 text-white py-2 rounded-lg justify-end items-end"
-                            onClick={() => reset()}
-                        >
-                            Back
-                        </button>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Card Number</label>
+                            <input
+                                type="text"
+                                value={data.card_number}
+                                onChange={(e) => setData('card_number', e.target.value)}
+                                placeholder="e.g., 6203... (min 10 digits)"
+                                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                maxLength={19}
+                                onClick={(e) => e.stopPropagation()} // Tambahkan ini
+                            />
+                            {errors.card_number && <p className="text-red-500 text-xs">{errors.card_number}</p>}
+                        </div>
 
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="w-40 bg-slate-900 text-white py-2 rounded-lg justify-end items-end disabled:opacity-50"
-                        >
-                            {processing ? "Saving..." : "Save changes"}
-                        </button>
-                    </div>
-                </form>
-            </DialogContent>
-        </Dialog>
+                        <div className="flex items-center justify-between pt-4">
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="w-20 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                            >
+                                Back
+                            </button>
+
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="w-40 bg-slate-900 text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                            >
+                                {processing ? "Saving..." : "Save changes"}
+                            </button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }

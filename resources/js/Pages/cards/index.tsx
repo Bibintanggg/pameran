@@ -314,24 +314,6 @@ export default function Cards() {
 
                         <hr className="w-full h-0.5 bg-gray-200 mb-6" />
 
-                        {/* Mobile Stats */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            <StatsCard
-                                title="Total Balance"
-                                amount={statistics.totalBalance}
-                                change={statistics.balanceGrowth}
-                                icon={<Wallet className="w-5 h-5 text-blue-600" />}
-                                isPositive={statistics.balanceGrowth >= 0}
-                            />
-                            <StatsCard
-                                title="Net Income"
-                                amount={statistics.netIncome}
-                                change={statistics.incomeGrowth}
-                                icon={<TrendingUp className="w-5 h-5 text-green-600" />}
-                                isPositive={statistics.netIncome >= 0}
-                            />
-                        </div>
-
                         <AddCards label="Add Cards" triggerClassName="h-[3.5rem]" />
 
                         {/* Mobile Cards Grid */}
