@@ -390,7 +390,7 @@ class CardsController extends Controller
         $validated = $request->validate([
             'currency' => ["required", 'string', Rule::in(Currency::values())],
             'name' => 'required|string|max:30',
-            'card_number' => 'nullable|string|max:100',
+            'card_number' => 'nullable|string|max:16',
             'balance' => 'nullable|numeric||min:0'
         ]);
 
@@ -420,7 +420,7 @@ class CardsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:30',
-            'card_number' => 'required|string|max:100',
+            'card_number' => 'required|string|max:16',
             // 'balance' => 'nullable|numeric|min:0'
         ]);
 

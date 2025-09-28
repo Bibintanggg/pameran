@@ -341,10 +341,10 @@ export default function Home() {
 
                                     <div className="flex justify-between items-center space-x-4">
                                         <div className="flex-1">
-                                            <AddIncome label="Income" activeCardId={activeCardId} />
+                                            <AddIncome label="Income" activeCardId={activeCardId ?? 0} />
                                         </div>
                                         <div className="flex-1">
-                                            <AddExpense label="Expense" activeCardId={activeCardId} />
+                                            <AddExpense label="Expense" activeCardId={activeCardId ?? 0} />
                                         </div>
                                         <div className="flex-1">
                                             <AddConvert label="Convert" />
@@ -393,7 +393,7 @@ export default function Home() {
                 <Sidebar
                     auth={auth}
                     activeCard={activeCard}
-                    activeCardId={activeCardId}
+                    {...(activeCardId !== null && { activeCardId })}
                     EyesOpen={EyesOpen}
                     setEyesOpen={setEyesOpen}
                     incomePerCard={incomePerCard}
@@ -432,7 +432,10 @@ export default function Home() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <MetricCard
                                     title="Total Income"
-                                    value={formatCurrency(incomePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 'indonesian_rupiah'])}
+                                    value={formatCurrency(
+                                        activeCardId !== null ? incomePerCard[activeCardId] ?? 0 : 0,
+                                        currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
+                                    )}
                                     change={activeRates.income_rate}
                                     trend="up"
                                     color="green"
@@ -440,7 +443,10 @@ export default function Home() {
                                 />
                                 <MetricCard
                                     title="Total Expense"
-                                    value={formatCurrency(expensePerCard[activeCardId] ?? 0, currencyMap[activeCard?.currency ?? 'indonesian_rupiah'])}
+                                    value={formatCurrency(
+                                        activeCardId !== null ? expensePerCard[activeCardId] ?? 0 : 0,
+                                        currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
+                                    )}
                                     change={activeRates.expense_rate}
                                     trend="up"
                                     color="orange"
@@ -449,7 +455,9 @@ export default function Home() {
                                 <MetricCard
                                     title="Net Balance"
                                     value={formatCurrency(
-                                        (incomePerCard[activeCardId] ?? 0) - (expensePerCard[activeCardId] ?? 0),
+                                        activeCardId !== null
+                                            ? (incomePerCard[activeCardId] ?? 0) - (expensePerCard[activeCardId] ?? 0)
+                                            : 0,
                                         currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                                     )}
                                     change={Math.abs(activeRates.income_rate - activeRates.expense_rate)}
@@ -457,6 +465,7 @@ export default function Home() {
                                     color="blue"
                                     icon={<DollarSign className="w-6 h-6 text-blue-600" />}
                                 />
+
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -609,8 +618,10 @@ export default function Home() {
                                     <QuickActionCard gradient>
                                         <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
                                         <div className="grid grid-cols-3 gap-3">
-                                            <AddIncome label="Add Income" activeCardId={activeCardId} />
-                                            <AddExpense label="Add Expense" activeCardId={activeCardId} />
+                                            {activeCardId !== null && (
+                                                <AddIncome label="Add Income" activeCardId={activeCardId} />
+                                            )}
+                                            <AddExpense label="Add Expense" activeCardId={activeCardId ?? 0} />
                                             <AddConvert label="Convert" />
                                         </div>
                                     </QuickActionCard>
