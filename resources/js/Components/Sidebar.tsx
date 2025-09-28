@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import clsx from "clsx"
 import { useActiveCard } from "@/context/ActiveCardContext"
-import { useState, useRef, useEffect } from "react" // Import tambahan untuk dropdown
+import { useState, useRef, useEffect } from "react" 
 
 type SidebarProps = {
     auth: {
@@ -29,6 +29,7 @@ type SidebarProps = {
         balance?: number
         currency?: string
     }
+    activeCardId?: number
     EyesOpen: boolean
     setEyesOpen: (open: boolean) => void
     incomePerCard: Record<string | number, number>

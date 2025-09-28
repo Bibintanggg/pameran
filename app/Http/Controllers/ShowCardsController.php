@@ -22,8 +22,8 @@ class ShowCardsController extends Controller
                 return [
                     'id' => $card->id,
                     'name' => $card->name,
-                    'card_number' => $card->card_number ? 
-                        '**** **** **** ' . substr($card->card_number, -4) : 
+                    'card_number' => $card->card_number ?
+                        '**** **** **** ' . substr($card->card_number, -4) :
                         '**** **** **** ****',
                     'balance' => (float) $card->balance,
                     'currency' => $card->currency,
@@ -56,10 +56,9 @@ class ShowCardsController extends Controller
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
         $cardsWithStats = $cards->map(function ($card) use ($incomePerCard, $expensePerCard) {
-            $cardId = $card['id'];
-            $income = $incomePerCard->get($cardId, 0);
-            $expense = $expensePerCard->get($cardId, 0);
-            
+            $income = $incomePerCard->get($card['id'], 0);
+            $expense = $expensePerCard->get($card['id'], 0);
+
             return array_merge($card, [
                 'income' => $income,
                 'expense' => $expense,
@@ -87,7 +86,7 @@ class ShowCardsController extends Controller
             ->whereYear('transaction_date', $previousMonth->year)
             ->sum('amount');
 
-        $incomeGrowth = $previousMonthIncome > 0 ? 
+        $incomeGrowth = $previousMonthIncome > 0 ?
             (($currentMonthIncome - $previousMonthIncome) / $previousMonthIncome) * 100 : 0;
 
         $currentMonthExpense = Transactions::where('user_id', $userId)
@@ -102,7 +101,7 @@ class ShowCardsController extends Controller
             ->whereYear('transaction_date', $previousMonth->year)
             ->sum('amount');
 
-        $expenseGrowth = $previousMonthExpense > 0 ? 
+        $expenseGrowth = $previousMonthExpense > 0 ?
             (($currentMonthExpense - $previousMonthExpense) / $previousMonthExpense) * 100 : 0;
 
         return Inertia::render('cards/index', [
@@ -129,7 +128,7 @@ class ShowCardsController extends Controller
     private function getCardType($cardName)
     {
         $name = strtolower($cardName);
-        
+
         if (strpos($name, 'business') !== false) {
             return 'Business Account';
         } elseif (strpos($name, 'savings') !== false) {

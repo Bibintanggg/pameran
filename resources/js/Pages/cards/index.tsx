@@ -25,11 +25,6 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
-import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
-} from "@/Components/ui/alert"
 import AddCards from "@/Components/AddCards";
 import { Input } from "@/Components/ui/input"
 import { Label } from "@/Components/ui/label"
@@ -86,14 +81,16 @@ type Props = {
     statistics: Statistics;
     auth: {
         user: {
+            id: number; 
             name: string;
+            email: string; 
             avatar: string;
-        }
+        };
     };
 };
 
 export default function Cards() {
-    const { cards, statistics, auth } = usePage().props as Props;
+    const { cards, statistics, auth } = usePage<Props>().props;
 
     const [eyesOpen, setEyesOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState<number | null>(null);
@@ -352,7 +349,7 @@ export default function Cards() {
             <div className="hidden lg:flex min-h-screen">
                 <Sidebar
                     auth={auth}
-                    activeCard={null}
+                    // activeCard={0}
                     activeCardId={0}
                     EyesOpen={eyesOpen}
                     setEyesOpen={setEyesOpen}
@@ -473,7 +470,9 @@ export default function Cards() {
                                                             <td className="py-4">
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="flex items-center">
-                                                                        <EditCards card={card} />
+                                                                        <EditCards
+                                                                            card={card}
+                                                                            onClose={() => setSelectedCard(null)} />
                                                                     </div>
                                                                     <AlertDialog>
                                                                         <AlertDialogTrigger asChild>

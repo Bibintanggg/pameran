@@ -8,8 +8,20 @@ import {
     DialogDescription,
 } from "@/Components/ui/dialog"
 import { useForm } from "@inertiajs/react"
-import { Card } from "@/types/card"
 import { useToast } from "@/hooks/use-toast"
+
+type Card = {
+    id: number;
+    name: string;
+    card_number: string;
+    balance: number;
+    currency: string;
+    type: string;
+    color: string;
+    income: number;
+    expense: number;
+    net: number;
+};
 
 export default function EditCards({ card, onClose }: { card: Card; onClose: () => void }) {
     const { toast } = useToast()
@@ -21,13 +33,13 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
     const [open, setOpen] = useState(false)
 
     const handleOpen = (e: React.MouseEvent) => {
-        e.stopPropagation() // Tambahkan ini untuk mencegah event bubbling
+        e.stopPropagation()
         setOpen(true)
     }
 
     const handleClose = () => {
         setOpen(false)
-        onClose() // Ini akan menutup dropdown juga
+        onClose()
     }
 
     const handleSubmit = (e: React.FormEvent) => {
