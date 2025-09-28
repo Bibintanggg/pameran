@@ -18,8 +18,10 @@ import { AlertDialogHeader } from "./ui/alert-dialog"
 import { Button } from "./ui/button"
 import { useForm } from "@inertiajs/react"
 import { Card } from "@/types/card"
+import { useToast } from "@/hooks/use-toast"
 
 export default function EditCards({ card }: {card: Card}) {
+    const { toast } = useToast()
     const { data, setData, put, errors, processing, reset } = useForm({
         // 'currency': 'indonesian_rupiah',
         name: card.name,
@@ -31,6 +33,17 @@ export default function EditCards({ card }: {card: Card}) {
         put(route('cards.update', card.id), {
             onSuccess: () => {
                 reset()
+                toast({
+                    title: "Success!",
+                    description: "Your card has been change successfully.",
+                })
+            },
+            onError: (errors) => {
+                toast({
+                    title: "Error",
+                    description: "Please check the required fields.",
+                    variant: "destructive",
+                })
             }
         })
     }
