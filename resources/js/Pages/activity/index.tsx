@@ -298,10 +298,10 @@ export default function AllActivity() {
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
     const netBalanceChange = Math.abs(calculatedIncomeRate - calculatedExpenseRate);
 
-    console.log("calculatedTotalExpense", calculatedTotalExpense);
-    console.log("activeCardId", activeCardId);
-    console.log("expensePerCard", expensePerCard);
-    console.log("totalExpense", totalExpense);
+    // console.log("calculatedTotalExpense", calculatedTotalExpense);
+    // console.log("activeCardId", activeCardId);
+    // console.log("expensePerCard", expensePerCard);
+    // console.log("totalExpense", totalExpense);
 
     return (
         <div className="min-h-screen bg-gray-50">
