@@ -296,7 +296,7 @@ export default function AllActivity() {
 
     const netBalance = calculatedTotalIncome - calculatedTotalExpense;
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
-    const netBalanceChange = Math.abs(calculatedIncomeRate - calculatedExpenseRate);
+    const netBalanceChange = (calculatedIncomeRate - calculatedExpenseRate).toFixed(2);
 
     // console.log("calculatedTotalExpense", calculatedTotalExpense);
     // console.log("activeCardId", activeCardId);

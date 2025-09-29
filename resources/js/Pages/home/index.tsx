@@ -578,7 +578,7 @@ export default function Home() {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <QuickActionCard gradient={false} className="overflow-y-auto">
+                                    <QuickActionCard gradient={false} className="overflow-y-auto h-96">
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="text-lg font-bold text-gray-900">Available Card</h3>
                                             <button onClick={() => router.visit(route('cards.show'))} className="text-blue-600 hover:text-blue-700 font-medium text-sm">
@@ -587,7 +587,7 @@ export default function Home() {
                                         </div>
                                         <div className="space-y-3">
                                             {cards && cards.length > 0 ? (
-                                                cards.slice(0, 3).map((card) => (
+                                                cards.map((card) => (
                                                     <button
                                                         key={card.id}
                                                         onClick={() => setActiveCardId(card.id)}
