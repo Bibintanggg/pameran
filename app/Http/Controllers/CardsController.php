@@ -427,7 +427,7 @@ class CardsController extends Controller
         $cards->update([
         'name' => $validated['name'],
         'card_number' => $validated['card_number'],
-        // 'balance' => $validated['balance'] ?? $cards->balance 
+        // 'balance' => $validated['balance'] ?? $cards->balance
     ]);
 
         return back()->with('success', 'Cards berhasil diperbarui');

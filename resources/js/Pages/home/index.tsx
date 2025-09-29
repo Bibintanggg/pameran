@@ -458,7 +458,10 @@ export default function Home() {
                                             : 0,
                                         currencyMap[activeCard?.currency ?? 'indonesian_rupiah']
                                     )}
-                                    change={Math.abs(activeRates.income_rate - activeRates.expense_rate)}
+                                    change={+Math.min(
+                                        Math.abs(activeRates.income_rate - activeRates.expense_rate),
+                                        100
+                                    ).toFixed(1)}
                                     trend="up"
                                     color="blue"
                                     icon={<DollarSign className="w-6 h-6 text-blue-600" />}
