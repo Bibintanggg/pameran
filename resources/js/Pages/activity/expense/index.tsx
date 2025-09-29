@@ -47,7 +47,7 @@ type Props = {
     auth: {
         user: {
             name: string;
-            avatar: string | null;
+            avatar: string;
         }
     };
     startDate: string | null;
@@ -86,7 +86,9 @@ export default function Expense() {
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
 
-    const activeCard = cards.find((card) => card.id === activeCardId);
+    const activeCard = activeCardId != null
+        ? cards.find(card => card.id === activeCardId)
+        : undefined;
 
     useEffect(() => {
         if (initialActiveCardId && initialActiveCardId !== activeCardId) {
@@ -123,10 +125,10 @@ export default function Expense() {
     }, [chartDataForActiveCard, chartMode]);
 
     // Hitung total expense berdasarkan kartu aktif
+    const safeCardId = activeCardId ?? 0
     const calculatedTotalExpense = useMemo(() => {
-        if (activeCardId === 0) return totalExpense;
-        return expensePerCard[activeCardId] || 0;
-    }, [activeCardId, totalExpense, expensePerCard]);
+        return safeCardId === 0 ? totalExpense : expensePerCard[safeCardId] || 0;
+    }, [safeCardId, totalExpense, expensePerCard]);
 
     const calculatedAvgMonthlyExpense = useMemo(() => {
         return avgMonthlyExpense;
@@ -520,8 +522,8 @@ export default function Expense() {
             <div className="hidden lg:flex min-h-screen">
                 <Sidebar
                     auth={auth}
-                    activeCard={activeCard}
-                    activeCardId={activeCardId}
+                    activeCard={activeCard ?? undefined}
+                    activeCardId={activeCardId ?? undefined}
                     EyesOpen={false}
                     setEyesOpen={() => { }}
                     incomePerCard={{}}

@@ -1,5 +1,5 @@
 export type Card = {
-    id: string
+    id: number
     userId?: number
     name: string
     balance: number

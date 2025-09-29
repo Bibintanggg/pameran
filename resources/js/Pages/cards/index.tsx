@@ -81,9 +81,9 @@ type Props = {
     statistics: Statistics;
     auth: {
         user: {
-            id: number; 
+            id: number;
             name: string;
-            email: string; 
+            email: string;
             avatar: string;
         };
     };

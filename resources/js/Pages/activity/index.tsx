@@ -241,8 +241,6 @@ export default function AllActivity() {
         </div>
     );
 
-    console.log("Sidebar auth.user:", auth.user);
-
     const formatAutoCurrency = (amount: number, currencyId?: number) => {
         const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
         return formatCurrency(amount, currency);
