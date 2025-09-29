@@ -18,9 +18,11 @@ createInertiaApp({
         ),
     setup({ el, App, props }) {
         const root = createRoot(el);
+        const inertiaProps = props as any;
+        const cards = inertiaProps.cards || [];
 
         root.render(
-            <ActiveCardProvider>
+            <ActiveCardProvider cards={cards}>
                 <App {...props} />
                 <Toaster />
             </ActiveCardProvider>
