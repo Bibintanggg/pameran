@@ -8,7 +8,6 @@ import CardIndex from "@/Components/CardIndex"
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar"
 import { PageProps } from "@/types"
 import { router, usePage } from "@inertiajs/react"
-import FlashMessage from '@/Components/FlashMessage';
 import {
     EyeClosedIcon,
     EyeIcon,
@@ -423,7 +422,6 @@ export default function Home() {
                                             <Filter className="w-5 h-5 text-gray-600" />
                                         </button>
                                     </div>
-                                    <FlashMessage />
                                 </div>
                             </div>
                         </div>
