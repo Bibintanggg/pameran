@@ -46,7 +46,7 @@ type Props = {
     auth: {
         user: {
             name: string;
-            avatar: string | null;
+            avatar: string;
         }
     };
     startDate: string | null;
@@ -128,15 +128,12 @@ export default function Income() {
     // Hitung total income berdasarkan kartu aktif
     const calculatedTotalIncome = useMemo(() => {
         if (activeCardId === 0) return totalIncome;
-        return incomePerCard[activeCardId] || 0;
+        return activeCardId !== null ? incomePerCard[activeCardId] || 0 : 0
     }, [activeCardId, totalIncome, incomePerCard]);
 
     const activeCardIncomeByCategory = useMemo(() => {
-        if (activeCardId === 0) {
-            return incomeByCategory; // Untuk "All Cards", gunakan yang universal
-        } else {
-            return incomeByCategoryPerCard[activeCardId] || {};
-        }
+        if (activeCardId === 0) return incomeByCategory;
+        return activeCardId != null ? incomeByCategoryPerCard[activeCardId] ?? {} : {};
     }, [activeCardId, incomeByCategory, incomeByCategoryPerCard]);
 
     // Transform incomeByCategory untuk chart pie
@@ -157,16 +154,9 @@ export default function Income() {
         return names[0][0];
     };
 
-    // Hitung average monthly income berdasarkan kartu aktif
     const calculatedAvgMonthlyIncome = useMemo(() => {
-        if (activeCardId === 0) {
-            // Untuk "All Cards", gunakan avgMonthlyIncome dari backend
-            return avgMonthlyIncome;
-        } else {
-            // Untuk card spesifik, hitung dari incomePerCard dibagi 12
-            const cardIncome = incomePerCard[activeCardId] || 0;
-            return cardIncome / 12;
-        }
+        if (activeCardId === 0) return avgMonthlyIncome;
+        return activeCardId != null ? (incomePerCard[activeCardId] ?? 0) / 12 : 0;
     }, [activeCardId, avgMonthlyIncome, incomePerCard]);
 
     const currentDate = new Date().toLocaleDateString('en-US', {
@@ -201,7 +191,7 @@ export default function Income() {
         </div>
     );
 
-    const formatAutoCurrency = (amount: number, currencyId?: number) => {
+    const formatAutoCurrency = (amount: number, currencyId?: string) => {
         const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
         return formatCurrency(amount, currency);
     };
@@ -218,19 +208,17 @@ export default function Income() {
             preserveState: false,
             replace: true,
             onFinish: () => {
-                console.log('Request finished');
                 setIsLoading(false);
             },
             onError: (error) => {
-                console.error('Request error:', error);
                 setIsLoading(false);
-                setChartMode(initialChartMode)
+                // setChartMode(initialChartMode)
             }
         });
     };
 
     const handleCardChange = (cardId: number) => {
-        if (cardId === activeCardId) return; // Jangan request jika sama
+        if (cardId === activeCardId) return;
 
         setIsLoading(true);
         setActiveCardId(cardId);
@@ -238,15 +226,13 @@ export default function Income() {
         router.get(route('income.index'), {
             filter,
             chartMode,
-            activeCardId: cardId // Langsung gunakan cardId yang baru
+            activeCardId: cardId
         }, {
             preserveState: false,
             replace: true,
             onFinish: () => setIsLoading(false),
             onError: (error) => {
-                console.error('Card change error:', error);
                 setIsLoading(false);
-                // Rollback activeCardId jika error
                 setActiveCardId(activeCardId);
             }
         });
@@ -516,7 +502,7 @@ export default function Income() {
                 <Sidebar
                     auth={auth}
                     activeCard={activeCard}
-                    activeCardId={activeCardId}
+                    {...(activeCardId !== null && { activeCardId })}
                     EyesOpen={false}
                     setEyesOpen={() => { }}
                     incomePerCard={incomePerCard}

@@ -257,7 +257,7 @@ export default function Home() {
                         <div className="mt-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-gray-900">My Cards</h3>
-                                <AddCards label="Add" />
+                                <AddCards label="Add Cards" triggerClassName="h-[3.5rem] w-42" />
                             </div>
 
                             <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -616,16 +616,16 @@ export default function Home() {
                                         </div>
                                     </QuickActionCard>
 
-                                    <QuickActionCard gradient>
+                                    {activeCardId !== null && (
+                                        <QuickActionCard gradient>
                                         <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
                                         <div className="grid grid-cols-3 gap-3">
-                                            {activeCardId !== null && (
-                                                <AddIncome label="Add Income" activeCardId={activeCardId} />
-                                            )}
-                                            <AddExpense label="Add Expense" activeCardId={activeCardId ?? 0} />
+                                            <AddIncome label="Add Income" activeCardId={activeCardId} />
+                                            <AddExpense label="Add Expense" activeCardId={activeCardId} />
                                             <AddConvert label="Convert" />
                                         </div>
                                     </QuickActionCard>
+                                    )}
                                 </div>
                             </div>
 

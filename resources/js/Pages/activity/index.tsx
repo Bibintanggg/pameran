@@ -167,10 +167,9 @@ export default function AllActivity() {
                 yearly: yearlyResult
             };
         } else {
-            // Gunakan data untuk kartu aktif tertentu
             return {
-                monthly: chartData.monthly[activeCardId] || [],
-                yearly: chartData.yearly[activeCardId] || []
+                monthly: chartData.monthly[activeCardId ?? 0] || [],
+                yearly: chartData.yearly[activeCardId ?? 0] || []
             };
         }
     }, [chartData, activeCardId]);
@@ -182,21 +181,25 @@ export default function AllActivity() {
     }, [chartDataForActiveCard, chartMode]);
 
     const calculatedTotalIncome = useMemo(() => {
+        if (activeCardId === null) return 0;
         if (activeCardId === 0) return totalIncome;
         return incomePerCard[activeCardId] || 0;
     }, [activeCardId, totalIncome, incomePerCard]);
 
     const calculatedTotalExpense = useMemo(() => {
+        if (activeCardId === null) return 0;
         if (activeCardId === 0) return totalExpense;
         return expensePerCard[activeCardId] || 0;
     }, [activeCardId, totalExpense, expensePerCard]);
 
     const calculatedIncomeRate = useMemo(() => {
+        if (activeCardId === null) return 0;
         if (activeCardId === 0) return incomeRate;
         return ratesPerCard[activeCardId]?.income_rate || 0;
     }, [activeCardId, incomeRate, ratesPerCard]);
 
     const calculatedExpenseRate = useMemo(() => {
+        if (activeCardId === null) return 0;
         if (activeCardId === 0) return expenseRate;
         return ratesPerCard[activeCardId]?.expense_rate || 0;
     }, [activeCardId, expenseRate, ratesPerCard]);
@@ -241,7 +244,7 @@ export default function AllActivity() {
         </div>
     );
 
-    const formatAutoCurrency = (amount: number, currencyId?: number) => {
+    const formatAutoCurrency = (amount: number, currencyId?: string) => {
         const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
         return formatCurrency(amount, currency);
     };
@@ -526,7 +529,7 @@ export default function AllActivity() {
                 <Sidebar
                     auth={auth}
                     activeCard={activeCard}
-                    activeCardId={activeCardId}
+                    {...(activeCardId !== null && { activeCardId })}
                     EyesOpen={false}
                     setEyesOpen={() => { }}
                     incomePerCard={incomePerCard}
@@ -590,7 +593,7 @@ export default function AllActivity() {
                                 <MetricCard
                                     title="Net Balance"
                                     value={formatAutoCurrency(netBalance, activeCard?.currency)}
-                                    change={netBalanceChange}
+                                    change={netBalanceChange ? parseFloat(netBalanceChange) : 0}
                                     trend={netBalanceTrend}
                                     color="blue"
                                     icon={<DollarSign className="w-6 h-6 text-blue-600" />}
@@ -654,7 +657,7 @@ export default function AllActivity() {
                                                     />
                                                     <YAxis
                                                         axisLine={false}
-                                                        toggleLine={false}
+                                                        tickLine={false}
                                                         tick={{ fill: '#6B7280', fontSize: 12 }}
                                                     />
                                                     <Tooltip

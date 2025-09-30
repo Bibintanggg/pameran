@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 
 interface ActiveCardContextProps {
     activeCardId: number | null;
-    setActiveCardId: (id: number) => void;
+    setActiveCardId: (id: number | null) => void;
 }
 
 const ActiveCardContext = createContext<ActiveCardContextProps | undefined>(undefined);
