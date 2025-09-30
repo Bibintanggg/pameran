@@ -35,7 +35,6 @@ interface ExpenseProps {
     activeCardId: number
 }
 
-
 export default function AddExpense({
     label,
     activeCardId
@@ -107,7 +106,7 @@ export default function AddExpense({
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <button className="flex flex-col items-center">
-                            <PlusSquareIcon opacity={54} size={32} />
+                            <PlusSquareIcon opacity={54} size={32} color={"white"}/>
                             <p className="text-white text-sm font-semibold">{label}</p>
                         </button>
                     </DialogTrigger>

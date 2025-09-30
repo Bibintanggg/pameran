@@ -383,7 +383,7 @@ export default function Home() {
                         <div className="h-4"></div>
                     </div>
 
-                    <BottomNavbar />
+                    <BottomNavbar activeCardId={activeCardId}/>
                 </div>
             </div>
 

@@ -266,7 +266,7 @@ export default function Cards() {
 
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-                    <BottomNavbar />
+                    <BottomNavbar activeCardId={null} />
 
                     <div className="flex-1 overflow-y-auto p-6">
                         <div className="flex items-center justify-between mb-6">

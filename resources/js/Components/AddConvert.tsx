@@ -130,7 +130,7 @@ export default function AddConvert({ label }: { label: string }) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <button className="flex flex-col items-center">
-                    <ChevronsRightLeftIcon opacity={54} size={32} />
+                    <ChevronsRightLeftIcon opacity={54} size={32} color="white"/>
                     <p className="text-white text-sm font-semibold">{label}</p>
                 </button>
             </DialogTrigger>
