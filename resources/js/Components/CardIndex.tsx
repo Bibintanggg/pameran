@@ -35,9 +35,9 @@ export default function CardIndex({ id, currency, balance }: CardIndexProps) {
 
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <button className="hover:bg-black/5 transition-all duration-300 ease-in-out rounded-full w-5 h-5 flex items-center justify-center">
+                            <div className="hover:bg-black/5 transition-all duration-300 ease-in-out rounded-full w-5 h-5 flex items-center justify-center">
                                 <TrashIcon size={15} color={"red"} />
-                            </button>
+                            </div>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
@@ -48,14 +48,13 @@ export default function CardIndex({ id, currency, balance }: CardIndexProps) {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction asChild>
-                                    <button
-                                        onClick={handleDelete}
-                                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                                    >
-                                        Delete
-                                    </button> 
+                                <AlertDialogAction
+                                    onClick={handleDelete}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                >
+                                    Delete
                                 </AlertDialogAction>
+
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>

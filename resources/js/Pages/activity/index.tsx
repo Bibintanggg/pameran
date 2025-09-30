@@ -311,7 +311,7 @@ export default function AllActivity() {
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-                    <BottomNavbar />
+                    <BottomNavbar activeCardId={activeCardId} />
 
                     <div className="flex-1 overflow-y-auto p-6">
                         {/* Mobile Header */}
@@ -431,13 +431,13 @@ export default function AllActivity() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="h-48 relative">
+                            <div className="h-48 relative w-full">
                                 {isLoading && (
                                     <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
                                         <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
                                     </div>
                                 )}
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height={320}>
                                     <AreaChart data={mergedChartData}>
                                         <defs>
                                             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
@@ -630,13 +630,13 @@ export default function AllActivity() {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="h-80 relative">
+                                        <div className="h-80 relative w-full">
                                             {isLoading && (
                                                 <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
                                                     <RefreshCw className="h-8 w-8 text-blue-500 animate-spin" />
                                                 </div>
                                             )}
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height={320}>
                                                 <AreaChart data={mergedChartData}>
                                                     <defs>
                                                         <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">

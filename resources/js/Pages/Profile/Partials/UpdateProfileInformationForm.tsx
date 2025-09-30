@@ -141,7 +141,7 @@ export default function UpdateProfileInformation({
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-                    <BottomNavbar />
+                    <BottomNavbar activeCardId={activeCardId}/>
 
                     {/* Mobile Header */}
                     <div className="bg-gradient-to-r from-[#9290FE] to-[#7A78D1] p-6 text-white">

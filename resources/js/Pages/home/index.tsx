@@ -263,7 +263,7 @@ export default function Home() {
                             <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
                                 {cards && cards.length > 0 ? (
                                     cards.map((card) => (
-                                        <button
+                                        <div
                                             key={card.id}
                                             onClick={() => setActiveCardId(card.id)}
                                             className={`flex-shrink-0 p-4 rounded-xl transition-all duration-200 border-2 ${activeCardId === card.id
@@ -277,7 +277,7 @@ export default function Home() {
                                                 balance={card.balance}
                                                 eyesOpen={EyesOpen}
                                             />
-                                        </button>
+                                        </div>
                                     ))
                                 ) : (
                                     <div className="flex items-center justify-center w-full py-8">
@@ -303,15 +303,12 @@ export default function Home() {
                                                 </div>
                                             </div>
                                             <p className="text-white/80 text-xs font-medium mb-1">Income</p>
-                                            <p className="text-white font-bold text-lg">
                                                 <p className="text-white font-bold text-lg">
                                                     {formatCurrency(
                                                         activeCardId !== null ? incomePerCard[activeCardId] ?? 0 : 0,
                                                         currencyMap[activeCard?.currency ?? "indonesian_rupiah"]
                                                     )}
                                                 </p>
-
-                                            </p>
                                             <div className="flex items-center justify-center mt-2">
                                                 <TrendingUp className="h-3 w-3 text-green-300 mr-1" />
                                                 <span className="text-green-300 text-xs">{activeRates.income_rate}%</span>
