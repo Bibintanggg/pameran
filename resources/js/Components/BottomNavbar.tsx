@@ -9,6 +9,7 @@ export default function BottomNavbar({ activeCardId }: { activeCardId: number | 
     const { url } = usePage()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+
     const data = [
         { icon: <Home className="w-6 h-6" />, path: "/home" },
         { icon: <TrendingUp className="w-6 h-6" />, path: "/all-activity" },
@@ -27,8 +28,8 @@ export default function BottomNavbar({ activeCardId }: { activeCardId: number | 
                                 <button
                                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                                     className={`flex flex-col items-center transition-all ${
-                                        isMenuOpen 
-                                            ? "text-blue-500 transform rotate-45" 
+                                        isMenuOpen
+                                            ? "text-blue-500 transform rotate-45"
                                             : "text-gray-600 hover:text-blue-500"
                                     }`}
                                 >
@@ -54,7 +55,7 @@ export default function BottomNavbar({ activeCardId }: { activeCardId: number | 
             </nav>
 
             {isMenuOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black bg-opacity-30 z-40"
                     onClick={() => setIsMenuOpen(false)}
                 />
@@ -62,45 +63,45 @@ export default function BottomNavbar({ activeCardId }: { activeCardId: number | 
 
             {isMenuOpen && (
                 <div className="fixed bottom-20 right-6 z-50 flex flex-col-reverse space-y-reverse space-y-3 max-w-sm">
-                    <div 
+                    <div
                         className="flex items-center space-x-3 animate-slide-in"
                         style={{ animationDelay: '0ms' }}
                     >
                         <span className="bg-white px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium text-gray-700 whitespace-nowrap">
                             Income
                         </span>
-                        <div onClick={() => setIsMenuOpen(false)}>
-                            <AddIncome 
+                        <div>
+                            <AddIncome
                                 label=""
                                 activeCardId={activeCardId ?? 0}
                             />
                         </div>
                     </div>
 
-                    <div 
+                    <div
                         className="flex items-center space-x-3 animate-slide-in"
                         style={{ animationDelay: '50ms' }}
                     >
                         <span className="bg-white px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium text-gray-700 whitespace-nowrap">
                             Expense
                         </span>
-                        <div onClick={() => setIsMenuOpen(false)}>
-                            <AddExpense 
+                        <div>
+                            <AddExpense
                                 label=""
                                 activeCardId={activeCardId ?? 0}
                             />
                         </div>
                     </div>
 
-                    <div 
+                    <div
                         className="flex items-center space-x-3 animate-slide-in"
                         style={{ animationDelay: '100ms' }}
                     >
                         <span className="bg-white px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium text-gray-700 whitespace-nowrap">
                             Convert
                         </span>
-                        <div onClick={() => setIsMenuOpen(false)}>
-                            <AddConvert 
+                        <div>
+                            <AddConvert
                                 label=""
                             />
                         </div>
