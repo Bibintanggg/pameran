@@ -82,12 +82,13 @@ export default function AddIncome({
                 })
             },
             onError: (errors) => {
-                // console.log('Validation errors:', errors);
-                toast({
-                    title: "Error",
-                    description: "Please check the required fields.",
-                    variant: "destructive",
-                })
+                Object.keys(errors).forEach((key) => {
+                    toast({
+                        title: "Error",
+                        description: errors[key],
+                        variant: "destructive",
+                    });
+                });
             }
         })
     }
@@ -212,7 +213,7 @@ export default function AddIncome({
                             </DropdownMenu>
                         </div>
 
-                        <div className="flex flex-col items-start">
+                        {/* <div className="flex flex-col items-start">
                             {errors.category && (
                                 <span className="text-red-500 text-sm">{errors.category}</span>
                             )}
@@ -225,7 +226,7 @@ export default function AddIncome({
                             {errors.asset && (
                                 <span className="text-red-500 text-sm">{errors.asset}</span>
                             )}
-                        </div>
+                        </div> */}
 
                         <div className="flex items-center justify-between">
                             <button

@@ -51,7 +51,6 @@ export default function AddConvert({ label }: { label: string }) {
             setRate(response.data.rate)
             setConvertedAmount(response.data.converted_amount)
         } catch (error: any) {
-            console.error("Failed to fetch rate:", error)
             
             const errorMsg = error.response?.data?.error || "Failed to fetch exchange rate. Please try again."
             
@@ -69,7 +68,11 @@ export default function AddConvert({ label }: { label: string }) {
 
     useEffect(() => {
         if (fromCard && toCard && amount && parseFloat(amount) > 0) {
-            fetchRate(fromCard.id, toCard.id, parseFloat(amount))
+            const timeout = setTimeout(() => {
+                fetchRate(fromCard.id, toCard.id, parseFloat(amount))
+            }, 600)
+
+            return () => clearTimeout(timeout)
         } else {
             setRate(null)
             setConvertedAmount(null)

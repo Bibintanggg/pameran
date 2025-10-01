@@ -116,7 +116,7 @@ class TransactionsController extends Controller
 
         // dd($data);
         if ($data['type'] === TransactionsType::EXPENSE->value) {
-            if (! in_array($data['category'], [
+            if (!in_array($data['category'], [
                 Category::FOOD_DRINKS->value,
                 Category::TRANSPORTATION->value,
                 Category::HEALTH->value,
@@ -127,6 +127,14 @@ class TransactionsController extends Controller
             ])) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
+
+            $card = Cards::findOrFail($data['from_cards_id']);
+
+            if ($card->balance < $data['amount']) {
+                return back()->withErrors([
+                    'amount' => 'Insufficient balance to perform this transaction.',
+                ]);
+            };
 
             Transactions::create([
                 'user_id' => Auth::id(),
@@ -139,7 +147,7 @@ class TransactionsController extends Controller
                 'transaction_date' => $data['transaction_date'],
             ]);
 
-            $card = Cards::find($data['from_cards_id']); // Gunakan to_cards_id
+            $card = Cards::find($data['from_cards_id']);
             if ($card) {
                 if ($card) {
                     if ($card->balance < $data['amount']) {

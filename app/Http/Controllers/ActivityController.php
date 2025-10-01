@@ -775,7 +775,7 @@ class ActivityController extends Controller
             return [
                 'month' => Carbon::create()->month($month)->format('M'),
                 'income' => $data->income ?? 0,
-                'target' => ($data->income ?? 0) * 1.1,
+                // 'target' => ($data->income ?? 0) * 1.1,
                 'label' => Carbon::create()->month($month)->format('M'),
             ];
         });
@@ -817,7 +817,7 @@ class ActivityController extends Controller
             return [
                 'year' => $data->year,
                 'income' => $data->income ?? 0,
-                'target' => ($data->income ?? 0) * 1.1,
+                // 'target' => ($data->income ?? 0) * 1.1,
                 'label' => (string) $data->year,
             ];
         });

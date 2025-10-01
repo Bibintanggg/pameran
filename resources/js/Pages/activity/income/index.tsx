@@ -32,8 +32,8 @@ type Props = {
     transactions: Transaction[];
     cards: Card[];
     chartData: {
-        monthly: { label: string; income: number; target: number }[];
-        yearly: { label: string; income: number; target: number }[];
+        monthly: { label: string; income: number; }[];
+        yearly: { label: string; income: number; }[];
     };
     incomeByCategory: Record<string, number>;
     incomeByCategoryPerCard: Record<number, Record<string, number>>;
@@ -441,7 +441,7 @@ export default function Income() {
                                             }}
                                             formatter={(value: any, name: string) => [
                                                 formatAutoCurrency(value, activeCard?.currency),
-                                                name === 'income' ? 'Income' : 'Target'
+                                                'Income'
                                             ]}
                                         />
                                         <Area
@@ -647,15 +647,6 @@ export default function Income() {
                                                         fillOpacity={1}
                                                         fill="url(#colorIncome)"
                                                     />
-                                                    {/* <Area
-                                                        type="monotone"
-                                                        dataKey="target"
-                                                        stroke="#D1D5DB"
-                                                        color="black"
-                                                        strokeWidth={2}
-                                                        strokeDasharray="5 5"
-                                                        fill="none"
-                                                    /> */}
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </div>

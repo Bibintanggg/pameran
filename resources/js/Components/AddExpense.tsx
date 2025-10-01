@@ -69,12 +69,14 @@ export default function AddExpense({
                 })
             },
             onError: (errors) => {
+            Object.keys(errors).forEach((key) => {
                 toast({
                     title: "Error",
-                    description: "Please check the required fields.",
+                    description: errors[key],
                     variant: "destructive",
-                })
-            }
+                });
+            });
+        }
         })
     }
 
