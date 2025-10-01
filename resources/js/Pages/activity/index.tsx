@@ -380,6 +380,16 @@ export default function AllActivity() {
                             </div>
                         </div>
 
+                        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col items-center justify-center mb-3">
+                            <div className="flex items-center justify-center mb-2">
+                                <p className="text-xs font-medium text-gray-600 text-center">Net Balance</p>
+                            </div>
+                            <p className="text-lg font-bold text-gray-900">
+                                {formatAutoCurrency(netBalance, activeCard?.currency)}
+                            </p>
+                            <p className="text-xs text-green-600">{netBalanceChange}%</p>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                 <div className="flex items-center justify-between mb-2">

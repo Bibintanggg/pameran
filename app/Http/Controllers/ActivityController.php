@@ -856,6 +856,8 @@ class ActivityController extends Controller
             ? (($totalIncome - $previousPeriodIncome) / $previousPeriodIncome) * 100
             : ($totalIncome > 0 ? 100 : 0);
 
+        $growthRate = round($growthRate, 1);
+
         return Inertia::render('activity/income/index', [
             'transactions' => $transactions,
             'cards' => $cards,
