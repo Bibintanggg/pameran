@@ -170,7 +170,7 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                         <div className="flex justify-between items-end">
                             <div>
                                 <p className="text-sm opacity-80">Balance</p>
-                                <p className="text-2xl font-medium">
+                                <p className={`text-2xl font-medium ${isDesktop ? "text-2xl" : "text-xl"}`}>
                                     {eyesOpen ? formatAutoCurrency(card.balance, card.currency) : "****"}
                                 </p>
                             </div>
