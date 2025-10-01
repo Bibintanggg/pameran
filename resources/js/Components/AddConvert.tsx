@@ -36,7 +36,7 @@ export default function AddConvert({ label }: { label: string }) {
     const fetchRate = async (from: string, to: string, amount: number) => {
         try {
             const res = await fetch(
-                `https://api.freecurrencyapi.com/v1/latest?apikey=fca_live_e3wEN2sdrsUSaopn8LY0C6GNk4uMBvs0kpBtSKD6&currencies=${to}&base_currency=${from}`
+                `https://api.freecurrencyapi.com/v1/latest?apikey=${import.meta.env.VITE_CURRENCY_API_KEY}&currencies=${to}&base_currency=${from}`
             )
             const data = await res.json()
             const rateValue = data.data[to]
@@ -130,12 +130,12 @@ export default function AddConvert({ label }: { label: string }) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <button className="flex flex-col items-center">
-                    <ChevronsRightLeftIcon opacity={54} size={32} color="white"/>
+                    <ChevronsRightLeftIcon opacity={54} size={32} color="white" />
                     <p className="text-white text-sm font-semibold">{label}</p>
                 </button>
             </DialogTrigger>
 
-            <DialogContent className="w-96">
+            <DialogContent className="w-96" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>Convert Money</DialogTitle>
                 </DialogHeader>

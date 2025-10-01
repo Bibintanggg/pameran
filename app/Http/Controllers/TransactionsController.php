@@ -153,7 +153,7 @@ class TransactionsController extends Controller
             }
 
 
-            return redirect()->route('home.index')->with('success', 'Transaksi berhasil ditambahkan');
+            return back()->with('success', 'Transaksi berhasil ditambahkan');
         };
         return back()->withErrors(['type' => 'Invalid transaction type']);
     }

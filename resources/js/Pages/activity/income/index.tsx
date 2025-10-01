@@ -113,8 +113,6 @@ export default function Income() {
         if (activeCardId === 0) {
             return chartData;
         } else {
-            // Untuk kartu spesifik, kita perlu memfilter data
-            // Karena controller sudah menyediakan data per card, kita gunakan data yang ada
             return chartData;
         }
     }, [chartData, activeCardId]);
@@ -260,7 +258,7 @@ export default function Income() {
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-                    <BottomNavbar />
+                    <BottomNavbar activeCardId={activeCardId}/>
 
                     <div className="flex-1 overflow-y-auto p-6">
                         {/* Mobile Header */}
@@ -408,13 +406,13 @@ export default function Income() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="h-48 relative">
+                            <div className="h-48 relative w-full">
                                 {isLoading && (
                                     <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
                                         <RefreshCw className="h-6 w-6 text-green-500 animate-spin" />
                                     </div>
                                 )}
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height={220}>
                                     <AreaChart data={mergedChartData}>
                                         <defs>
                                             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
@@ -603,13 +601,13 @@ export default function Income() {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="h-80 relative">
+                                        <div className="h-80 relative w-full">
                                             {isLoading && (
                                                 <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
                                                     <RefreshCw className="h-8 w-8 text-green-500 animate-spin" />
                                                 </div>
                                             )}
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height={320}>
                                                 <AreaChart data={mergedChartData}>
                                                     <defs>
                                                         <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
@@ -771,8 +769,8 @@ export default function Income() {
                                             {/* Category Chart */}
                                             <div className="mt-6">
                                                 <h4 className="text-sm font-medium text-gray-700 mb-3">Distribution</h4>
-                                                <div className="h-48">
-                                                    <ResponsiveContainer width="100%" height="100%">
+                                                <div className="h-48 w-full">
+                                                    <ResponsiveContainer width="100%" height={320}>
                                                         <PieChart>
                                                             <Pie
                                                                 data={categoryChartData}

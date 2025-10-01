@@ -491,8 +491,8 @@ export default function Home() {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="h-80">
-                                            <ResponsiveContainer width="100%" height="100%">
+                                        <div className="h-80 w-full">
+                                            <ResponsiveContainer width="100%" height={320}>
                                                 <AreaChart data={chartData}>
                                                     <defs>
                                                         <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">

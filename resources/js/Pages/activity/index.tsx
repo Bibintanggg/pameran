@@ -437,7 +437,7 @@ export default function AllActivity() {
                                         <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
                                     </div>
                                 )}
-                                <ResponsiveContainer width="100%" height={320}>
+                                <ResponsiveContainer width="100%" height={220}>
                                     <AreaChart data={mergedChartData}>
                                         <defs>
                                             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
@@ -505,7 +505,6 @@ export default function AllActivity() {
                                 </div>
                                 <button
                                     className="text-blue-500 text-sm"
-                                    onClick={() => router.visit(route('transactions.index'))}
                                 >
                                     View all
                                 </button>
