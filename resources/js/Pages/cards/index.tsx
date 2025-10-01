@@ -316,21 +316,30 @@ export default function Cards() {
                         {/* Mobile Cards Grid */}
                         <div className="space-y-4 mt-5">
                             {cards.length > 0 ? (
-                                cards.map((card) => (
-                                    <CardComponent
+                                cards.map((card, index) => (
+                                    <div
                                         key={card.id}
-                                        ref={el => cardComponentRefs.current[card.id] = el}
-                                        card={card}
-                                        eyesOpen={eyesOpen}
-                                        onViewDetails={handleViewDetails}
-                                        onDeleteCard={handleDeleteCard}
-                                        formatAutoCurrency={formatAutoCurrency}
-                                        getCurrencyLabel={getCurrencyLabel}
-                                        dropdownRefs={dropdownRefs}
-                                        buttonRefs={buttonRefs}
-                                        selectedCard={selectedCard}
-                                        setSelectedCard={setSelectedCard}
-                                    />
+                                        className="relative"
+                                        style={{
+                                            zIndex: selectedCard === card.id ? 100 : 50 - index
+                                        }}
+                                    >
+
+                                        <CardComponent
+                                            key={card.id}
+                                            ref={el => cardComponentRefs.current[card.id] = el}
+                                            card={card}
+                                            eyesOpen={eyesOpen}
+                                            onViewDetails={handleViewDetails}
+                                            onDeleteCard={handleDeleteCard}
+                                            formatAutoCurrency={formatAutoCurrency}
+                                            getCurrencyLabel={getCurrencyLabel}
+                                            dropdownRefs={dropdownRefs}
+                                            buttonRefs={buttonRefs}
+                                            selectedCard={selectedCard}
+                                            setSelectedCard={setSelectedCard}
+                                        />
+                                    </div>
                                 ))
                             ) : (
                                 <div className="text-center py-8 text-gray-500">
@@ -405,22 +414,29 @@ export default function Cards() {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {cards.map((card) => (
-                                                <CardComponent
+                                            {cards.map((card, index) => (
+                                                <div
                                                     key={card.id}
-                                                    ref={el => cardComponentRefs.current[card.id] = el}
-                                                    card={card}
-                                                    isDesktop={true}
-                                                    eyesOpen={eyesOpen}
-                                                    onViewDetails={handleViewDetails}
-                                                    onDeleteCard={handleDeleteCard}
-                                                    formatAutoCurrency={formatAutoCurrency}
-                                                    getCurrencyLabel={getCurrencyLabel}
-                                                    dropdownRefs={dropdownRefs}
-                                                    buttonRefs={buttonRefs}
-                                                    selectedCard={selectedCard}
-                                                    setSelectedCard={setSelectedCard}
-                                                />
+                                                    className="relative font-mono"
+                                                    style={{
+                                                        zIndex: selectedCard === card.id ? 10 : 10 - index
+                                                    }}
+                                                >
+                                                    <CardComponent
+                                                        ref={el => cardComponentRefs.current[card.id] = el}
+                                                        card={card}
+                                                        isDesktop={true}
+                                                        eyesOpen={eyesOpen}
+                                                        onViewDetails={handleViewDetails}
+                                                        onDeleteCard={handleDeleteCard}
+                                                        formatAutoCurrency={formatAutoCurrency}
+                                                        getCurrencyLabel={getCurrencyLabel}
+                                                        dropdownRefs={dropdownRefs}
+                                                        buttonRefs={buttonRefs}
+                                                        selectedCard={selectedCard}
+                                                        setSelectedCard={setSelectedCard}
+                                                    />
+                                                </div>
                                             ))}
                                         </div>
                                     </div>

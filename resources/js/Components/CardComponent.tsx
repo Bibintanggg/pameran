@@ -67,9 +67,19 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
             if (selectedCard === card.id) {
                 const dropdown = dropdownRefs.current[card.id];
                 const button = buttonRefs.current[card.id];
+                const target = event.target as HTMLElement;
 
-                if (dropdown && !dropdown.contains(event.target as Node) &&
-                    button && !button.contains(event.target as Node)) {
+                // Jangan close jika klik di dalam dialog/modal atau overlay
+                const isInsideDialog = target.closest('[role="dialog"]') ||
+                    target.closest('[data-radix-dialog-overlay]') ||
+                    target.closest('[data-state="open"]');
+
+                if (isInsideDialog) {
+                    return;
+                }
+
+                if (dropdown && !dropdown.contains(target) &&
+                    button && !button.contains(target)) {
                     setSelectedCard(null);
                 }
             }
@@ -100,18 +110,18 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
     };
 
     const copyCardNumber = async (cardNumber: string) => {
-            await navigator.clipboard.writeText(cardNumber);
+        await navigator.clipboard.writeText(cardNumber);
 
-            if (alertTimeoutRef.current) {
-                clearTimeout(alertTimeoutRef.current);
-            }
+        if (alertTimeoutRef.current) {
+            clearTimeout(alertTimeoutRef.current);
+        }
 
-            setShowAlert(true);
-            setSelectedCard(null);
+        setShowAlert(true);
+        setSelectedCard(null);
 
-            alertTimeoutRef.current = setTimeout(() => {
-                setShowAlert(false);
-            }, 3000);
+        alertTimeoutRef.current = setTimeout(() => {
+            setShowAlert(false);
+        }, 3000);
     };
 
     useEffect(() => {
@@ -136,7 +146,7 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                 </div>
             )}
 
-            <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-visible transform transition-all duration-300 hover:scale-105 hover:shadow-xl`}>
+            <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-visible transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${selectedCard === card.id ? 'z-50' : 'z-0'}`}>
                 <div
                     className="absolute inset-0 p-6 flex flex-col justify-between text-white rounded-2xl overflow-hidden"
                     style={{ background: card.color }}
@@ -160,7 +170,7 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                         <div className="flex justify-between items-end">
                             <div>
                                 <p className="text-sm opacity-80">Balance</p>
-                                <p className="text-2xl font-bold">
+                                <p className="text-2xl font-medium">
                                     {eyesOpen ? formatAutoCurrency(card.balance, card.currency) : "****"}
                                 </p>
                             </div>
@@ -172,8 +182,8 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                 {selectedCard === card.id && (
                     <div
                         ref={el => dropdownRefs.current[card.id] = el}
-                        className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-40 min-w-[200px]"
-                        onClick={(e) => e.stopPropagation()} // Tambahkan ini
+                        className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-[200px]"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700"

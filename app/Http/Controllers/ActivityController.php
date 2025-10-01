@@ -483,23 +483,37 @@ class ActivityController extends Controller
             ];
         })->values();
 
-        $currentYearExpense = $filteredTransactions
+        $currentYearExpense = $allExpenseTransactions
             ->filter(function ($transaction) use ($currentYear) {
                 return $transaction->transaction_date->year === $currentYear;
             })
             ->sum('amount');
 
-        $avgMonthlyExpense = $currentYearExpense > 0 ? $currentYearExpense / 12 : 0;
+        $monthsWithData = $allExpenseTransactions
+            ->filter(function ($transaction) use ($currentYear) {
+                return $transaction->transaction_date->year === $currentYear;
+            })
+            ->groupBy(function ($transaction) {
+                return $transaction->transaction_date->month;
+            })
+            ->count();
 
-        $previousYearExpense = $filteredTransactions
+        $avgMonthlyExpense = $monthsWithData > 0 ? $currentYearExpense / $monthsWithData : 0;
+
+        $previousYearExpense = $allExpenseTransactions
             ->filter(function ($transaction) use ($currentYear) {
                 return $transaction->transaction_date->year === ($currentYear - 1);
             })
             ->sum('amount');
 
-        $expenseGrowthRate = $previousYearExpense > 0
-            ? (($currentYearExpense - $previousYearExpense) / $previousYearExpense) * 100
-            : 0;
+        if ($previousYearExpense > 0) {
+            $expenseGrowthRate = (($currentYearExpense - $previousYearExpense) / $previousYearExpense) * 100;
+        } elseif ($currentYearExpense > 0 && $previousYearExpense == 0) {
+            $expenseGrowthRate = 100; 
+        } else {
+            $expenseGrowthRate = 0; 
+        }
+
 
         $topCategories = $expenseByCategory->sortByDesc(function ($value) {
             return $value;

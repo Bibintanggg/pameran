@@ -589,8 +589,8 @@ export default function Expense() {
                                 />
                                 <MetricCard
                                     title="Budget Used"
-                                    value={`${budgetUtilization.toFixed(1)}%`}
-                                    change={budgetUtilization}
+                                    value={`${budgetUtilization.toFixed(2)}%`}
+                                    change={budgetUtilization.toFixed(3) as unknown as number}
                                     trend="up"
                                     color="red"
                                     icon={<Target className="w-6 h-6 text-red-600" />}
