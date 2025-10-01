@@ -268,7 +268,7 @@ export default function Cards() {
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
                     <BottomNavbar activeCardId={null} />
 
-                    <div className="flex-1 overflow-y-auto p-6">
+                    <div className="flex-1 overflow-y-auto p-6 pb-20">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-10 w-10">
@@ -319,9 +319,9 @@ export default function Cards() {
                                 cards.map((card, index) => (
                                     <div
                                         key={card.id}
-                                        className="relative"
+                                        className="relative font-mono"
                                         style={{
-                                            zIndex: selectedCard === card.id ? 100 : 50 - index
+                                            zIndex: selectedCard === card.id ? 50 : 50 - index
                                         }}
                                     >
 
@@ -419,7 +419,7 @@ export default function Cards() {
                                                     key={card.id}
                                                     className="relative font-mono"
                                                     style={{
-                                                        zIndex: selectedCard === card.id ? 10 : 10 - index
+                                                        zIndex: selectedCard === card.id ? 40 : 10 - index
                                                     }}
                                                 >
                                                     <CardComponent

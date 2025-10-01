@@ -20,7 +20,8 @@ export default function BottomNavbar({ activeCardId }: { activeCardId: number | 
 
     return (
         <>
-            <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-md z-50 max-w-sm mx-auto">
+            <nav className=" fixed bottom-0 left-0 right-0 bg-white border-t 
+            border-gray-200 shadow-md z-[60] max-w-sm mx-auto">
                 <ul className="flex justify-around items-center h-16">
                     {data.map((item, idx) => (
                         <li key={idx}>
@@ -56,7 +57,7 @@ export default function BottomNavbar({ activeCardId }: { activeCardId: number | 
 
             {isMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-30 z-40"
+                    className="fixed inset-0 bg-black bg-opacity-30 z-50"
                     onClick={() => setIsMenuOpen(false)}
                 />
             )}

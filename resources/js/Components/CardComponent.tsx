@@ -182,7 +182,7 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                 {selectedCard === card.id && (
                     <div
                         ref={el => dropdownRefs.current[card.id] = el}
-                        className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-[200px]"
+                        className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-40 min-w-[200px]"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
