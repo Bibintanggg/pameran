@@ -808,7 +808,7 @@ export default function Expense() {
                                             <div className="mt-6">
                                                 <h4 className="text-sm font-medium text-gray-700 mb-3">Distribution</h4>
                                                 <div className="h-48 w-full">
-                                                    <ResponsiveContainer width="100%" height={320}>
+                                                    <ResponsiveContainer width="100%" height={220}>
                                                         <PieChart>
                                                             <Pie
                                                                 data={categoryChartData}

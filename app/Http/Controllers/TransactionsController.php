@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Enum\Asset;
 use App\Enum\Category;
+// use App\Enum\Currency;
 use App\Enum\TransactionsType;
 use App\Models\Cards;
 use App\Models\Transactions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -24,7 +25,6 @@ class TransactionsController extends Controller
             ->where('user_id', Auth::id())
             ->latest()
             ->get();
-
 
         return Inertia::render('home/index', [
             'transactions' => $transactions,
@@ -70,11 +70,11 @@ class TransactionsController extends Controller
         $validIncomeCategories = [
             Category::SALLARY->value,
             Category::ALLOWANCE->value,
-            Category::BUSINESS->value
+            Category::BUSINESS->value,
         ];
 
         if ($validated['type'] === TransactionsType::INCOME->value) {
-            if (!in_array($validated['category'], $validIncomeCategories)) {
+            if (! in_array($validated['category'], $validIncomeCategories)) {
                 return back()->withErrors(['category' => 'Invalid income category']);
             }
 
@@ -86,7 +86,7 @@ class TransactionsController extends Controller
                 'amount' => $validated['amount'],
                 'asset' => $validated['asset'],
                 'category' => $validated['category'],
-                'notes' => $validated['notes'] ?? "",
+                'notes' => $validated['notes'] ?? '',
                 'transaction_date' => $validated['transaction_date'],
             ]);
 
@@ -98,6 +98,7 @@ class TransactionsController extends Controller
 
             return redirect()->back()->with('success', 'Transaksi berhasil ditambahkan');
         }
+
         return back()->withErrors(['type' => 'Invalid transaction type']);
     }
 
@@ -110,12 +111,12 @@ class TransactionsController extends Controller
             'asset' => 'required|string',
             'category' => 'required|string',
             'type' => ['required', 'string', Rule::in(TransactionsType::values())],
-            'from_cards_id' => 'required|exists:cards,id'
+            'from_cards_id' => 'required|exists:cards,id',
         ]);
 
         // dd($data);
         if ($data['type'] === TransactionsType::EXPENSE->value) {
-            if (!in_array($data['category'], [
+            if (! in_array($data['category'], [
                 Category::FOOD_DRINKS->value,
                 Category::TRANSPORTATION->value,
                 Category::HEALTH->value,
@@ -134,7 +135,7 @@ class TransactionsController extends Controller
                 'amount' => $data['amount'],
                 'asset' => $data['asset'],
                 'category' => $data['category'],
-                'notes' => $data['notes'] ?? "",
+                'notes' => $data['notes'] ?? '',
                 'transaction_date' => $data['transaction_date'],
             ]);
 
@@ -152,9 +153,9 @@ class TransactionsController extends Controller
                 }
             }
 
-
             return back()->with('success', 'Transaksi berhasil ditambahkan');
-        };
+        }
+
         return back()->withErrors(['type' => 'Invalid transaction type']);
     }
 
@@ -168,7 +169,7 @@ class TransactionsController extends Controller
             'rate' => 'required|numeric|min:0',
         ], [
             'to_cards_id.different' => 'Source and destination cards must be different.',
-            'amount.min' => 'Amount must be greater than 0.'
+            'amount.min' => 'Amount must be greater than 0.',
         ]);
 
         $fromCard = Cards::findOrFail($request->from_cards_id);
@@ -199,8 +200,72 @@ class TransactionsController extends Controller
         return back()->with('success', 'Conversion successful!');
     }
 
+    public function getRate(Request $request)
+    {
+        $request->validate([
+            'from_cards_id' => 'required|exists:cards,id',
+            'to_cards_id' => 'required|exists:cards,id|different:from_cards_id',
+            'amount' => 'required|numeric|min:0.01',
+        ]);
 
+        $fromCard = Cards::findOrFail($request->from_cards_id);
+        $toCard = Cards::findOrFail($request->to_cards_id);
 
+        if ($fromCard->balance < $request->amount) {
+            return response()->json(['error' => 'Insufficient balance'], 400);
+        }
+
+        // Langsung pakai karena sudah instance Currency
+        $fromCurrency = $fromCard->currency->toISO();
+        $toCurrency = $toCard->currency->toISO();
+
+        // Kalau currency sama, rate = 1
+        if ($fromCurrency === $toCurrency) {
+            return response()->json([
+                'rate' => 1,
+                'converted_amount' => $request->amount,
+                'from_currency' => $fromCurrency,
+                'to_currency' => $toCurrency,
+            ]);
+        }
+
+        try {
+            $response = Http::timeout(10)->get('https://api.freecurrencyapi.com/v1/latest', [
+                'apikey' => env('CURRENCY_API_KEY'),
+                'currencies' => $toCurrency,
+                'base_currency' => $fromCurrency,
+            ]);
+
+            if ($response->failed()) {
+                // \Log::error('Currency API failed', [
+                //     'status' => $response->status(),
+                //     'body' => $response->body(),
+                // ]);
+
+                return response()->json(['error' => 'Failed to fetch exchange rate from API'], 500);
+            }
+
+            $data = $response->json();
+            $rate = $data['data'][$toCurrency] ?? null;
+
+            if (! $rate) {
+                // \Log::error('Invalid rate response', ['data' => $data]);
+
+                return response()->json(['error' => 'Invalid exchange rate'], 400);
+            }
+
+            return response()->json([
+                'rate' => $rate,
+                'converted_amount' => $request->amount * $rate,
+                'from_currency' => $fromCurrency,
+                'to_currency' => $toCurrency,
+            ]);
+        } catch (\Exception $e) {
+            // \Log::error('Currency conversion error: '.$e->getMessage());
+
+            return response()->json(['error' => 'Failed to fetch exchange rate'], 500);
+        }
+    }
 
     /**
      * Display the specified resource.

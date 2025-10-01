@@ -5,6 +5,7 @@ import { Button } from "./ui/button"
 import { useEffect, useState } from "react"
 import { usePage, router } from "@inertiajs/react"
 import { useToast } from "@/hooks/use-toast"
+import axios from "axios"
 
 interface Card {
     id: number
@@ -25,35 +26,55 @@ export default function AddConvert({ label }: { label: string }) {
 
     const [rate, setRate] = useState<number | null>(null)
     const [convertedAmount, setConvertedAmount] = useState<number | null>(null)
+    const [isLoadingRate, setIsLoadingRate] = useState(false)
 
     const { toast } = useToast()
 
     const getCurrencySymbol = (currency: string) => {
-        const symbols: Record<string, string> = { 'indonesian_rupiah': 'Rp', 'baht_thailand': '฿', 'as_dollar': '$' }
+        const symbols: Record<string, string> = { 
+            'indonesian_rupiah': 'Rp', 
+            'baht_thailand': '฿', 
+            'as_dollar': '$' 
+        }
         return symbols[currency] || 'Rp'
     }
 
-    const fetchRate = async (from: string, to: string, amount: number) => {
+    const fetchRate = async (fromCardId: number, toCardId: number, amount: number) => {
+        setIsLoadingRate(true)
         try {
-            const res = await fetch(
-                `https://api.freecurrencyapi.com/v1/latest?apikey=${import.meta.env.VITE_CURRENCY_API_KEY}&currencies=${to}&base_currency=${from}`
-            )
-            const data = await res.json()
-            const rateValue = data.data[to]
-            setRate(rateValue)
-            setConvertedAmount(amount * rateValue)
-        } catch (error) {
+            const response = await axios.post('/transactions/get-rate', {
+                from_cards_id: fromCardId,
+                to_cards_id: toCardId,
+                amount: amount
+            })
+
+            setRate(response.data.rate)
+            setConvertedAmount(response.data.converted_amount)
+        } catch (error: any) {
             console.error("Failed to fetch rate:", error)
+            
+            const errorMsg = error.response?.data?.error || "Failed to fetch exchange rate. Please try again."
+            
+            toast({
+                title: "Error",
+                description: errorMsg,
+                variant: "destructive",
+            })
+            setRate(null)
+            setConvertedAmount(null)
+        } finally {
+            setIsLoadingRate(false)
         }
     }
 
     useEffect(() => {
-        if (fromCard && toCard && amount) {
-            const currencyMap: Record<string, string> = { 'indonesian_rupiah': "IDR", 'baht_thailand': "THB", 'as_dollar': "USD" }
-            fetchRate(currencyMap[fromCard.currency], currencyMap[toCard.currency], parseFloat(amount))
+        if (fromCard && toCard && amount && parseFloat(amount) > 0) {
+            fetchRate(fromCard.id, toCard.id, parseFloat(amount))
+        } else {
+            setRate(null)
+            setConvertedAmount(null)
         }
     }, [fromCard, toCard, amount])
-
 
     const formatBalance = (balance: number, currency: string) =>
         `${getCurrencySymbol(currency)} ${balance.toLocaleString()}`
@@ -61,7 +82,24 @@ export default function AddConvert({ label }: { label: string }) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!fromCard || !toCard || !amount) return
+        if (!fromCard || !toCard || !amount || !convertedAmount || !rate) {
+            toast({
+                title: "Error",
+                description: "Please fill all required fields and wait for exchange rate.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        // Validasi balance
+        if (fromCard.balance < parseFloat(amount)) {
+            toast({
+                title: "Insufficient Balance",
+                description: `Your ${fromCard.name} balance is not enough.`,
+                variant: "destructive",
+            })
+            return
+        }
 
         router.post('/transactions/convert', {
             from_cards_id: fromCard.id,
@@ -76,16 +114,19 @@ export default function AddConvert({ label }: { label: string }) {
                 setToCard(null)
                 setAmount("")
                 setNotes("")
+                setRate(null)
+                setConvertedAmount(null)
                 setIsOpen(false)
                 toast({
                     title: "Success!",
-                    description: "Your convert has been saved successfully."
+                    description: "Your conversion has been saved successfully."
                 })
             },
             onError: (errors) => {
+                const errorMessage = Object.values(errors).flat().join(', ') || "Please check the required fields."
                 toast({
                     title: "Error",
-                    description: "Please check the required fields.",
+                    description: errorMessage,
                     variant: "destructive",
                 })
             }
@@ -130,7 +171,7 @@ export default function AddConvert({ label }: { label: string }) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <button className="flex flex-col items-center">
-                    <ChevronsRightLeftIcon opacity={54} size={32} color="white" />
+                    <ChevronsRightLeftIcon opacity={54} size={32} color="white"/>
                     <p className="text-white text-sm font-semibold">{label}</p>
                 </button>
             </DialogTrigger>
@@ -191,11 +232,21 @@ export default function AddConvert({ label }: { label: string }) {
                         />
                     </div>
 
-                    {convertedAmount && toCard && (
-                        <p className="text-sm text-green-600 mt-2">
-                            You will get {getCurrencySymbol(toCard.currency)} {convertedAmount.toLocaleString()}
-                            {" "} (rate: {rate})
+                    {isLoadingRate && (
+                        <p className="text-sm text-blue-600">
+                            Fetching exchange rate...
                         </p>
+                    )}
+
+                    {convertedAmount && toCard && !isLoadingRate && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-sm text-green-700 font-medium">
+                                You will receive: {getCurrencySymbol(toCard.currency)} {convertedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            </p>
+                            <p className="text-xs text-green-600 mt-1">
+                                Exchange rate: 1 {fromCard?.currency} = {rate?.toFixed(4)} {toCard.currency}
+                            </p>
+                        </div>
                     )}
 
                     <div className="flex gap-3">
@@ -207,8 +258,12 @@ export default function AddConvert({ label }: { label: string }) {
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" className="flex-1">
-                            Convert
+                        <Button 
+                            type="submit" 
+                            className="flex-1"
+                            disabled={isLoadingRate || !convertedAmount}
+                        >
+                            {isLoadingRate ? "Loading..." : "Convert"}
                         </Button>
                     </div>
                 </form>

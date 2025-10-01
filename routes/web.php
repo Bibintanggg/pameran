@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/income',  [TransactionsController::class, 'storeIncome'])->name('transactions.storeincome');
         Route::post('/expense', [TransactionsController::class, 'storeExpense'])->name('transactions.store-expense');
         Route::post('/convert', [TransactionsController::class, 'storeConvert'])->name('transactions.convert');
+        Route::post('/get-rate', [TransactionsController::class, 'getRate'])->name('transactions.get-rate');
     });
 
     Route::post('/add-cards', [CardsController::class, 'store'])->name('cards.store');

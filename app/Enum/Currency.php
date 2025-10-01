@@ -35,6 +35,15 @@ enum Currency: string
         };
     }
 
+    public function toISO(): string
+    {
+        return match ($this) {
+            self::INDONESIAN_RUPIAH => "IDR",
+            self::BAHT_THAILAND => "THB",
+            self::AS_DOLLAR => "USD",
+        };
+    }
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');
