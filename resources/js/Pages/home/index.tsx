@@ -117,10 +117,13 @@ export default function Home() {
 
     // ava helper
     const getAvatarUrl = () => {
-        if (auth.user.avatar) {
-            return `/storage/${auth.user.avatar}`;
+        if (!auth.user?.avatar) return "";
+
+        if (auth.user.avatar.startsWith("http")) {
+            return auth.user.avatar;
         }
-        return '/default-avatar.png';
+
+        return `/storage/${auth.user.avatar}`;
     };
 
     const getUserInitials = () => {

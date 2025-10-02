@@ -54,6 +54,7 @@ type Props = {
     startDate: string | null;
     endDate: string | null;
     activeCardId?: number
+    avgMonthlyExpenseGrowthRate: number;
 };
 
 interface MetricCardProps {
@@ -79,7 +80,8 @@ export default function Expense() {
         auth,
         filter: initialFilter,
         chartMode: initialChartMode,
-        activeCardId: initialActiveCardId
+        activeCardId: initialActiveCardId,
+        avgMonthlyExpenseGrowthRate
     } = usePage().props as unknown as Props;
 
     const { activeCardId, setActiveCardId } = useActiveCard();
@@ -362,7 +364,9 @@ export default function Expense() {
                                 <p className="text-lg font-bold text-orange-900">
                                     {formatAutoCurrency(calculatedAvgMonthlyExpense, activeCard?.currency)}
                                 </p>
-                                <p className="text-xs text-orange-600">±5.2%</p>
+                                <p className="text-xs text-orange-600">
+                                    {avgMonthlyExpenseGrowthRate >= 0 ? '+' : ''}{avgMonthlyExpenseGrowthRate.toFixed(1)}%
+                                </p>
                             </div>
                         </div>
 
@@ -588,8 +592,8 @@ export default function Expense() {
                                 <MetricCard
                                     title="Monthly Average"
                                     value={formatAutoCurrency(calculatedAvgMonthlyExpense, activeCard?.currency)}
-                                    change={5.2}
-                                    trend="up"
+                                    change={Math.abs(avgMonthlyExpenseGrowthRate)}
+                                    trend={avgMonthlyExpenseGrowthRate >= 0 ? "up" : "down"}
                                     color="orange"
                                     icon={<TrendingDown className="w-6 h-6 text-orange-600" />}
                                 />
