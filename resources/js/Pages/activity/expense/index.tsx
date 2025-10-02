@@ -95,7 +95,7 @@ export default function Expense() {
         : undefined;
 
     useEffect(() => {
-        if (initialActiveCardId && initialActiveCardId !== activeCardId) {
+        if (initialActiveCardId !== undefined && initialActiveCardId !== activeCardId) {
             setActiveCardId(initialActiveCardId);
         }
     }, [initialActiveCardId, activeCardId, setActiveCardId]);
@@ -269,7 +269,7 @@ export default function Expense() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Head title="Expense"/>
+            <Head title="Expense" />
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">

@@ -14,95 +14,99 @@ class ShowCardsController extends Controller
 {
     public function showCards(Request $request)
     {
-        $userId = Auth::id();
+        try {
+            $userId = Auth::id();
 
-        $cards = Cards::where('user_id', $userId)
-            ->get()
-            ->map(function ($card) {
-                return [
-                    'id' => $card->id,
-                    'name' => $card->name,
-                    'card_number' => $card->card_number ?
-                        '**** **** **** ' . substr($card->card_number, -4) :
-                        '**** **** **** ****',
-                    'balance' => (float) $card->balance,
-                    'currency' => $card->currency,
-                    'type' => $this->getCardType($card->name),
-                    'color' => $this->getCardGradient($card->id),
-                ];
-            });
+            $cards = Cards::where('user_id', $userId)
+                ->get()
+                ->map(function ($card) {
+                    return [
+                        'id' => $card->id,
+                        'name' => $card->name,
+                        'card_number' => $card->card_number ?
+                            '**** **** **** ' . substr($card->card_number, -4) :
+                            '**** **** **** ****',
+                        'balance' => (float) $card->balance,
+                        'currency' => $card->currency,
+                        'type' => $this->getCardType($card->name),
+                        'color' => $this->getCardGradient($card->id),
+                    ];
+                });
 
-        $incomePerCard = Transactions::where('user_id', $userId)
-            ->whereIn('type', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
-            ->selectRaw('to_cards_id, SUM(CASE 
+            $incomePerCard = Transactions::where('user_id', $userId)
+                ->whereIn('type', [
+                    TransactionsType::INCOME->value,
+                    TransactionsType::CONVERT->value
+                ])
+                ->selectRaw('to_cards_id, SUM(CASE 
                 WHEN type = ? THEN amount 
                 WHEN type = ? THEN converted_amount 
                 ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
-            ->groupBy('to_cards_id')
-            ->pluck('total', 'to_cards_id')
-            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
+                    TransactionsType::INCOME->value,
+                    TransactionsType::CONVERT->value
+                ])
+                ->groupBy('to_cards_id')
+                ->pluck('total', 'to_cards_id')
+                ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
-        $expensePerCard = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::EXPENSE->value)
-            ->selectRaw('from_cards_id, SUM(amount) as total')
-            ->groupBy('from_cards_id')
-            ->pluck('total', 'from_cards_id')
-            ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
+            $expensePerCard = Transactions::where('user_id', $userId)
+                ->where('type', TransactionsType::EXPENSE->value)
+                ->selectRaw('from_cards_id, SUM(amount) as total')
+                ->groupBy('from_cards_id')
+                ->pluck('total', 'from_cards_id')
+                ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
-        $cardsWithStats = $cards->map(function ($card) use ($incomePerCard, $expensePerCard) {
-            $income = $incomePerCard->get($card['id'], 0);
-            $expense = $expensePerCard->get($card['id'], 0);
+            $cardsWithStats = $cards->map(function ($card) use ($incomePerCard, $expensePerCard) {
+                $income = $incomePerCard->get($card['id'], 0);
+                $expense = $expensePerCard->get($card['id'], 0);
 
-            return array_merge($card, [
-                'income' => $income,
-                'expense' => $expense,
-                'net' => $income - $expense,
-            ]);
-        });
+                return array_merge($card, [
+                    'income' => $income,
+                    'expense' => $expense,
+                    'net' => $income - $expense,
+                ]);
+            });
 
-        $totalBalance = $cardsWithStats->sum('balance');
-        $totalIncome = $cardsWithStats->sum('income');
-        $totalExpense = $cardsWithStats->sum('expense');
-        $netIncome = $totalIncome - $totalExpense;
+            $totalBalance = $cardsWithStats->sum('balance');
+            $totalIncome = $cardsWithStats->sum('income');
+            $totalExpense = $cardsWithStats->sum('expense');
+            $netIncome = $totalIncome - $totalExpense;
 
-        $currentMonth = now();
-        $previousMonth = now()->subMonth();
+            $currentMonth = now();
+            $previousMonth = now()->subMonth();
 
-        $currentMonthIncome = Transactions::where('user_id', $userId)
-            ->whereIn('type', [TransactionsType::INCOME->value, TransactionsType::CONVERT->value])
-            ->whereMonth('transaction_date', $currentMonth->month)
-            ->whereYear('transaction_date', $currentMonth->year)
-            ->sum('amount');
+            $currentMonthIncome = Transactions::where('user_id', $userId)
+                ->whereIn('type', [TransactionsType::INCOME->value, TransactionsType::CONVERT->value])
+                ->whereMonth('transaction_date', $currentMonth->month)
+                ->whereYear('transaction_date', $currentMonth->year)
+                ->sum('amount');
 
-        $previousMonthIncome = Transactions::where('user_id', $userId)
-            ->whereIn('type', [TransactionsType::INCOME->value, TransactionsType::CONVERT->value])
-            ->whereMonth('transaction_date', $previousMonth->month)
-            ->whereYear('transaction_date', $previousMonth->year)
-            ->sum('amount');
+            $previousMonthIncome = Transactions::where('user_id', $userId)
+                ->whereIn('type', [TransactionsType::INCOME->value, TransactionsType::CONVERT->value])
+                ->whereMonth('transaction_date', $previousMonth->month)
+                ->whereYear('transaction_date', $previousMonth->year)
+                ->sum('amount');
 
-        $incomeGrowth = $previousMonthIncome > 0 ?
-            (($currentMonthIncome - $previousMonthIncome) / $previousMonthIncome) * 100 : 0;
+            $incomeGrowth = $previousMonthIncome > 0 ?
+                (($currentMonthIncome - $previousMonthIncome) / $previousMonthIncome) * 100 : 0;
 
-        $currentMonthExpense = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::EXPENSE->value)
-            ->whereMonth('transaction_date', $currentMonth->month)
-            ->whereYear('transaction_date', $currentMonth->year)
-            ->sum('amount');
+            $currentMonthExpense = Transactions::where('user_id', $userId)
+                ->where('type', TransactionsType::EXPENSE->value)
+                ->whereMonth('transaction_date', $currentMonth->month)
+                ->whereYear('transaction_date', $currentMonth->year)
+                ->sum('amount');
 
-        $previousMonthExpense = Transactions::where('user_id', $userId)
-            ->where('type', TransactionsType::EXPENSE->value)
-            ->whereMonth('transaction_date', $previousMonth->month)
-            ->whereYear('transaction_date', $previousMonth->year)
-            ->sum('amount');
+            $previousMonthExpense = Transactions::where('user_id', $userId)
+                ->where('type', TransactionsType::EXPENSE->value)
+                ->whereMonth('transaction_date', $previousMonth->month)
+                ->whereYear('transaction_date', $previousMonth->year)
+                ->sum('amount');
 
-        $expenseGrowth = $previousMonthExpense > 0 ?
-            (($currentMonthExpense - $previousMonthExpense) / $previousMonthExpense) * 100 : 0;
+            $expenseGrowth = $previousMonthExpense > 0 ?
+                (($currentMonthExpense - $previousMonthExpense) / $previousMonthExpense) * 100 : 0;
+        } catch (\Exception $e) {
+            return back()->with('error', 'Something went wrong. Please try again.');
+        }
 
         return Inertia::render('cards/index', [
             'cards' => $cardsWithStats,

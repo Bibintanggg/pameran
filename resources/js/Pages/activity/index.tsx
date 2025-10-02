@@ -116,10 +116,10 @@ export default function AllActivity() {
     }, [transactions, activeCardId, filter]);
 
     useEffect(() => {
-        if (initialActiveCardId && initialActiveCardId !== activeCardId) {
+        if (initialActiveCardId !== undefined && initialActiveCardId !== activeCardId) {
             setActiveCardId(initialActiveCardId);
         }
-    }, [initialActiveCardId]);
+    }, [initialActiveCardId, activeCardId, setActiveCardId]);
 
     // Data untuk chart berdasarkan kartu aktif
     const chartDataForActiveCard = useMemo(() => {
@@ -244,8 +244,10 @@ export default function AllActivity() {
         </div>
     );
 
-    const formatAutoCurrency = (amount: number, currencyId?: string) => {
-        const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
+    const formatAutoCurrency = (amount: number, currencyId?: string): string => {
+        const defaultCurrency = 'indonesian_rupiah';
+        const currencyKey = currencyId ?? activeCard?.currency ?? defaultCurrency;
+        const currency = currencyMap[currencyKey] ?? currencyMap[defaultCurrency];
         return formatCurrency(amount, currency);
     };
 
@@ -308,7 +310,7 @@ export default function AllActivity() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Head title="Analytics"/>
+            <Head title="Analytics" />
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">

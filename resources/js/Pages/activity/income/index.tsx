@@ -189,10 +189,12 @@ export default function Income() {
         </div>
     );
 
-    const formatAutoCurrency = (amount: number, currencyId?: string) => {
-        const currency = currencyMap[currencyId ?? (activeCard?.currency || 'indonesian_rupiah')];
+    const formatAutoCurrency = (amount: number, currencyId?: string): string => {
+        const defaultCurrency = 'indonesian_rupiah';
+        const currencyKey = currencyId ?? activeCard?.currency ?? defaultCurrency;
+        const currency = currencyMap[currencyKey] ?? currencyMap[defaultCurrency];
         return formatCurrency(amount, currency);
-    };
+};
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
         setIsLoading(true);
@@ -255,11 +257,11 @@ export default function Income() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Head title="Income"/>
+            <Head title="Income" />
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-                    <BottomNavbar activeCardId={activeCardId}/>
+                    <BottomNavbar activeCardId={activeCardId} />
 
                     <div className="flex-1 overflow-y-auto p-6">
                         {/* Mobile Header */}
