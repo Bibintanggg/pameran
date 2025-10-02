@@ -10,6 +10,14 @@ use App\Http\Controllers\ClerkAuthController;
 use App\Http\Controllers\ShowCardsController;
 use App\Http\Controllers\TransactionsController;
 
+Route::get('/login/{any?}', function() {
+    return Inertia::render("Auth/Login");
+})->where('any', '.*')->name('login');
+
+Route::get('/register/{any?}', function() {
+    return Inertia::render("Auth/Register");
+})->where('any', '.*')->name('register');
+
 Route::post('/auth/clerk/sync', [ClerkAuthController::class, 'syncUser']);
 Route::post('/auth/clerk/logout', [ClerkAuthController::class, 'logout'])->middleware('auth');
 
