@@ -1,5 +1,6 @@
 import { SignIn, useUser } from '@clerk/clerk-react';
 import { Head, router, usePage } from '@inertiajs/react';
+import SyncLoader from 'react-spinners/SyncLoader';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -43,6 +44,7 @@ export default function Login() {
             <div className="flex justify-center items-center min-h-screen">
                 {isSyncing ? (
                     <div className="text-center">
+                        <SyncLoader size={10} />
                         <p>Logging you in...</p>
                     </div>
                 ) : (

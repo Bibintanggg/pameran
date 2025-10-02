@@ -12,7 +12,7 @@ export default function Register() {
     useEffect(() => {
         if (isSignedIn && user && !auth?.user && !isSyncing && !hasSynced) {
             setIsSyncing(true);
-            
+
             axios.get("/sanctum/csrf-cookie").then(() => {
                 axios.post('/auth/clerk/sync', {
                     clerk_user_id: user.id,
@@ -41,7 +41,7 @@ export default function Register() {
                     <p>Setting up your account...</p>
                 </div>
             ) : (
-                <SignUp 
+                <SignUp
                     path="/register"
                     routing="path"
                     signInUrl="/login"
