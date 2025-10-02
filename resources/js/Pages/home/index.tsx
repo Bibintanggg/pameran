@@ -415,14 +415,14 @@ export default function Home() {
                                         <p className="text-sm text-gray-500">Today</p>
                                         <p className="font-semibold text-gray-900">{currentDate}</p>
                                     </div>
-                                    <div className="flex gap-2">
+                                    {/* <div className="flex gap-2">
                                         <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                             <Calendar className="w-5 h-5 text-gray-600" />
                                         </button>
                                         <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                             <Filter className="w-5 h-5 text-gray-600" />
                                         </button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
                         </div>

@@ -19,7 +19,7 @@ export default function TransactionsList({ transactions }: TransactionListProps)
                 >
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                            <p className="font-semibold text-lg">{auth.user.name}</p>
+                            <p className="font-semibold text-lg">{auth.user.name.split(" ")[0]}</p>
                             <span className="text-gray-500 text-sm">{transaction.transaction_date}</span>
                         </div>
 

@@ -570,9 +570,9 @@ export default function AllActivity() {
                                         >
                                             <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         </button>
-                                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                        {/* <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                             <Filter className="w-5 h-5 text-gray-600" />
-                                        </button>
+                                        </button> */}
                                     </div>
                                 </div>
                             </div>
