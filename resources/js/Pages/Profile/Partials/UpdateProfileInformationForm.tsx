@@ -6,7 +6,7 @@ import BottomNavbar from '@/Components/BottomNavbar';
 import Sidebar from '@/Components/Sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { Transition } from '@headlessui/react';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useRef, ChangeEvent, useState } from 'react';
 import {
     Camera,
@@ -141,6 +141,7 @@ export default function UpdateProfileInformation({
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Head title="Settings"/>
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">

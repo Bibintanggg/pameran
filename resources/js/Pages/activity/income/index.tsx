@@ -3,7 +3,7 @@ import BottomNavbar from "@/Components/BottomNavbar";
 import TransactionsList from "@/Components/TransactionsList";
 import Sidebar from "@/Components/Sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
-import { router, usePage } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 import { addDays, format } from "date-fns"
 import { Calendar } from "@/Components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover"
@@ -255,6 +255,7 @@ export default function Income() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Head title="Income"/>
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">

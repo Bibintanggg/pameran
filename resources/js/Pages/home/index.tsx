@@ -7,7 +7,7 @@ import CardBalance from "@/Components/CardBalance"
 import CardIndex from "@/Components/CardIndex"
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar"
 import { PageProps } from "@/types"
-import { router, usePage } from "@inertiajs/react"
+import { Head, router, usePage } from "@inertiajs/react"
 import {
     EyeClosedIcon,
     EyeIcon,
@@ -197,6 +197,7 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Head title="Overview"/>
             {/* Mobile */}
             <div className="lg:hidden min-h-screen bg-gray-50">
                 <div className="relative w-full max-w-sm mx-auto min-h-screen bg-white shadow-xl overflow-hidden">

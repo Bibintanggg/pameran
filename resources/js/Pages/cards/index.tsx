@@ -2,7 +2,7 @@
 import BottomNavbar from "@/Components/BottomNavbar";
 import Sidebar from "@/Components/Sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
-import { router, usePage } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Settings,
     Plus,
@@ -262,6 +262,8 @@ export default function Cards() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Head title="Cards" />
+
             <ViewDetailsDialog />
 
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
