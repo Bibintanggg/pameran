@@ -298,7 +298,7 @@ export default function Home() {
                                 <div className="relative z-10">
                                     <h3 className="text-white font-semibold text-lg mb-6">Financial Overview</h3>
 
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <div className="flex flex-col gap-4 mb-6">
                                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
                                             <div className="flex items-center justify-center mb-3">
                                                 <div className="p-2 bg-white/30 rounded-full">

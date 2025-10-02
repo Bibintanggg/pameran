@@ -344,7 +344,7 @@ export default function Expense() {
                         </div>
 
                         {/* Mobile Expense Stats */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="flex flex-col gap-4 mb-6">
                             <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl p-4 border border-red-100">
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-xs font-medium text-red-700">Total Expense</p>

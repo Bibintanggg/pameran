@@ -330,7 +330,7 @@ export default function Income() {
                         </div>
 
                         {/* Mobile Income Stats */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="flex flex-col gap-4 mb-6">
                             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-xs font-medium text-green-700">Total Income</p>

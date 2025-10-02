@@ -390,7 +390,7 @@ export default function AllActivity() {
                             <p className="text-xs text-green-600">{netBalanceChange}%</p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="flex flex-col gap-4 mb-6">
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-xs font-medium text-gray-600">Total Income</p>
