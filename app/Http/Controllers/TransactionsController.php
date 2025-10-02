@@ -28,6 +28,7 @@ class TransactionsController extends Controller
                 ->latest()
                 ->get();
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
 
@@ -102,6 +103,7 @@ class TransactionsController extends Controller
 
             return back()->withErrors(['type' => 'Invalid transaction type']);
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
@@ -171,6 +173,7 @@ class TransactionsController extends Controller
 
             return back()->withErrors(['type' => 'Invalid transaction type']);
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
@@ -216,6 +219,7 @@ class TransactionsController extends Controller
 
             return back()->with('success', 'Conversion successful!');
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }

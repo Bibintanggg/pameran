@@ -41,7 +41,7 @@ class ActivityController extends Controller
                 ]);
             }
 
-            $allTransactions = $allTransactionsQuery->latest()->get()->paginate(1000);
+            $allTransactions = $allTransactionsQuery->latest()->get();
 
             // filtering transactionsList
             $filteredTransactions = $allTransactions->filter(function ($transaction) use ($activeCardId, $filter) {
@@ -269,6 +269,7 @@ class ActivityController extends Controller
             $incomeRate = $totalTransactions > 0 ? round(($totalIncome / $totalTransactions) * 100, 2) : 0;
             $expenseRate = $totalTransactions > 0 ? round(($totalExpense / $totalTransactions) * 100, 2) : 0;
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
 
@@ -311,6 +312,7 @@ class ActivityController extends Controller
 
             return Excel::download(new TransactionExport($transactions), 'all-activity.xlsx');
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
@@ -330,6 +332,7 @@ class ActivityController extends Controller
 
             return Excel::download(new TransactionExport($transactions), 'income-activity.xlsx');
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
@@ -346,6 +349,7 @@ class ActivityController extends Controller
 
             return Excel::download(new TransactionExport($transactions), 'expense-activity.xlsx');
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
@@ -580,6 +584,7 @@ class ActivityController extends Controller
                 return $value;
             })->take(5);
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
 
@@ -939,6 +944,7 @@ class ActivityController extends Controller
 
             $growthRate = round($growthRate, 1);
         } catch (\Exception $e) {
+             dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
 
