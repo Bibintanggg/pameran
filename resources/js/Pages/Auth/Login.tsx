@@ -1,110 +1,65 @@
-import Checkbox from '@/Components/Checkbox';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
+import { SignIn, useUser } from '@clerk/clerk-react';
+import { Head, router, usePage } from '@inertiajs/react';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
-export default function Login({
-    status,
-    canResetPassword,
-}: {
-    status?: string;
-    canResetPassword: boolean;
-}) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
-        password: '',
-        remember: false as boolean,
-    });
+export default function Login() {
+    const { isSignedIn, user } = useUser();
+    const { auth } = usePage().props;
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [hasSynced, setHasSynced] = useState(false);
 
-    const submit: FormEventHandler = (e) => {
-        e.preventDefault();
+    useEffect(() => {
+        if (isSignedIn && user && !auth?.user && !isSyncing && !hasSynced) {
+            setIsSyncing(true);
 
-        post(route('login'), {
-            onFinish: () => reset('password'),
-        });
-    };
+            axios.get("/sanctum/csrf-cookie").then(() => {
+                axios.post('/auth/clerk/sync', {
+                    clerk_user_id: user.id,
+                }).then(() => {
+                    setHasSynced(true);
+                    window.location.href = '/home';
+                }).catch(error => {
+                    console.error('Sync error:', error.response?.data || error.message);
+                    setIsSyncing(false);
+                });
+            }).catch(error => {
+                console.error('CSRF error:', error);
+                setIsSyncing(false);
+            });
+        }
+
+        // Jika sudah login di Laravel, redirect langsung
+        if (auth?.user) {
+            window.location.href = '/home';
+        }
+    }, [isSignedIn, user?.id, auth?.user]);
 
     return (
         <GuestLayout>
             <Head title="Log in" />
 
-            {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
-
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        isFocused={true}
-                        onChange={(e) => setData('email', e.target.value)}
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
-                            name="remember"
-                            checked={data.remember}
-                            onChange={(e) =>
-                                setData(
-                                    'remember',
-                                    (e.target.checked || false) as false,
-                                )
+            <div className="flex justify-center items-center min-h-screen">
+                {isSyncing ? (
+                    <div className="text-center">
+                        <p>Logging you in...</p>
+                    </div>
+                ) : (
+                    <SignIn
+                        path="/login"
+                        routing="path"
+                        signUpUrl="/register"
+                        afterSignInUrl="/home"
+                        appearance={{
+                            elements: {
+                                card: "shadow-lg rounded-xl"
                             }
-                        />
-                        <span className="ms-2 text-sm text-gray-600">
-                            Remember me
-                        </span>
-                    </label>
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    {canResetPassword && (
-                        <Link
-                            href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                        >
-                            Forgot your password?
-                        </Link>
-                    )}
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
-                    </PrimaryButton>
-                </div>
-            </form>
+                        }}
+                        unsafeMetadata={{ mfa: false }}
+                    />
+                )}
+            </div>
         </GuestLayout>
     );
 }

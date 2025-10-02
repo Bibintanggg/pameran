@@ -1,13 +1,17 @@
 <?php
 
-use App\Http\Controllers\ActivityController;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Application;
 use App\Http\Controllers\CardsController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ClerkAuthController;
 use App\Http\Controllers\ShowCardsController;
 use App\Http\Controllers\TransactionsController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+
+Route::post('/auth/clerk/sync', [ClerkAuthController::class, 'syncUser']);
+Route::post('/auth/clerk/logout', [ClerkAuthController::class, 'logout'])->middleware('auth');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/home', [CardsController::class, 'index'])->name('home.index');

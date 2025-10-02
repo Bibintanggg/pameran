@@ -431,6 +431,55 @@ class ActivityController extends Controller
             })
             ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
+        // NEW: Calculate monthly average per card
+        $monthlyAveragePerCard = [];
+        $currentYear = now()->year;
+
+        foreach ($cards as $card) {
+            $cardTransactions = $allExpenseTransactions->where('from_cards_id', $card->id);
+
+            $currentYearExpense = $cardTransactions
+                ->filter(function ($transaction) use ($currentYear) {
+                    return $transaction->transaction_date->year === $currentYear;
+                })
+                ->sum('amount');
+
+            $monthsWithData = $cardTransactions
+                ->filter(function ($transaction) use ($currentYear) {
+                    return $transaction->transaction_date->year === $currentYear;
+                })
+                ->groupBy(function ($transaction) {
+                    return $transaction->transaction_date->month;
+                })
+                ->count();
+
+            $avgMonthlyExpense = $monthsWithData > 0 ? $currentYearExpense / $monthsWithData : 0;
+
+            $monthlyAveragePerCard[$card->id] = $avgMonthlyExpense;
+        }
+
+        // NEW: Calculate overall monthly average based on active card filter
+        $transactionsForAverage = $activeCardId && $activeCardId != 0
+            ? $allExpenseTransactions->where('from_cards_id', $activeCardId)
+            : $allExpenseTransactions;
+
+        $currentYearExpense = $transactionsForAverage
+            ->filter(function ($transaction) use ($currentYear) {
+                return $transaction->transaction_date->year === $currentYear;
+            })
+            ->sum('amount');
+
+        $monthsWithData = $transactionsForAverage
+            ->filter(function ($transaction) use ($currentYear) {
+                return $transaction->transaction_date->year === $currentYear;
+            })
+            ->groupBy(function ($transaction) {
+                return $transaction->transaction_date->month;
+            })
+            ->count();
+
+        $avgMonthlyExpense = $monthsWithData > 0 ? $currentYearExpense / $monthsWithData : 0;
+
         // Expense by category berdasarkan transactions yang difilter
         $expenseByCategory = $filteredTransactions
             ->groupBy('category')
@@ -443,7 +492,6 @@ class ActivityController extends Controller
             });
 
         // Data chart berdasarkan transactions yang difilter
-        $currentYear = now()->year;
         $monthlyExpenseData = $filteredTransactions
             ->filter(function ($transaction) use ($currentYear) {
                 return $transaction->transaction_date->year === $currentYear;
@@ -483,24 +531,8 @@ class ActivityController extends Controller
             ];
         })->values();
 
-        $currentYearExpense = $allExpenseTransactions
-            ->filter(function ($transaction) use ($currentYear) {
-                return $transaction->transaction_date->year === $currentYear;
-            })
-            ->sum('amount');
-
-        $monthsWithData = $allExpenseTransactions
-            ->filter(function ($transaction) use ($currentYear) {
-                return $transaction->transaction_date->year === $currentYear;
-            })
-            ->groupBy(function ($transaction) {
-                return $transaction->transaction_date->month;
-            })
-            ->count();
-
-        $avgMonthlyExpense = $monthsWithData > 0 ? $currentYearExpense / $monthsWithData : 0;
-
-        $previousYearExpense = $allExpenseTransactions
+        // Growth rate calculation based on filtered transactions
+        $previousYearExpense = $transactionsForAverage
             ->filter(function ($transaction) use ($currentYear) {
                 return $transaction->transaction_date->year === ($currentYear - 1);
             })
@@ -509,11 +541,10 @@ class ActivityController extends Controller
         if ($previousYearExpense > 0) {
             $expenseGrowthRate = (($currentYearExpense - $previousYearExpense) / $previousYearExpense) * 100;
         } elseif ($currentYearExpense > 0 && $previousYearExpense == 0) {
-            $expenseGrowthRate = 100; 
+            $expenseGrowthRate = 100;
         } else {
-            $expenseGrowthRate = 0; 
+            $expenseGrowthRate = 0;
         }
-
 
         $topCategories = $expenseByCategory->sortByDesc(function ($value) {
             return $value;
@@ -530,13 +561,14 @@ class ActivityController extends Controller
             'topCategories' => $topCategories,
             'totalExpense' => $totalExpense,
             'avgMonthlyExpense' => $avgMonthlyExpense,
+            'monthlyAveragePerCard' => $monthlyAveragePerCard,
             'expenseGrowthRate' => $expenseGrowthRate,
             'expensePerCard' => $expensePerCard,
             'filter' => $filter,
             'chartMode' => $chartMode,
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'activeCardId' => (int) $activeCardId, // Pastikan integer
+            'activeCardId' => (int) $activeCardId,
             'auth' => [
                 'user' => [
                     'name' => Auth::user()->name,

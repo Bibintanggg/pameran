@@ -16,7 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        $middleware->alias([
+            'clerk' => \App\Http\Middleware\EnsureUserIsAuthenticated::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

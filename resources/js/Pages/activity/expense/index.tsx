@@ -40,6 +40,7 @@ type Props = {
     expenseByCategory: Record<string, number>;
     totalExpense: number;
     avgMonthlyExpense: number;
+    monthlyAveragePerCard: Record<number, number>
     expenseGrowthRate: number;
     expensePerCard: Record<number, number>;
     filter: string;
@@ -72,6 +73,7 @@ export default function Expense() {
         expenseByCategory,
         totalExpense,
         avgMonthlyExpense,
+        monthlyAveragePerCard,
         expenseGrowthRate,
         expensePerCard,
         auth,
@@ -131,8 +133,12 @@ export default function Expense() {
     }, [safeCardId, totalExpense, expensePerCard]);
 
     const calculatedAvgMonthlyExpense = useMemo(() => {
-        return avgMonthlyExpense;
-    }, [avgMonthlyExpense]);
+        if (activeCardId === 0) {
+            return avgMonthlyExpense;
+        } else {
+            return monthlyAveragePerCard[activeCardId ?? 0] || 0;
+        }
+    }, [avgMonthlyExpense, monthlyAveragePerCard, activeCardId]);
 
     const calculatedExpenseGrowthRate = useMemo(() => {
         return expenseGrowthRate;
@@ -264,7 +270,7 @@ export default function Expense() {
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-                    <BottomNavbar activeCardId={activeCardId}/>
+                    <BottomNavbar activeCardId={activeCardId} />
 
                     <div className="flex-1 overflow-y-auto p-6">
                         {/* Mobile Header */}

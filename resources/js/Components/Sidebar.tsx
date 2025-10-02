@@ -16,6 +16,8 @@ import {
 import clsx from "clsx"
 import { useActiveCard } from "@/context/ActiveCardContext"
 import { useState, useRef, useEffect } from "react"
+import axios from "axios"
+import { useClerk } from "@clerk/clerk-react"
 
 type SidebarProps = {
     auth: {
@@ -46,6 +48,7 @@ export default function Sidebar({
     expensePerCard,
 }: SidebarProps) {
     const { url } = usePage()
+    const { signOut } = useClerk();
     const { activeCardId } = useActiveCard();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -81,9 +84,11 @@ export default function Sidebar({
         return names[0][0]
     }
 
-    const handleLogout = () => {
-        router.post(route('logout'))
-    }
+    const handleLogout = async () => {
+        await axios.post('/auth/clerk/logout');
+        await signOut();
+        window.location.href = '/';
+    };
 
     const linkClass = (href: string) =>
         clsx(
