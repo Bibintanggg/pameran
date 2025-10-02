@@ -64,12 +64,12 @@ export default function UpdatePasswordForm({
             <form onSubmit={updatePassword} className="mt-6 space-y-6">
                 <div>
                     <InputLabel
-                        htmlFor="current_password"
+                        // htmlFor="current_password_update"
                         value="Current Password"
                     />
 
                     <TextInput
-                        id="current_password"
+                        // id="current_password_update"
                         ref={currentPasswordInput}
                         value={data.current_password}
                         onChange={(e) =>
@@ -87,10 +87,10 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="password" value="New Password" />
+                    <InputLabel htmlFor="new_password_update" value="New Password" /> 
 
                     <TextInput
-                        id="password"
+                        // id="new_password_update"
                         ref={passwordInput}
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
@@ -104,12 +104,12 @@ export default function UpdatePasswordForm({
 
                 <div>
                     <InputLabel
-                        htmlFor="password_confirmation"
+                        // htmlFor="confirm_password_update"  
                         value="Confirm Password"
                     />
 
                     <TextInput
-                        id="password_confirmation"
+                        // id="confirm_password_update" 
                         value={data.password_confirmation}
                         onChange={(e) =>
                             setData('password_confirmation', e.target.value)

@@ -109,10 +109,13 @@ export default function UpdateProfileInformation({
     };
 
     const getAvatarUrl = () => {
-        if (data.avatar) {
-            return URL.createObjectURL(data.avatar);
+        if (!auth.user?.avatar) return "";
+
+        if (auth.user.avatar.startsWith("http")) {
+            return auth.user.avatar;
         }
-        return user.avatar ? `/storage/${user.avatar}` : '/default-avatar.png';
+
+        return `/storage/${auth.user.avatar}`;
     };
 
     const getUserInitials = () => {
@@ -222,7 +225,7 @@ export default function UpdateProfileInformation({
                                     Full Name
                                 </InputLabel>
                                 <TextInput
-                                    id="name"
+                                    id="name_mobile"
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9290FE] focus:border-transparent"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
@@ -239,7 +242,7 @@ export default function UpdateProfileInformation({
                                     Email Address
                                 </InputLabel>
                                 <TextInput
-                                    id="email"
+                                    id="email_mobile"
                                     type="email"
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9290FE] focus:border-transparent"
                                     value={data.email}
@@ -310,14 +313,14 @@ export default function UpdateProfileInformation({
                             {/* Mobile Security Tabs */}
                             <div className="flex space-x-2 mb-6">
                                 <SecurityTabButton
-                                    id="password"
+                                    id="password_mobile"
                                     label="Change Password"
                                     icon={<Lock className="w-4 h-4" />}
                                     isActive={activeSecurityTab === 'password'}
                                     onClick={() => setActiveSecurityTab('password')}
                                 />
                                 <SecurityTabButton
-                                    id="delete"
+                                    id="delete_mobile"
                                     label="Delete Account"
                                     icon={<Trash2 className="w-4 h-4" />}
                                     isActive={activeSecurityTab === 'delete'}
@@ -455,7 +458,7 @@ export default function UpdateProfileInformation({
                                                             Full Name
                                                         </InputLabel>
                                                         <TextInput
-                                                            id="name"
+                                                            id="name_desktop"
                                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9290FE] focus:border-transparent transition-all"
                                                             value={data.name}
                                                             onChange={(e) => setData('name', e.target.value)}
@@ -472,7 +475,7 @@ export default function UpdateProfileInformation({
                                                             Email Address
                                                         </InputLabel>
                                                         <TextInput
-                                                            id="email"
+                                                            id="email_desktop"
                                                             type="email"
                                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9290FE] focus:border-transparent transition-all"
                                                             value={data.email}
