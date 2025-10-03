@@ -27,6 +27,8 @@ import { Card } from "@/types/card";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 import ActivityNavbar from "../layout/nav";
 import { useActiveCard } from "@/context/ActiveCardContext";
+import SyncLoader from "react-spinners/SyncLoader";
+import { ErrorBoundary } from "@/Components/ErrorBoundary";
 
 type Props = {
     transactions: Transaction[];
@@ -93,7 +95,7 @@ export default function Income() {
         if (serverActiveCardId !== undefined && serverActiveCardId !== activeCardId) {
             setActiveCardId(serverActiveCardId);
         }
-    }, [serverActiveCardId, setActiveCardId]);
+    }, [serverActiveCardId, setActiveCardId, activeCardId]);
 
     // Filter transaksi untuk income saja berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
@@ -194,7 +196,7 @@ export default function Income() {
         const currencyKey = currencyId ?? activeCard?.currency ?? defaultCurrency;
         const currency = currencyMap[currencyKey] ?? currencyMap[defaultCurrency];
         return formatCurrency(amount, currency);
-};
+    };
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
         setIsLoading(true);
@@ -254,6 +256,25 @@ export default function Income() {
     };
 
     const [date, setDate] = React.useState<{ from: Date | undefined; to?: Date | undefined }>();
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100/50 to-gray-200/50 backdrop-blur-sm">
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg border border-white/20 flex items-center justify-center flex-col">
+                    <SyncLoader size={15} color="#10B981" />
+                    <p className="text-gray-600 mt-4 text-center">Loading income data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!transactions || !cards) {
+        return <ErrorBoundary>
+            <div className="text-center py-8 text-gray-500">
+                <p>Something went wrong. Please try again later.</p>
+            </div>
+        </ErrorBoundary>
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -411,8 +432,10 @@ export default function Income() {
                             </div>
                             <div className="h-48 relative w-full">
                                 {isLoading && (
-                                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-                                        <RefreshCw className="h-6 w-6 text-green-500 animate-spin" />
+                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl z-10">
+                                        <div className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-lg border border-white/20">
+                                            <RefreshCw className="h-6 w-6 text-green-500 animate-spin" />
+                                        </div>
                                     </div>
                                 )}
                                 <ResponsiveContainer width="100%" height={220}>

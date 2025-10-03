@@ -25,9 +25,19 @@ import { Card } from "@/types/card";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
 import ActivityNavbar from "./layout/nav";
 import { useActiveCard } from "@/context/ActiveCardContext"; // Import context
+import { ErrorBoundary } from "@/Components/ErrorBoundary";
+import SyncLoader from "react-spinners/SyncLoader";
 
 type Props = {
-    transactions: Transaction[];
+    transactions: {
+        data: Transaction[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number;
+        to: number;
+    };
     cards: Card[];
     chartData: {
         monthly: Record<string, { label: string; income: number; expense: number }[]>;
@@ -50,6 +60,7 @@ type Props = {
     expensePerCard: Record<number, number>;
     startDate: string | null;
     endDate: string | null;
+    activeCardId: number;
 };
 
 interface MetricCardProps {
@@ -90,30 +101,30 @@ export default function AllActivity() {
     const activeCard = cards.find((card) => card.id === activeCardId); // DARI CONTEXT CARD AKTIF
 
     // Filter transaksi berdasarkan kartu aktif
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter((t) => {
-            // Filter berdasarkan card
-            let matchesCard = false;
+    // const filteredTransactions = useMemo(() => {
+    //     return transactions.data.filter((t) => {
+    //         // Filter berdasarkan card
+    //         let matchesCard = false;
 
-            if (activeCardId === 0) {
-                matchesCard = true; // Show all cards
-            } else {
-                // Filter berdasarkan tipe transaksi dan card yang sesuai
-                if (t.type === 'income' || t.type === 'convert') {
-                    matchesCard = t.to_cards_id === activeCardId;
-                } else if (t.type === 'expense') {
-                    matchesCard = t.from_cards_id === activeCardId;
-                }
-            }
+    //         if (activeCardId === 0) {
+    //             matchesCard = true; // Show all cards
+    //         } else {
+    //             // Filter berdasarkan tipe transaksi dan card yang sesuai
+    //             if (t.type === 'income' || t.type === 'convert') {
+    //                 matchesCard = t.to_cards_id === activeCardId;
+    //             } else if (t.type === 'expense') {
+    //                 matchesCard = t.from_cards_id === activeCardId;
+    //             }
+    //         }
 
-            if (!matchesCard) return false;
+    //         if (!matchesCard) return false;
 
-            if (filter === "all") return true;
-            if (filter === "income") return t.type === "income" || t.type === "convert";
-            if (filter === "expense") return t.type === "expense";
-            return true;
-        });
-    }, [transactions, activeCardId, filter]);
+    //         if (filter === "all") return true;
+    //         if (filter === "income") return t.type === "income" || t.type === "convert";
+    //         if (filter === "expense") return t.type === "expense";
+    //         return true;
+    //     });
+    // }, [transactions, activeCardId, filter]);
 
     useEffect(() => {
         if (initialActiveCardId && initialActiveCardId !== activeCardId) {
@@ -249,6 +260,27 @@ export default function AllActivity() {
         return formatCurrency(amount, currency);
     };
 
+    const handleCardChange = (cardId: number) => {
+        if (isLoading || cardId === activeCardId) return;
+
+        setIsLoading(true);
+        setActiveCardId(cardId);
+
+        router.get(route('all-activity'), {
+            filter,
+            chartMode,
+            activeCardId: cardId,
+            page: 1, 
+        }, {
+            preserveState: true,
+            onFinish: () => setIsLoading(false),
+            onError: () => {
+                setIsLoading(false);
+                setActiveCardId(activeCardId);
+            }
+        });
+    };
+
     const handleFilterChange = (newFilter: "all" | "income" | "expense") => {
         if (isLoading) return;
 
@@ -258,7 +290,8 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter: newFilter,
             chartMode,
-            // activeCardId
+            activeCardId,
+            page: 1
         }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
@@ -274,7 +307,8 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode: newMode,
-            // activeCardId
+            activeCardId,
+            page: 1
         }, {
             preserveState: true,
             onFinish: () => setIsLoading(false)
@@ -288,10 +322,31 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode,
-            // activeCardId
+            activeCardId,
+            page: transactions.current_page,
         }, {
             preserveState: false,
             onFinish: () => setIsLoading(false)
+        });
+    };
+
+    const handlePageChange = (page: number) => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+
+        router.get(route('all-activity'), {
+            page: page,
+            filter,
+            chartMode,
+            // activeCardId,
+            // start_date: startDate,
+            // end_date: endDate,
+        }, {
+            preserveState: true,
+            replace: true,
+            onFinish: () => setIsLoading(false),
+            onError: () => setIsLoading(false)
         });
     };
 
@@ -301,14 +356,17 @@ export default function AllActivity() {
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
     const netBalanceChange = (calculatedIncomeRate - calculatedExpenseRate).toFixed(2);
 
-    // console.log("calculatedTotalExpense", calculatedTotalExpense);
-    // console.log("activeCardId", activeCardId);
-    // console.log("expensePerCard", expensePerCard);
-    // console.log("totalExpense", totalExpense);
+    if (!transactions || !cards) {
+        return <ErrorBoundary>
+            <div className="text-center py-8 text-gray-500">
+                <p>Something went wrong. Please try again later.</p>
+            </div>
+        </ErrorBoundary>
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Head title="Analytics"/>
+            <Head title="Analytics" />
             {/* Mobile Layout */}
             <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
@@ -444,8 +502,10 @@ export default function AllActivity() {
                             </div>
                             <div className="h-48 relative w-full">
                                 {isLoading && (
-                                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-                                        <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
+                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl z-10">
+                                        <div className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-lg border border-white/20">
+                                            <RefreshCw className="h-6 w-6 text-green-500 animate-spin" />
+                                        </div>
                                     </div>
                                 )}
                                 <ResponsiveContainer width="100%" height={220}>
@@ -511,7 +571,7 @@ export default function AllActivity() {
                                 <div>
                                     <h3 className="text-lg font-semibold">Transactions</h3>
                                     <p className="text-sm text-gray-500">
-                                        Showing {filteredTransactions.length} transactions
+                                        Showing {transactions.from} to {transactions.to} of {transactions.total} transaction
                                     </p>
                                 </div>
                                 <button
@@ -521,8 +581,11 @@ export default function AllActivity() {
                                 </button>
                             </div>
                             <div className="max-h-60 overflow-y-auto">
-                                {filteredTransactions.length > 0 ? (
-                                    <TransactionsList transactions={filteredTransactions} />
+                                {transactions.data.length > 0 ? (
+                                    <TransactionsList
+                                        transactions={transactions}
+                                        onPageChange={handlePageChange}
+                                    />
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         <p>No transactions found for the current filter.</p>
@@ -711,7 +774,7 @@ export default function AllActivity() {
                                                     All Transactions
                                                 </h3>
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Showing {filteredTransactions.length} of {transactions.length} transactions
+                                                    Showing {transactions.from} to {transactions.to} of {transactions.total} transactions
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -751,6 +814,8 @@ export default function AllActivity() {
                                                                     router.get(route('all-activity'), {
                                                                         filter,
                                                                         chartMode,
+                                                                        page: 1,
+                                                                        activeCardId,
                                                                         start_date: selected.from.toISOString().split('T')[0],
                                                                         end_date: selected.to.toISOString().split('T')[0],
                                                                     }, {
@@ -765,8 +830,11 @@ export default function AllActivity() {
                                             </div>
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
-                                            {filteredTransactions.length > 0 ? (
-                                                <TransactionsList transactions={filteredTransactions} />
+                                            {transactions.data.length > 0 ? (
+                                                <TransactionsList
+                                                    transactions={transactions}
+                                                    onPageChange={handlePageChange}
+                                                />
                                             ) : (
                                                 <div className="text-center py-12 text-gray-500">
                                                     <ActivityIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -910,7 +978,7 @@ export default function AllActivity() {
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-500">Transactions:</span>
-                                                        <span className="font-medium">{transactions.length}</span>
+                                                        <span className="font-medium">{transactions.total}</span>
                                                     </div>
                                                 </div>
                                             </div>

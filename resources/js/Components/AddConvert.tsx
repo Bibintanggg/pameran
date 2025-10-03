@@ -23,6 +23,7 @@ export default function AddConvert({ label }: { label: string }) {
     const [amount, setAmount] = useState("")
     const [notes, setNotes] = useState("")
     const [isOpen, setIsOpen] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const [rate, setRate] = useState<number | null>(null)
     const [convertedAmount, setConvertedAmount] = useState<number | null>(null)
@@ -31,10 +32,10 @@ export default function AddConvert({ label }: { label: string }) {
     const { toast } = useToast()
 
     const getCurrencySymbol = (currency: string) => {
-        const symbols: Record<string, string> = { 
-            'indonesian_rupiah': 'Rp', 
-            'baht_thailand': '฿', 
-            'as_dollar': '$' 
+        const symbols: Record<string, string> = {
+            'indonesian_rupiah': 'Rp',
+            'baht_thailand': '฿',
+            'as_dollar': '$'
         }
         return symbols[currency] || 'Rp'
     }
@@ -51,9 +52,9 @@ export default function AddConvert({ label }: { label: string }) {
             setRate(response.data.rate)
             setConvertedAmount(response.data.converted_amount)
         } catch (error: any) {
-            
+
             const errorMsg = error.response?.data?.error || "Failed to fetch exchange rate. Please try again."
-            
+
             toast({
                 title: "Error",
                 description: errorMsg,
@@ -104,6 +105,8 @@ export default function AddConvert({ label }: { label: string }) {
             return
         }
 
+        setIsSubmitting(true)
+
         router.post('/transactions/convert', {
             from_cards_id: fromCard.id,
             to_cards_id: toCard.id,
@@ -120,6 +123,7 @@ export default function AddConvert({ label }: { label: string }) {
                 setRate(null)
                 setConvertedAmount(null)
                 setIsOpen(false)
+                setIsSubmitting(false)
                 toast({
                     title: "Success!",
                     description: "Your conversion has been saved successfully."
@@ -132,6 +136,7 @@ export default function AddConvert({ label }: { label: string }) {
                     description: errorMessage,
                     variant: "destructive",
                 })
+                setIsSubmitting(false)
             }
         })
     }
@@ -258,13 +263,14 @@ export default function AddConvert({ label }: { label: string }) {
                             variant="destructive"
                             onClick={() => setIsOpen(false)}
                             className="flex-1"
+                            disabled={isSubmitting}
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             className="flex-1"
-                            disabled={isLoadingRate || !convertedAmount}
+                            disabled={isLoadingRate || !convertedAmount || isSubmitting}
                         >
                             {isLoadingRate ? "Loading..." : "Convert"}
                         </Button>

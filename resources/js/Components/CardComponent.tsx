@@ -64,6 +64,8 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
+
+
             if (selectedCard === card.id) {
                 const dropdown = dropdownRefs.current[card.id];
                 const button = buttonRefs.current[card.id];

@@ -28,7 +28,7 @@ class TransactionsController extends Controller
                 ->latest()
                 ->get();
         } catch (\Exception $e) {
-             dd($e->getMessage(), $e->getTrace());
+            //  dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
 
@@ -103,7 +103,8 @@ class TransactionsController extends Controller
 
             return back()->withErrors(['type' => 'Invalid transaction type']);
         } catch (\Exception $e) {
-             dd($e->getMessage(), $e->getTrace());
+            DB::rollBack();
+            //  dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
@@ -173,7 +174,8 @@ class TransactionsController extends Controller
 
             return back()->withErrors(['type' => 'Invalid transaction type']);
         } catch (\Exception $e) {
-             dd($e->getMessage(), $e->getTrace());
+            DB::rollBack();
+            //  dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
@@ -181,6 +183,7 @@ class TransactionsController extends Controller
     public function storeConvert(Request $request)
     {
         try {
+            DB::beginTransaction();
             $request->validate([
                 'from_cards_id' => 'required|exists:cards,id',
                 'to_cards_id' => 'required|exists:cards,id|different:from_cards_id',
@@ -219,7 +222,7 @@ class TransactionsController extends Controller
 
             return back()->with('success', 'Conversion successful!');
         } catch (\Exception $e) {
-             dd($e->getMessage(), $e->getTrace());
+            //  dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }

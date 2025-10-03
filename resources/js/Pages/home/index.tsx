@@ -368,7 +368,18 @@ export default function Home() {
 
                             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                                 {filteredTransactions.length > 0 ? (
-                                    <TransactionsList transactions={filteredTransactions.slice(0, 5)} />
+                                    <TransactionsList
+                                        transactions={{
+                                            data: filteredTransactions.slice(0, 5),
+                                            current_page: 1,
+                                            last_page: 1,
+                                            per_page: 5,
+                                            total: filteredTransactions.length,
+                                            from: filteredTransactions.length > 0 ? 1 : 0,
+                                            to: Math.min(filteredTransactions.length, 5)
+                                        }}
+                                        onPageChange={() => {}}
+                                    />
                                 ) : (
                                     <div className="p-8 text-center">
                                         <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -564,7 +575,18 @@ export default function Home() {
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
                                             {filteredTransactions.length > 0 ? (
-                                                <TransactionsList transactions={filteredTransactions.slice(0, 8)} />
+                                                <TransactionsList
+                                                    transactions={{
+                                                        data: filteredTransactions.slice(0, 5),
+                                                        current_page: 1,
+                                                        last_page: 1,
+                                                        per_page: 8,
+                                                        total: filteredTransactions.length,
+                                                        from: filteredTransactions.length > 0 ? 1 : 0,
+                                                        to: Math.min(filteredTransactions.length, 8)
+                                                    }}
+                                                    onPageChange={() => {}}
+                                                />
                                             ) : (
                                                 <div className="text-center py-12">
                                                     <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
