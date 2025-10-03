@@ -456,10 +456,11 @@ class ActivityController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
             $activeCardId = $request->query('activeCardId', 0);
+            $perPage = $request->query('per_page', 5); //  TAMBAHKAN PAGINATION
 
             $cards = Cards::where('user_id', $userId)->get();
 
-            // Query dasar untuk expense transactions
+            // QUERY DENGAN PAGINATION - SAMA SEPERTI allActivity
             $expenseTransactionsQuery = Transactions::where('user_id', $userId)
                 ->where('type', TransactionsType::EXPENSE->value)
                 ->with(['toCard', 'fromCard']);
@@ -477,25 +478,11 @@ class ActivityController extends Controller
                 ]);
             }
 
-            // Dapatkan transactions yang sudah difilter
-            $filteredTransactions = $expenseTransactionsQuery->latest()->get();
+            // PAGINATE QUERY YANG SUDAH DIFILTER
+            $paginatedTransactions = $expenseTransactionsQuery->latest()->paginate($perPage);
 
-            // Query untuk semua transactions (untuk chart dan analytics)
-            $allExpenseTransactionsQuery = Transactions::where('user_id', $userId)
-                ->where('type', TransactionsType::EXPENSE->value)
-                ->with(['toCard', 'fromCard']);
-
-            if ($startDate && $endDate) {
-                $allExpenseTransactionsQuery->whereBetween('transaction_date', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]);
-            }
-
-            $allExpenseTransactions = $allExpenseTransactionsQuery->get();
-
-            // Format transactions dengan currency yang benar
-            $transactions = $filteredTransactions->map(function ($data) {
+            // MAP TRANSACTIONS UNTUK DISPLAY - SAMA SEPERTI allActivity
+            $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) {
                 // Prioritaskan currency dari from_card (card yang mengeluarkan expense)
                 $currency = $data->fromCard?->currency;
                 if ($currency instanceof Currency) {
@@ -533,16 +520,43 @@ class ActivityController extends Controller
                 ];
             });
 
-            // Hitung total expense berdasarkan transactions yang difilter
-            $totalExpense = $filteredTransactions->sum('amount');
+            //  REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
+            $paginatedTransactions->setCollection($formattedTransactions);
 
-            // Expense per card (gunakan all transactions untuk analytics card)
-            $expensePerCard = $allExpenseTransactions
-                ->groupBy('from_cards_id')
-                ->map(function ($transactions) {
-                    return $transactions->sum('amount');
-                })
-                ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
+            //  QUERY TERPISAH UNTUK ANALYTICS & CHART (tanpa pagination, semua data)
+            $analyticsQuery = Transactions::where('user_id', $userId)
+                ->where('type', TransactionsType::EXPENSE->value)
+                ->with(['toCard', 'fromCard']);
+
+            if ($activeCardId && $activeCardId != 0) {
+                $analyticsQuery->where('from_cards_id', $activeCardId);
+            }
+
+            if ($startDate && $endDate) {
+                $analyticsQuery->whereBetween('transaction_date', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay(),
+                ]);
+            }
+
+            $allExpenseTransactions = $analyticsQuery->get();
+
+            // Hitung total expense dari semua data analytics
+            $totalExpense = $allExpenseTransactions->sum('amount');
+
+            // Expense per card dari semua data analytics
+            $expensePerCard = collect();
+            foreach ($allExpenseTransactions as $transaction) {
+                $cardId = $transaction->from_cards_id;
+                $amount = $transaction->amount;
+
+                $expensePerCard[$cardId] = ($expensePerCard[$cardId] ?? 0) + $amount;
+            }
+
+            // Untuk "All Cards", hitung total dari semua cards
+            if ($activeCardId == 0) {
+                $expensePerCard[0] = $totalExpense;
+            }
 
             // Calculate monthly average per card
             $monthlyAveragePerCard = [];
@@ -566,7 +580,7 @@ class ActivityController extends Controller
             }
 
             // Calculate overall monthly average untuk All Cards
-            $currentYearExpense = $filteredTransactions
+            $currentYearExpense = $allExpenseTransactions
                 ->filter(function ($transaction) use ($currentYear) {
                     return $transaction->transaction_date->year === $currentYear;
                 })
@@ -577,7 +591,7 @@ class ActivityController extends Controller
                 : 0;
 
             // Calculate monthly average growth rate untuk All Cards
-            $previousYearExpense = $filteredTransactions
+            $previousYearExpense = $allExpenseTransactions
                 ->filter(function ($transaction) use ($currentYear) {
                     return $transaction->transaction_date->year === ($currentYear - 1);
                 })
@@ -621,8 +635,8 @@ class ActivityController extends Controller
                 $expenseGrowthRate = 0;
             }
 
-            // Expense by category berdasarkan transactions yang difilter
-            $expenseByCategory = $filteredTransactions
+            // Expense by category berdasarkan semua data analytics
+            $expenseByCategory = $allExpenseTransactions
                 ->groupBy('category')
                 ->map(function ($transactions) {
                     return $transactions->sum('amount');
@@ -632,8 +646,15 @@ class ActivityController extends Controller
                     return [$categoryLabel => (float) $total];
                 });
 
-            // Data chart berdasarkan transactions yang difilter
-            $monthlyExpenseData = $filteredTransactions
+            $topCategories = $expenseByCategory->sortByDesc(function ($value) {
+                return $value;
+            })->take(5);
+
+            // Data chart berdasarkan semua data analytics
+            $currentYear = now()->year;
+
+            // Monthly data untuk chart
+            $monthlyExpenseData = $allExpenseTransactions
                 ->filter(function ($transaction) use ($currentYear) {
                     return $transaction->transaction_date->year === $currentYear;
                 })
@@ -654,7 +675,8 @@ class ActivityController extends Controller
                 ];
             });
 
-            $yearlyExpenseData = $filteredTransactions
+            // Yearly data untuk chart
+            $yearlyExpenseData = $allExpenseTransactions
                 ->groupBy(function ($transaction) {
                     return $transaction->transaction_date->year;
                 })
@@ -671,17 +693,13 @@ class ActivityController extends Controller
                     'label' => (string) $year,
                 ];
             })->values();
-
-            $topCategories = $expenseByCategory->sortByDesc(function ($value) {
-                return $value;
-            })->take(5);
         } catch (\Exception $e) {
-            //  dd($e->getMessage(), $e->getTrace());
+            // dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
 
         return Inertia::render('activity/expense/index', [
-            'transactions' => $transactions->values(),
+            'transactions' => $paginatedTransactions, //  GUNAKAN PAGINATOR INSTANCE
             'cards' => $cards,
             'chartData' => [
                 'monthly' => $monthlyChartData,
@@ -719,6 +737,7 @@ class ActivityController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
             $activeCardId = $request->query('activeCardId', 0); // Default ke 0
+            $perPage = $request->query('per_page', 5); //  TAMBAHKAN PAGINATION
 
             $cards = Cards::where('user_id', $userId)->get();
 
@@ -726,6 +745,7 @@ class ActivityController extends Controller
                 $activeCardId = 0; // Reset ke "All Cards" jika card tidak ditemukan
             }
 
+            //  QUERY DENGAN PAGINATION - SAMA SEPERTI allActivity
             $transactionsQuery = Transactions::where('user_id', $userId)
                 ->whereIn('type', [
                     TransactionsType::INCOME->value,
@@ -744,264 +764,182 @@ class ActivityController extends Controller
                 ]);
             }
 
-            $transactions = $transactionsQuery->latest()
-                ->get()
-                ->map(function ($data) {
-                    $currency = $data->toCard?->currency;
-                    if ($currency instanceof Currency) {
-                        $currency = $currency->value;
-                    }
+            //  PAGINATE QUERY YANG SUDAH DIFILTER
+            $paginatedTransactions = $transactionsQuery->latest()->paginate($perPage);
 
-                    $currency ??= Currency::INDONESIAN_RUPIAH->value;
-                    $currencySymbol = Currency::from($currency)->symbol();
-
-                    $displayAmount = $data->type === TransactionsType::CONVERT->value
-                        ? $data->converted_amount
-                        : $data->amount;
-
-                    return [
-                        'id'               => $data->id,
-                        'to_cards_id'      => $data->to_cards_id,
-                        'user_name'        => Auth::user()->name,
-                        'type'             => $data->type,
-                        'type_label'       => TransactionsType::from($data->type)->label(),
-                        'amount'           => $displayAmount,
-                        'formatted_amount' => $currencySymbol . ' ' . number_format($displayAmount, 0, ',', '.'),
-                        'notes'            => $data->notes,
-                        'currency'         => $data->toCard?->currency ?? 'IDR',
-                        'asset'            => $data->asset,
-                        'asset_label'      => Asset::from($data->asset)->label(),
-                        'category'         => $data->category,
-                        'category_label'   => $data->category ? Category::from($data->category)->label() : 'Transfer',
-                        'transaction_date' => $data->transaction_date->format('d F Y'),
-                        'created_at'       => $data->created_at,
-                    ];
-                });
-
-            $totalIncomeQuery = Transactions::where('user_id', $userId)
-                ->whereIn('type', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]);
-
-            if ($activeCardId && $activeCardId !== 0) {
-                $totalIncomeQuery->where('to_cards_id', $activeCardId);
-            }
-
-            if ($startDate && $endDate) {
-                $totalIncomeQuery->whereBetween('transaction_date', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]);
-            }
-
-            $totalIncome = $totalIncomeQuery->selectRaw('SUM(CASE
-        WHEN type = ? THEN amount
-        WHEN type = ? THEN converted_amount
-        ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])->value('total') ?? 0;
-
-            $incomePerCard = Transactions::where('user_id', $userId)
-                ->whereIn('type', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ])
-                ->selectRaw('to_cards_id, SUM(CASE
-            WHEN type = ? THEN amount
-            WHEN type = ? THEN converted_amount
-            ELSE 0 END) as total', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ])
-                ->groupBy('to_cards_id')
-                ->pluck('total', 'to_cards_id')
-                ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
-
-            $incomeByCategoryQuery = Transactions::where('user_id', $userId)
-                ->whereIn('type', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]);
-
-            if ($activeCardId && $activeCardId !== 0) {
-                $incomeByCategoryQuery->where('to_cards_id', $activeCardId);
-            }
-
-            if ($startDate && $endDate) {
-                $incomeByCategoryQuery->whereBetween('transaction_date', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]);
-            }
-
-            $incomeByCategory = $incomeByCategoryQuery->selectRaw('category, SUM(CASE
-        WHEN type = ? THEN amount
-        WHEN type = ? THEN converted_amount
-        ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
-                ->groupBy('category')
-                ->get()
-                ->mapWithKeys(function ($item) {
-                    $categoryLabel = $item->category ? Category::from($item->category)->label() : 'Other';
-                    return [$categoryLabel => (float) $item->total];
-                });
-
-            $incomeByCategoryPerCard = [];
-
-            $allCardsCategoryQuery = Transactions::where('user_id', $userId)
-                ->whereIn('type', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]);
-
-            if ($startDate && $endDate) {
-                $allCardsCategoryQuery->whereBetween('transaction_date', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]);
-            }
-
-            $allCardsCategories = $allCardsCategoryQuery->selectRaw('category, SUM(CASE
-        WHEN type = ? THEN amount
-        WHEN type = ? THEN converted_amount
-        ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])
-                ->groupBy('category')
-                ->get()
-                ->mapWithKeys(function ($item) {
-                    $categoryLabel = $item->category ? Category::from($item->category)->label() : 'Other';
-                    return [$categoryLabel => (float) $item->total];
-                });
-
-            $incomeByCategoryPerCard[0] = $allCardsCategories->toArray();
-
-            foreach ($cards as $card) {
-                $cardCategoryQuery = Transactions::where('user_id', $userId)
-                    ->where('to_cards_id', $card->id)
-                    ->whereIn('type', [
-                        TransactionsType::INCOME->value,
-                        TransactionsType::CONVERT->value
-                    ]);
-
-                if ($startDate && $endDate) {
-                    $cardCategoryQuery->whereBetween('transaction_date', [
-                        Carbon::parse($startDate)->startOfDay(),
-                        Carbon::parse($endDate)->endOfDay(),
-                    ]);
+            //  MAP TRANSACTIONS UNTUK DISPLAY - SAMA SEPERTI allActivity
+            $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) {
+                $currency = $data->toCard?->currency;
+                if ($currency instanceof Currency) {
+                    $currency = $currency->value;
                 }
 
-                $cardCategories = $cardCategoryQuery->selectRaw('category, SUM(CASE
-            WHEN type = ? THEN amount
-            WHEN type = ? THEN converted_amount
-            ELSE 0 END) as total', [
+                $currency ??= Currency::INDONESIAN_RUPIAH->value;
+                $currencySymbol = Currency::from($currency)->symbol();
+
+                $displayAmount = $data->type === TransactionsType::CONVERT->value
+                    ? $data->converted_amount
+                    : $data->amount;
+
+                return [
+                    'id'               => $data->id,
+                    'to_cards_id'      => $data->to_cards_id,
+                    'user_name'        => Auth::user()->name,
+                    'type'             => $data->type,
+                    'type_label'       => TransactionsType::from($data->type)->label(),
+                    'amount'           => $displayAmount,
+                    'formatted_amount' => $currencySymbol . ' ' . number_format($displayAmount, 0, ',', '.'),
+                    'notes'            => $data->notes,
+                    'currency'         => $data->toCard?->currency ?? 'IDR',
+                    'asset'            => $data->asset,
+                    'asset_label'      => Asset::from($data->asset)->label(),
+                    'category'         => $data->category,
+                    'category_label'   => $data->category ? Category::from($data->category)->label() : 'Transfer',
+                    'transaction_date' => $data->transaction_date->format('d F Y'),
+                    'created_at'       => $data->created_at,
+                ];
+            });
+
+            //  REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
+            $paginatedTransactions->setCollection($formattedTransactions);
+
+            //  QUERY TERPISAH UNTUK ANALYTICS & CHART (tanpa pagination, semua data)
+            $analyticsQuery = Transactions::where('user_id', $userId)
+                ->whereIn('type', [
                     TransactionsType::INCOME->value,
                     TransactionsType::CONVERT->value
                 ])
+                ->with('toCard');
+
+            if ($activeCardId && $activeCardId !== 0) {
+                $analyticsQuery->where('to_cards_id', $activeCardId);
+            }
+
+            if ($startDate && $endDate) {
+                $analyticsQuery->whereBetween('transaction_date', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay(),
+                ]);
+            }
+
+            $allTransactionsForAnalytics = $analyticsQuery->get();
+
+            // Hitung total income dari semua data analytics
+            $totalIncome = $allTransactionsForAnalytics->sum(function ($transaction) {
+                return $transaction->type === TransactionsType::CONVERT->value
+                    ? $transaction->converted_amount
+                    : $transaction->amount;
+            });
+
+            // Hitung income per card dari semua data analytics
+            $incomePerCard = collect();
+            foreach ($allTransactionsForAnalytics as $transaction) {
+                $cardId = $transaction->to_cards_id;
+                $amount = $transaction->type === TransactionsType::CONVERT->value
+                    ? $transaction->converted_amount
+                    : $transaction->amount;
+
+                $incomePerCard[$cardId] = ($incomePerCard[$cardId] ?? 0) + $amount;
+            }
+
+            // Untuk "All Cards", hitung total dari semua cards
+            if ($activeCardId == 0) {
+                $incomePerCard[0] = $totalIncome;
+            }
+
+            // Income by category berdasarkan semua data analytics
+            $incomeByCategory = $allTransactionsForAnalytics
+                ->groupBy('category')
+                ->map(function ($transactions) {
+                    return $transactions->sum(function ($transaction) {
+                        return $transaction->type === TransactionsType::CONVERT->value
+                            ? $transaction->converted_amount
+                            : $transaction->amount;
+                    });
+                })
+                ->mapWithKeys(function ($total, $category) {
+                    $categoryLabel = $category ? Category::from($category)->label() : 'Other';
+                    return [$categoryLabel => (float) $total];
+                });
+
+            // Income by category per card berdasarkan semua data analytics
+            $incomeByCategoryPerCard = [];
+
+            // Data untuk "All Cards"
+            $incomeByCategoryPerCard[0] = $incomeByCategory->toArray();
+
+            // Data untuk masing-masing card
+            foreach ($cards as $card) {
+                $cardCategories = $allTransactionsForAnalytics
+                    ->where('to_cards_id', $card->id)
                     ->groupBy('category')
-                    ->get()
-                    ->mapWithKeys(function ($item) {
-                        $categoryLabel = $item->category ? Category::from($item->category)->label() : 'Other';
-                        return [$categoryLabel => (float) $item->total];
+                    ->map(function ($transactions) {
+                        return $transactions->sum(function ($transaction) {
+                            return $transaction->type === TransactionsType::CONVERT->value
+                                ? $transaction->converted_amount
+                                : $transaction->amount;
+                        });
+                    })
+                    ->mapWithKeys(function ($total, $category) {
+                        $categoryLabel = $category ? Category::from($category)->label() : 'Other';
+                        return [$categoryLabel => (float) $total];
                     });
 
                 $incomeByCategoryPerCard[$card->id] = $cardCategories->toArray();
             }
 
+            // Chart data berdasarkan semua data analytics
             $currentYear = now()->year;
-            $monthlyIncomeDataQuery = Transactions::where('user_id', $userId)
-                ->whereIn('type', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ])
-                ->whereYear('transaction_date', $currentYear);
 
-            if ($activeCardId && $activeCardId !== 0) {
-                $monthlyIncomeDataQuery->where('to_cards_id', $activeCardId);
-            }
-
-            if ($startDate && $endDate) {
-                $monthlyIncomeDataQuery->whereBetween('transaction_date', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]);
-            }
-
-            $monthlyIncomeData = $monthlyIncomeDataQuery->selectRaw(
-                'MONTH(transaction_date) as month,
-            SUM(CASE
-                WHEN type = ? THEN amount
-                WHEN type = ? THEN converted_amount
-                ELSE 0
-            END) as income',
-                [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]
-            )
-                ->groupBy('month')
-                ->get()
-                ->keyBy('month');
+            // Monthly data untuk chart
+            $monthlyIncomeData = $allTransactionsForAnalytics
+                ->filter(function ($transaction) use ($currentYear) {
+                    return $transaction->transaction_date->year === $currentYear;
+                })
+                ->groupBy(function ($transaction) {
+                    return $transaction->transaction_date->month;
+                })
+                ->map(function ($transactions) {
+                    return $transactions->sum(function ($transaction) {
+                        return $transaction->type === TransactionsType::CONVERT->value
+                            ? $transaction->converted_amount
+                            : $transaction->amount;
+                    });
+                });
 
             $monthlyChartData = collect(range(1, 12))->map(function ($month) use ($monthlyIncomeData) {
-                $data = $monthlyIncomeData->get($month);
+                $incomeAmount = $monthlyIncomeData->get($month, 0);
                 return [
                     'month' => Carbon::create()->month($month)->format('M'),
-                    'income' => $data->income ?? 0,
-                    // 'target' => ($data->income ?? 0) * 1.1,
+                    'income' => $incomeAmount,
                     'label' => Carbon::create()->month($month)->format('M'),
                 ];
             });
 
-            $yearlyIncomeDataQuery = Transactions::where('user_id', $userId)
-                ->whereIn('type', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]);
+            // Yearly data untuk chart
+            $yearlyIncomeData = $allTransactionsForAnalytics
+                ->groupBy(function ($transaction) {
+                    return $transaction->transaction_date->year;
+                })
+                ->map(function ($transactions) {
+                    return $transactions->sum(function ($transaction) {
+                        return $transaction->type === TransactionsType::CONVERT->value
+                            ? $transaction->converted_amount
+                            : $transaction->amount;
+                    });
+                })
+                ->sortKeys();
 
-            if ($activeCardId && $activeCardId !== 0) {
-                $yearlyIncomeDataQuery->where('to_cards_id', $activeCardId);
-            }
-
-            if ($startDate && $endDate) {
-                $yearlyIncomeDataQuery->whereBetween('transaction_date', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]);
-            }
-
-            $yearlyIncomeData = $yearlyIncomeDataQuery->selectRaw(
-                'YEAR(transaction_date) as year,
-            SUM(CASE
-                WHEN type = ? THEN amount
-                WHEN type = ? THEN converted_amount
-                ELSE 0
-            END) as income',
-                [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ]
-            )
-                ->groupBy('year')
-                ->get()
-                ->sortBy('year');
-
-            $yearlyChartData = $yearlyIncomeData->map(function ($data) {
+            $yearlyChartData = $yearlyIncomeData->map(function ($incomeAmount, $year) {
                 return [
-                    'year' => $data->year,
-                    'income' => $data->income ?? 0,
-                    // 'target' => ($data->income ?? 0) * 1.1,
-                    'label' => (string) $data->year,
+                    'year' => $year,
+                    'income' => $incomeAmount,
+                    'label' => (string) $year,
                 ];
-            });
+            })->values();
 
+            // Calculate average monthly income
             $avgMonthlyIncome = 0;
-
             if ($startDate && $endDate) {
                 $start = Carbon::parse($startDate);
                 $end = Carbon::parse($endDate);
@@ -1011,37 +949,29 @@ class ActivityController extends Controller
                 $avgMonthlyIncome = $totalIncome / 12;
             }
 
-            $previousPeriodIncomeQuery = Transactions::where('user_id', $userId)
-                ->whereIn('type', [
-                    TransactionsType::INCOME->value,
-                    TransactionsType::CONVERT->value
-                ])
-                ->whereYear('transaction_date', $currentYear - 1);
+            // Calculate growth rate
+            $previousYearIncome = $allTransactionsForAnalytics
+                ->filter(function ($transaction) use ($currentYear) {
+                    return $transaction->transaction_date->year === ($currentYear - 1);
+                })
+                ->sum(function ($transaction) {
+                    return $transaction->type === TransactionsType::CONVERT->value
+                        ? $transaction->converted_amount
+                        : $transaction->amount;
+                });
 
-            if ($activeCardId && $activeCardId !== 0) {
-                $previousPeriodIncomeQuery->where('to_cards_id', $activeCardId);
-            }
-
-            $previousPeriodIncome = $previousPeriodIncomeQuery->selectRaw('SUM(CASE
-        WHEN type = ? THEN amount
-        WHEN type = ? THEN converted_amount
-        ELSE 0 END) as total', [
-                TransactionsType::INCOME->value,
-                TransactionsType::CONVERT->value
-            ])->value('total') ?? 0;
-
-            $growthRate = $previousPeriodIncome > 0
-                ? (($totalIncome - $previousPeriodIncome) / $previousPeriodIncome) * 100
+            $growthRate = $previousYearIncome > 0
+                ? (($totalIncome - $previousYearIncome) / $previousYearIncome) * 100
                 : ($totalIncome > 0 ? 100 : 0);
 
             $growthRate = round($growthRate, 1);
         } catch (\Exception $e) {
-            //  dd($e->getMessage(), $e->getTrace());
+            // dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
 
         return Inertia::render('activity/income/index', [
-            'transactions' => $transactions,
+            'transactions' => $paginatedTransactions, //  GUNAKAN PAGINATOR INSTANCE
             'cards' => $cards,
             'chartData' => [
                 'monthly' => $monthlyChartData,

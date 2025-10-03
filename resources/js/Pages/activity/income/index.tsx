@@ -31,7 +31,15 @@ import SyncLoader from "react-spinners/SyncLoader";
 import { ErrorBoundary } from "@/Components/ErrorBoundary";
 
 type Props = {
-    transactions: Transaction[];
+    transactions: {
+        data: Transaction[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number;
+        to: number;
+    };
     cards: Card[];
     chartData: {
         monthly: { label: string; income: number; }[];
@@ -84,7 +92,6 @@ export default function Income() {
 
     const { activeCardId, setActiveCardId } = useActiveCard();
 
-
     const [filter, setFilter] = useState<"all" | "monthly" | "yearly">(initialFilter as "all" | "monthly" | "yearly");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
@@ -97,26 +104,26 @@ export default function Income() {
         }
     }, [serverActiveCardId, setActiveCardId, activeCardId]);
 
-    // Filter transaksi untuk income saja berdasarkan kartu aktif
+    // Filter transaksi untuk income saja berdasarkan kartu aktif - DIPERBAIKI
     const filteredTransactions = useMemo(() => {
-        const incomeTransactions = transactions.filter(t =>
-            t.type_label === "Income" || t.type_label === "Convert"
-        );
+        if (!transactions.data) return [];
 
-        if (activeCardId === 0) {
-            return incomeTransactions;
-        } else {
-            return incomeTransactions.filter(t => t.to_cards_id === activeCardId);
-        }
-    }, [transactions, activeCardId]);
+        return transactions.data.filter((t) => {
+            // Filter berdasarkan card
+            const matchesCard = activeCardId === 0 ||
+                (t.type === 'income' || t.type === 'convert' ? t.to_cards_id === activeCardId : false);
 
-    // Data untuk chart berdasarkan kartu aktif
+            // Hanya transaksi income/convert
+            const isIncomeTransaction = t.type === "income" || t.type === "convert";
+
+            return matchesCard && isIncomeTransaction;
+        });
+    }, [transactions.data, activeCardId]);
+
+    // Data untuk chart berdasarkan kartu aktif - DIPERBAIKI
     const chartDataForActiveCard = useMemo(() => {
-        if (activeCardId === 0) {
-            return chartData;
-        } else {
-            return chartData;
-        }
+        // Untuk income, chart data sudah difilter dari backend
+        return chartData;
     }, [chartData, activeCardId]);
 
     const mergedChartData = useMemo(() => {
@@ -199,28 +206,25 @@ export default function Income() {
     };
 
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
+        if (isLoading) return;
+
         setIsLoading(true);
         setChartMode(newMode);
 
         router.get(route('income.index'), {
             filter,
             chartMode: newMode,
-            activeCardId
+            activeCardId,
+            page: 1 // Reset ke page 1 saat ganti chart mode
         }, {
-            preserveState: false,
+            preserveState: true,
             replace: true,
-            onFinish: () => {
-                setIsLoading(false);
-            },
-            onError: (error) => {
-                setIsLoading(false);
-                // setChartMode(initialChartMode)
-            }
+            onFinish: () => setIsLoading(false)
         });
     };
 
     const handleCardChange = (cardId: number) => {
-        if (cardId === activeCardId) return;
+        if (isLoading || cardId === activeCardId) return;
 
         setIsLoading(true);
         setActiveCardId(cardId);
@@ -228,15 +232,30 @@ export default function Income() {
         router.get(route('income.index'), {
             filter,
             chartMode,
-            activeCardId: cardId
+            activeCardId: cardId,
+            page: 1 // Reset ke page 1 saat ganti card
         }, {
-            preserveState: false,
+            preserveState: true,
             replace: true,
-            onFinish: () => setIsLoading(false),
-            onError: (error) => {
-                setIsLoading(false);
-                setActiveCardId(activeCardId);
-            }
+            onFinish: () => setIsLoading(false)
+        });
+    };
+
+    // HANDLE PAGINATION - DITAMBAHKAN
+    const handlePageChange = (page: number) => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+
+        router.get(route('income.index'), {
+            page: page,
+            filter,
+            chartMode,
+            activeCardId,
+        }, {
+            preserveState: true,
+            replace: true,
+            onFinish: () => setIsLoading(false)
         });
     };
 
@@ -247,26 +266,26 @@ export default function Income() {
         router.get(route('income.index'), {
             filter,
             chartMode,
-            activeCardId
+            activeCardId,
+            page: transactions.current_page,
         }, {
-            preserveState: false,
-            replace: true,
+            preserveState: true,
             onFinish: () => setIsLoading(false)
         });
     };
 
     const [date, setDate] = React.useState<{ from: Date | undefined; to?: Date | undefined }>();
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100/50 to-gray-200/50 backdrop-blur-sm">
-                <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg border border-white/20 flex items-center justify-center flex-col">
-                    <SyncLoader size={15} color="#10B981" />
-                    <p className="text-gray-600 mt-4 text-center">Loading income data...</p>
-                </div>
-            </div>
-        );
-    }
+    // if (isLoading) {
+    //     return (
+    //         <div className="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100/50 to-gray-200/50 backdrop-blur-sm">
+    //             <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg border border-white/20 flex items-center justify-center flex-col">
+    //                 <SyncLoader size={15} color="#10B981" />
+    //                 <p className="text-gray-600 mt-4 text-center">Loading income data...</p>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     if (!transactions || !cards) {
         return <ErrorBoundary>
@@ -478,26 +497,18 @@ export default function Income() {
                                             fillOpacity={1}
                                             fill="url(#colorIncome)"
                                         />
-                                        {/* <Area
-                                            type="monotone"
-                                            dataKey="target"
-                                            stroke="#D1D5DB"
-                                            strokeWidth={1}
-                                            strokeDasharray="5 5"
-                                            fill="none"
-                                        /> */}
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        {/* Mobile Income Transactions */}
+                        {/* Mobile Income Transactions - DIPERBAIKI dengan pagination */}
                         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                             <div className="flex items-center justify-between mb-4">
                                 <div>
                                     <h3 className="text-lg font-semibold">Recent Income</h3>
                                     <p className="text-sm text-gray-500">
-                                        Showing {filteredTransactions.length} income transactions
+                                        Showing {transactions.from}-{transactions.to} of {transactions.total} income transactions
                                     </p>
                                 </div>
                                 <button
@@ -509,7 +520,14 @@ export default function Income() {
                             </div>
                             <div className="max-h-60 overflow-y-auto">
                                 {filteredTransactions.length > 0 ? (
-                                    <TransactionsList transactions={filteredTransactions.slice(0, 6)} />
+                                    <TransactionsList
+                                        transactions={{
+                                            ...transactions,
+                                            data: filteredTransactions
+                                        }}
+                                        onPageChange={handlePageChange}
+                                        // isLoading={isLoading}
+                                    />
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         <p>No income transactions found.</p>
@@ -559,9 +577,6 @@ export default function Income() {
                                         >
                                             <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         </button>
-                                        {/* <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                            <Filter className="w-5 h-5 text-gray-600" />
-                                        </button> */}
                                     </div>
                                 </div>
                             </div>
@@ -678,13 +693,13 @@ export default function Income() {
                                         </div>
                                     </div>
 
-                                    {/* Desktop Income Transactions */}
+                                    {/* Desktop Income Transactions - DIPERBAIKI dengan pagination */}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-900">Income Transactions</h3>
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Showing {filteredTransactions.length} income transactions
+                                                    Showing {transactions.from}-{transactions.to} of {transactions.total} income transactions
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -727,6 +742,7 @@ export default function Income() {
                                                                         filter,
                                                                         chartMode,
                                                                         activeCardId,
+                                                                        page: 1,
                                                                         start_date: selected.from.toISOString().split('T')[0],
                                                                         end_date: selected.to.toISOString().split('T')[0],
                                                                     }, {
@@ -742,7 +758,14 @@ export default function Income() {
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
                                             {filteredTransactions.length > 0 ? (
-                                                <TransactionsList transactions={filteredTransactions} />
+                                                <TransactionsList
+                                                    transactions={{
+                                                        ...transactions,
+                                                        data: filteredTransactions
+                                                    }}
+                                                    onPageChange={handlePageChange}
+                                                    // isLoading={isLoading}
+                                                />
                                             ) : (
                                                 <div className="text-center py-12 text-gray-500">
                                                     <ActivityIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -804,7 +827,7 @@ export default function Income() {
                                                             </Pie>
                                                             <Tooltip
                                                                 formatter={(value: number, name: string, props: any) => {
-                                                                    const categoryName = props.payload.name; // Ambil nama kategori
+                                                                    const categoryName = props.payload.name;
                                                                     const percentage = calculatedTotalIncome > 0
                                                                         ? ((value / calculatedTotalIncome) * 100).toFixed(1)
                                                                         : '0';
@@ -813,9 +836,7 @@ export default function Income() {
                                                                         <div key="tooltip-content">
                                                                             <div className="font-semibold">{categoryName}</div>
                                                                             <div>{formatAutoCurrency(value, activeCard?.currency)}</div>
-                                                                            {/* <div className="text-xs text-gray-500">{percentage}% of total</div> */}
                                                                         </div>,
-
                                                                     ];
                                                                 }}
                                                                 contentStyle={{
@@ -943,7 +964,7 @@ export default function Income() {
                                                     </div>
                                                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                                                         <p className="text-gray-500 mb-1">Transactions</p>
-                                                        <p className="font-semibold text-blue-600">{filteredTransactions.length}</p>
+                                                        <p className="font-semibold text-blue-600">{transactions.total}</p>
                                                     </div>
                                                 </div>
                                             </div>

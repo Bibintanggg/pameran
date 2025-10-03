@@ -102,7 +102,7 @@ export default function AllActivity() {
 
     // Filter transaksi berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
-        console.log('Filtering transactions for card:', activeCardId);
+        // console.log('Filtering transactions for card:', activeCardId);
         if (!transactions.data) return [];
 
         return transactions.data.filter((t) => {

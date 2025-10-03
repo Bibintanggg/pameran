@@ -33,7 +33,15 @@ import SyncLoader from "react-spinners/SyncLoader";
 import { ErrorBoundary } from "@/Components/ErrorBoundary";
 
 type Props = {
-    transactions: Transaction[];
+    transactions: {
+        data: Transaction[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number;
+        to: number;
+    };
     cards: Card[];
     chartData: {
         monthly: { label: string; expense: number; budget?: number }[];
@@ -104,24 +112,24 @@ export default function Expense() {
 
     // Filter transaksi untuk expense saja berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
-        const expenseTransactions = transactions.filter(t =>
-            t.type_label === "Expense"
-        );
+        if (!transactions.data) return [];
 
-        if (activeCardId === 0) {
-            return expenseTransactions;
-        } else {
-            return expenseTransactions.filter(t => t.from_cards_id === activeCardId);
-        }
-    }, [transactions, activeCardId]);
+        return transactions.data.filter((t) => {
+            // Filter berdasarkan card
+            const matchesCard = activeCardId === 0 ||
+                (t.type === 'expense' ? t.from_cards_id === activeCardId : false);
+
+            // Hanya transaksi expense
+            const isExpenseTransaction = t.type === "expense";
+
+            return matchesCard && isExpenseTransaction;
+        });
+    }, [transactions.data, activeCardId]);
 
     // Data untuk chart berdasarkan kartu aktif
     const chartDataForActiveCard = useMemo(() => {
-        if (activeCardId === 0) {
-            return chartData;
-        } else {
-            return chartData;
-        }
+        // Untuk expense, chart data sudah difilter dari backend
+        return chartData;
     }, [chartData, activeCardId]);
 
     const mergedChartData = useMemo(() => {
@@ -215,6 +223,24 @@ export default function Expense() {
         return formatCurrency(amount, currencyMap['indonesian_rupiah']);
     };
 
+    // Handle page change untuk pagination
+    const handlePageChange = (page: number) => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+
+        router.get(route('expense.index'), {
+            page: page,
+            filter,
+            chartMode,
+            activeCardId,
+        }, {
+            preserveState: true,
+            replace: true,
+            onFinish: () => setIsLoading(false)
+        });
+    };
+
     const handleChartModeChange = (newMode: "monthly" | "yearly") => {
         if (isLoading) return;
 
@@ -224,7 +250,8 @@ export default function Expense() {
         router.get(route('expense.index'), {
             filter,
             chartMode: newMode,
-            activeCardId
+            activeCardId,
+            page: 1 // Reset ke page 1 saat ganti chart mode
         }, {
             preserveState: true,
             replace: true,
@@ -239,15 +266,16 @@ export default function Expense() {
         router.get(route('expense.index'), {
             filter,
             chartMode,
-            activeCardId
+            activeCardId,
+            page: transactions.current_page,
         }, {
-            preserveState: false,
+            preserveState: true,
             onFinish: () => setIsLoading(false)
         });
     };
 
     const handleCardChange = (cardId: number) => {
-        if (isLoading) return;
+        if (isLoading || cardId === activeCardId) return;
 
         setActiveCardId(cardId);
         setIsLoading(true);
@@ -255,7 +283,8 @@ export default function Expense() {
         router.get(route('expense.index'), {
             filter,
             chartMode,
-            activeCardId: cardId
+            activeCardId: cardId,
+            page: 1 // Reset ke page 1 saat ganti card
         }, {
             preserveState: true,
             replace: true,
@@ -269,16 +298,16 @@ export default function Expense() {
     const monthlyBudget = 5000; // This could come from backend
     const budgetUtilization = (calculatedTotalExpense / (monthlyBudget * 12)) * 100;
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100/50 to-gray-200/50 backdrop-blur-sm">
-                <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg border border-white/20 flex items-center justify-center flex-col">
-                    <SyncLoader size={15} color="#DD0303" />
-                    <p className="text-gray-600 mt-4 text-center">Loading expense data...</p>
-                </div>
-            </div>
-        );
-    }
+    // if (isLoading) {
+    //     return (
+    //         <div className="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100/50 to-gray-200/50 backdrop-blur-sm">
+    //             <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg border border-white/20 flex items-center justify-center flex-col">
+    //                 <SyncLoader size={15} color="#DD0303" />
+    //                 <p className="text-gray-600 mt-4 text-center">Loading expense data...</p>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     if (!transactions || !cards) {
         return <ErrorBoundary>
@@ -522,13 +551,13 @@ export default function Expense() {
                             </div>
                         </div>
 
-                        {/* Mobile Expense Transactions */}
+                        {/*  Mobile Expense Transactions dengan pagination */}
                         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                             <div className="flex items-center justify-between mb-4">
                                 <div>
                                     <h3 className="text-lg font-semibold">Recent Expenses</h3>
                                     <p className="text-sm text-gray-500">
-                                        Showing {filteredTransactions.length} expense transactions
+                                        Showing {transactions.from}-{transactions.to} of {transactions.total} expense transactions
                                     </p>
                                 </div>
                                 <button
@@ -540,7 +569,14 @@ export default function Expense() {
                             </div>
                             <div className="max-h-60 overflow-y-auto">
                                 {filteredTransactions.length > 0 ? (
-                                    <TransactionsList transactions={filteredTransactions.slice(0, 6)} />
+                                    <TransactionsList
+                                        transactions={{
+                                            ...transactions,
+                                            data: filteredTransactions
+                                        }}
+                                        onPageChange={handlePageChange}
+                                        // isLoading={isLoading}
+                                    />
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         <p>No expense transactions found.</p>
@@ -590,9 +626,6 @@ export default function Expense() {
                                         >
                                             <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
                                         </button>
-                                        {/* <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                            <Filter className="w-5 h-5 text-gray-600" />
-                                        </button> */}
                                     </div>
                                 </div>
                             </div>
@@ -719,28 +752,18 @@ export default function Expense() {
                                                         fillOpacity={1}
                                                         fill="url(#colorExpense)"
                                                     />
-                                                    {/* {mergedChartData[0]?.budget && (
-                                                        <Area
-                                                            type="monotone"
-                                                            dataKey="budget"
-                                                            stroke="#D1D5DB"
-                                                            strokeWidth={2}
-                                                            strokeDasharray="5 5"
-                                                            fill="none"
-                                                        />
-                                                    )} */}
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
 
-                                    {/* Desktop Expense Transactions */}
+                                    {/* Desktop Expense Transactions dengan pagination */}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-900">Expense Transactions</h3>
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Showing {filteredTransactions.length} expense transactions
+                                                    Showing {transactions.from}-{transactions.to} of {transactions.total} expense transactions
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -782,6 +805,8 @@ export default function Expense() {
                                                                     router.get(route('expense.index'), {
                                                                         filter,
                                                                         chartMode,
+                                                                        activeCardId,
+                                                                        page: 1,
                                                                         start_date: selected.from.toISOString().split('T')[0],
                                                                         end_date: selected.to.toISOString().split('T')[0],
                                                                     }, {
@@ -797,7 +822,14 @@ export default function Expense() {
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
                                             {filteredTransactions.length > 0 ? (
-                                                <TransactionsList transactions={filteredTransactions} />
+                                                <TransactionsList
+                                                    transactions={{
+                                                        ...transactions,
+                                                        data: filteredTransactions
+                                                    }}
+                                                    onPageChange={handlePageChange}
+                                                    // isLoading={isLoading}
+                                                />
                                             ) : (
                                                 <div className="text-center py-12 text-gray-500">
                                                     <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -980,7 +1012,7 @@ export default function Expense() {
                                                     </div>
                                                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                                                         <p className="text-gray-500 mb-1">Transactions</p>
-                                                        <p className="font-semibold text-orange-600">{filteredTransactions.length}</p>
+                                                        <p className="font-semibold text-orange-600">{transactions.total}</p>
                                                     </div>
                                                 </div>
                                             </div>
