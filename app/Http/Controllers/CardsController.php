@@ -426,7 +426,7 @@ class CardsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Cards $cards)
+    public function update(Request $request, Cards $card)
     {
         try {
             $validated = $request->validate([
@@ -435,7 +435,7 @@ class CardsController extends Controller
                 // 'balance' => 'nullable|numeric|min:0'
             ]);
 
-            $cards->update([
+            $card->update([
                 'name' => $validated['name'],
                 'card_number' => $validated['card_number'],
                 // 'balance' => $validated['balance'] ?? $cards->balance

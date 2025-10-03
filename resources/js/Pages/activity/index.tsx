@@ -86,12 +86,13 @@ export default function AllActivity() {
         filter: initialFilter,
         chartMode: initialChartMode,
         incomePerCard,
-        expensePerCard
+        expensePerCard,
+        activeCardId: serverActiveCardId
     } = usePage().props as unknown as Props;
 
 
     const { activeCardId, setActiveCardId } = useActiveCard();
-    const { activeCardId: initialActiveCardId } = usePage().props as any;
+    // const { activeCardId: initialActiveCardId } = usePage().props as any;
 
     const [filter, setFilter] = useState<"all" | "income" | "expense">(initialFilter as "all" | "income" | "expense");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
@@ -129,11 +130,11 @@ export default function AllActivity() {
         });
     }, [transactions.data, activeCardId, filter]);
 
-    useEffect(() => {
-        if (initialActiveCardId && initialActiveCardId !== activeCardId) {
-            setActiveCardId(initialActiveCardId);
-        }
-    }, [initialActiveCardId]);
+    // useEffect(() => {
+    //     if (serverActiveCardId !== undefined && serverActiveCardId !== activeCardId) {
+    //         setActiveCardId(serverActiveCardId);
+    //     }
+    // }, [serverActiveCardId, setActiveCardId, activeCardId]);
 
     // Data untuk chart berdasarkan kartu aktif
     const chartDataForActiveCard = useMemo(() => {
