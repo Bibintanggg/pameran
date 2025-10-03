@@ -101,30 +101,33 @@ export default function AllActivity() {
     const activeCard = cards.find((card) => card.id === activeCardId); // DARI CONTEXT CARD AKTIF
 
     // Filter transaksi berdasarkan kartu aktif
-    // const filteredTransactions = useMemo(() => {
-    //     return transactions.data.filter((t) => {
-    //         // Filter berdasarkan card
-    //         let matchesCard = false;
+    const filteredTransactions = useMemo(() => {
+        console.log('Filtering transactions for card:', activeCardId);
+        if (!transactions.data) return [];
 
-    //         if (activeCardId === 0) {
-    //             matchesCard = true; // Show all cards
-    //         } else {
-    //             // Filter berdasarkan tipe transaksi dan card yang sesuai
-    //             if (t.type === 'income' || t.type === 'convert') {
-    //                 matchesCard = t.to_cards_id === activeCardId;
-    //             } else if (t.type === 'expense') {
-    //                 matchesCard = t.from_cards_id === activeCardId;
-    //             }
-    //         }
+        return transactions.data.filter((t) => {
+            // Gunakan cardId dari parameter, bukan bergantung sepenuhnya pada context
+            const currentCardId = activeCardId;
 
-    //         if (!matchesCard) return false;
+            let matchesCard = false;
+            if (currentCardId === 0) {
+                matchesCard = true;
+            } else {
+                if (t.type === 'income' || t.type === 'convert') {
+                    matchesCard = t.to_cards_id === currentCardId;
+                } else if (t.type === 'expense') {
+                    matchesCard = t.from_cards_id === currentCardId;
+                }
+            }
 
-    //         if (filter === "all") return true;
-    //         if (filter === "income") return t.type === "income" || t.type === "convert";
-    //         if (filter === "expense") return t.type === "expense";
-    //         return true;
-    //     });
-    // }, [transactions, activeCardId, filter]);
+            if (!matchesCard) return false;
+
+            if (filter === "all") return true;
+            if (filter === "income") return t.type === "income" || t.type === "convert";
+            if (filter === "expense") return t.type === "expense";
+            return true;
+        });
+    }, [transactions.data, activeCardId, filter]);
 
     useEffect(() => {
         if (initialActiveCardId && initialActiveCardId !== activeCardId) {
@@ -261,6 +264,7 @@ export default function AllActivity() {
     };
 
     const handleCardChange = (cardId: number) => {
+        // console.log('Card changed to:', cardId, 'Previous:', activeCardId);
         if (isLoading || cardId === activeCardId) return;
 
         setIsLoading(true);
@@ -270,13 +274,14 @@ export default function AllActivity() {
             filter,
             chartMode,
             activeCardId: cardId,
-            page: 1, 
+            page: 1,
         }, {
             preserveState: true,
+            replace: true,
             onFinish: () => setIsLoading(false),
             onError: () => {
                 setIsLoading(false);
-                setActiveCardId(activeCardId);
+                // setActiveCardId(activeCardId);
             }
         });
     };
@@ -425,7 +430,7 @@ export default function AllActivity() {
                         <div className="mb-4">
                             <div className="flex items-center gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <button
-                                    onClick={() => setActiveCardId(0)}
+                                    onClick={() => handleCardChange(0)}
                                     className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === 0
                                         ? "bg-blue-500 text-white"
                                         : "bg-gray-100 text-gray-700"}`}
@@ -436,7 +441,7 @@ export default function AllActivity() {
                                     cards.map((card) => (
                                         <button
                                             key={card.id}
-                                            onClick={() => setActiveCardId(card.id)}
+                                            onClick={() => handleCardChange(card.id)}
                                             className={`min-w-max px-4 py-2 rounded-lg transition-colors ${activeCardId === card.id
                                                 ? "bg-blue-500 text-white"
                                                 : "bg-gray-100 text-gray-700"}`}
@@ -582,7 +587,7 @@ export default function AllActivity() {
                                 <div>
                                     <h3 className="text-lg font-semibold">Transactions</h3>
                                     <p className="text-sm text-gray-500">
-                                        Showing {transactions.from} to {transactions.to} of {transactions.total} transaction
+                                        Showing {filteredTransactions.length} transactions
                                     </p>
                                 </div>
                                 <button
@@ -592,9 +597,12 @@ export default function AllActivity() {
                                 </button>
                             </div>
                             <div className="max-h-60 overflow-y-auto">
-                                {transactions.data.length > 0 ? (
+                                {filteredTransactions.length > 0 ? (
                                     <TransactionsList
-                                        transactions={transactions}
+                                        transactions={{
+                                            ...transactions,
+                                            data: filteredTransactions
+                                        }}
                                         onPageChange={handlePageChange}
                                     />
                                 ) : (
@@ -785,7 +793,7 @@ export default function AllActivity() {
                                                     All Transactions
                                                 </h3>
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Showing {transactions.from} to {transactions.to} of {transactions.total} transactions
+                                                    Showing {filteredTransactions.length} transactions
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -841,9 +849,12 @@ export default function AllActivity() {
                                             </div>
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
-                                            {transactions.data.length > 0 ? (
+                                            {filteredTransactions.length > 0 ? (
                                                 <TransactionsList
-                                                    transactions={transactions}
+                                                    transactions={{
+                                                        ...transactions,
+                                                        data: filteredTransactions
+                                                    }}
                                                     onPageChange={handlePageChange}
                                                 />
                                             ) : (
@@ -922,7 +933,7 @@ export default function AllActivity() {
                                                                 ? 'bg-blue-50 border border-blue-200'
                                                                 : 'bg-gray-50 hover:bg-gray-100'
                                                                 }`}
-                                                            onClick={() => setActiveCardId(card.id)}
+                                                            onClick={() => handleCardChange(card.id)}
                                                         >
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <div className="flex items-center gap-2">

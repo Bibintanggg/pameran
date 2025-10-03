@@ -116,16 +116,16 @@ class ActivityController extends Controller
             $allTransactionsForAnalytics = $analyticsQuery->get();
 
             // Filter analytics berdasarkan activeCardId jika dipilih
-            if ($activeCardId && $activeCardId != 0) {
-                $allTransactionsForAnalytics = $allTransactionsForAnalytics->filter(function ($transaction) use ($activeCardId) {
-                    if ($transaction->type === 'income' || $transaction->type === 'convert') {
-                        return $transaction->to_cards_id == $activeCardId;
-                    } else if ($transaction->type === 'expense') {
-                        return $transaction->from_cards_id == $activeCardId;
-                    }
-                    return false;
-                });
-            }
+            // if ($activeCardId && $activeCardId != 0) {
+            //     $allTransactionsForAnalytics = $allTransactionsForAnalytics->filter(function ($transaction) use ($activeCardId) {
+            //         if ($transaction->type === 'income' || $transaction->type === 'convert') {
+            //             return $transaction->to_cards_id == $activeCardId;
+            //         } else if ($transaction->type === 'expense') {
+            //             return $transaction->from_cards_id == $activeCardId;
+            //         }
+            //         return false;
+            //     });
+            // }
 
             // Filter analytics berdasarkan type jika bukan 'all'
             if ($filter !== 'all') {

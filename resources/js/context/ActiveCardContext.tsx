@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 interface ActiveCardContextProps {
@@ -11,10 +12,25 @@ export const ActiveCardProvider = ({ children, cards }: {
     children: ReactNode;
     cards: Array<{ id: number }>;
 }) => {
-    // Inisialisasi dengan card pertama jika ada
-    const [activeCardId, setActiveCardId] = useState<number | null>(
-        cards && cards.length > 0 ? cards[0].id : null
-    );
+    const [activeCardId, setActiveCardId] = useState<number | null>(null);
+
+    // Load dari localStorage saat mount - HANYA SEKALI
+    useEffect(() => {
+        const saved = localStorage.getItem('activeCardId');
+        if (saved) {
+            const savedId = parseInt(saved);
+            // Validasi savedId ada di cards
+            if (cards?.some(card => card.id === savedId)) {
+                setActiveCardId(savedId);
+                return; // Keluar, jangan set default
+            }
+        }
+
+        // Default ke card pertama hanya jika tidak ada saved value
+        if (cards && cards.length > 0) {
+            setActiveCardId(cards[0].id);
+        }
+    }, []); // HAPUS cards dari dependency
 
     // Persist activeCardId ke localStorage
     useEffect(() => {
@@ -22,18 +38,6 @@ export const ActiveCardProvider = ({ children, cards }: {
             localStorage.setItem('activeCardId', activeCardId.toString());
         }
     }, [activeCardId]);
-
-    // Load dari localStorage saat mount
-    useEffect(() => {
-        const saved = localStorage.getItem('activeCardId');
-        if (saved && cards?.length) {  // tambah ?.length
-            const savedId = parseInt(saved);
-            if (cards.some(card => card.id === savedId)) {
-                setActiveCardId(savedId);
-            }
-        }
-    }, [cards]);
-
 
     return (
         <ActiveCardContext.Provider value={{ activeCardId, setActiveCardId }}>
