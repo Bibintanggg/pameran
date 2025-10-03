@@ -13,5 +13,5 @@ export interface Transaction {
     category_label: string;
     transaction_date: string;
     to_cards_id: number, 
-    from_cards_id: number
+    from_cards_id: number   
 }

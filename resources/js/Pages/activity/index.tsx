@@ -290,7 +290,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter: newFilter,
             chartMode,
-            activeCardId,
+            // activeCardId,
             page: 1
         }, {
             preserveState: true,
@@ -307,7 +307,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode: newMode,
-            activeCardId,
+            // activeCardId,
             page: 1
         }, {
             preserveState: true,
@@ -322,7 +322,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode,
-            activeCardId,
+            // activeCardId,
             page: transactions.current_page,
         }, {
             preserveState: false,
@@ -355,6 +355,17 @@ export default function AllActivity() {
     const netBalance = calculatedTotalIncome - calculatedTotalExpense;
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
     const netBalanceChange = (calculatedIncomeRate - calculatedExpenseRate).toFixed(2);
+
+    // if (isLoading) {
+    //     return (
+    //         <div className="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100/50 to-gray-200/50 backdrop-blur-sm">
+    //             <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg border border-white/20 flex items-center justify-center flex-col">
+    //                 <SyncLoader size={15} color="#10B981" />
+    //                 <p className="text-gray-600 mt-4 text-center">Loading chart data...</p>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     if (!transactions || !cards) {
         return <ErrorBoundary>

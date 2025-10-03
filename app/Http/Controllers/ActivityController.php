@@ -26,16 +26,14 @@ class ActivityController extends Controller
             $chartMode = $request->query('chartMode', 'monthly');
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
-            $activeCardId = $request->query('activeCardId');
+            $activeCardId = $request->query('activeCardId', 0);
             $perPage = $request->query('per_page', 5);
 
             $cards = Cards::where('user_id', $userId)->get();
 
-            // QUERY UNTUK PAGINATION (transactions yang ditampilkan)
             $transactionsQuery = Transactions::where('user_id', $userId)
                 ->with('toCard', 'fromCard');
 
-            // Filter berdasarkan tanggal
             if ($startDate && $endDate) {
                 $transactionsQuery->whereBetween('transaction_date', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -43,7 +41,6 @@ class ActivityController extends Controller
                 ]);
             }
 
-            // Filter berdasarkan card aktif
             if ($activeCardId && $activeCardId != 0) {
                 $transactionsQuery->where(function ($query) use ($activeCardId) {
                     $query->where('to_cards_id', $activeCardId)
@@ -51,7 +48,6 @@ class ActivityController extends Controller
                 });
             }
 
-            // Filter berdasarkan type
             if ($filter === 'income') {
                 $transactionsQuery->whereIn('type', [
                     TransactionsType::INCOME->value,
@@ -274,7 +270,7 @@ class ActivityController extends Controller
                 $cardId = $card->id;
                 $monthlyChartData[$cardId] = collect(range(1, 12))->map(function ($month) use ($monthlyIncomeData, $monthlyExpenseData, $cardId) {
                     return [
-                        'month' => Carbon::create()->month($month)->format('M'),
+                        'month' => $month,
                         'income' => $monthlyIncomeData->get($cardId, collect())->get($month, 0),
                         'expense' => $monthlyExpenseData->get($cardId, collect())->get($month, 0),
                         'label' => Carbon::create()->month($month)->format('M'),
