@@ -31,17 +31,33 @@ class CardsController extends Controller
                 ->select('id', 'name', 'balance', 'currency', 'card_number')
                 ->get()
                 ->each(function ($card) use ($userId) {
-                    $income = Transactions::where('user_id', $userId)
+                    // INCOME: INCOME biasa + CONVERT yang masuk ke card ini
+                    $incomeFromIncome = Transactions::where('user_id', $userId)
+                        ->where('type', TransactionsType::INCOME->value)
                         ->where('to_cards_id', $card->id)
-                        ->whereIn('type', [TransactionsType::INCOME->value, TransactionsType::CONVERT->value])
                         ->sum('amount');
 
-                    $expense = Transactions::where('user_id', $userId)
+                    $incomeFromConvert = Transactions::where('user_id', $userId)
+                        ->where('type', TransactionsType::CONVERT->value)
+                        ->where('to_cards_id', $card->id)
+                        ->sum('converted_amount');
+
+                    $totalIncome = $incomeFromIncome + $incomeFromConvert;
+
+                    // EXPENSE: EXPENSE biasa + CONVERT yang keluar dari card ini
+                    $expenseFromExpense = Transactions::where('user_id', $userId)
+                        ->where('type', TransactionsType::EXPENSE->value)
                         ->where('from_cards_id', $card->id)
-                        ->whereIn('type', [TransactionsType::EXPENSE->value, TransactionsType::CONVERT->value])
                         ->sum('amount');
 
-                    $card->balance = $income - $expense;
+                    $expenseFromConvert = Transactions::where('user_id', $userId)
+                        ->where('type', TransactionsType::CONVERT->value)
+                        ->where('from_cards_id', $card->id)
+                        ->sum('amount');
+
+                    $totalExpense = $expenseFromExpense + $expenseFromConvert;
+
+                    $card->balance = $totalIncome - $totalExpense;
                 });
 
             $transactionsQuery = Transactions::where('user_id', $userId)
