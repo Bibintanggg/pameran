@@ -41,6 +41,7 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
     const [open, setOpen] = useState(false)
 
     const handleOpen = (e: React.MouseEvent) => {
+        e.preventDefault()
         e.stopPropagation()
         setOpen(true)
     }
@@ -62,9 +63,7 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
                     title: "Success!",
                     description: "Your card has been updated successfully.",
                 })
-                setOpen(false)
-                onClose()
-                reset()
+                handleClose()
             },
             onError: (errors) => {
                 toast({
@@ -76,11 +75,9 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
         })
     }
 
-    // Handle card number input - format and validate
     const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-        value = value.slice(0, 16); // Limit to 16 digits
-
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.slice(0, 16);
         setData('card_number', value);
     }
 
@@ -90,6 +87,7 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
                 type="button"
                 className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 cursor-pointer z-60"
                 onClick={handleOpen}
+                onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
             >
                 <Edit className="w-4 h-4 text-gray-600" />
                 <span>Edit Cards</span>
@@ -100,11 +98,14 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
                     className="w-96 rounded-lg"
                     onPointerDownOutside={(e) => {
                         e.preventDefault()
+                        handleClose()
                     }}
                     onEscapeKeyDown={(e) => {
+                        e.preventDefault()
                         handleClose()
                     }}
                     onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
                 >
                     <DialogHeader>
                         <DialogTitle className="text-start">Edit Cards</DialogTitle>
@@ -117,6 +118,7 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
                         className="space-y-3"
                         onSubmit={handleSubmit}
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
                     >
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Card Name</label>
@@ -124,6 +126,7 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
                                 type="text"
                                 value={data.name}
                                 onChange={(e) => setData("name", e.target.value)}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 placeholder="e.g., My Card"
                                 className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 autoComplete="off"
@@ -138,6 +141,7 @@ export default function EditCards({ card, onClose }: { card: Card; onClose: () =
                                 type="text"
                                 value={data.card_number}
                                 onChange={handleCardNumberChange}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 placeholder="Enter 16-digit card number"
                                 className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 maxLength={16}

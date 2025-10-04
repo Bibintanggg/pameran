@@ -62,40 +62,6 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
     const [showAlert, setShowAlert] = useState(false);
     const alertTimeoutRef = useRef<NodeJS.Timeout>();
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-
-
-            if (selectedCard === card.id) {
-                const dropdown = dropdownRefs.current[card.id];
-                const button = buttonRefs.current[card.id];
-                const target = event.target as HTMLElement;
-
-                // Jangan close jika klik di dalam dialog/modal atau overlay
-                const isInsideDialog = target.closest('[role="dialog"]') ||
-                    target.closest('[data-radix-dialog-overlay]') ||
-                    target.closest('[data-state="open"]');
-
-                if (isInsideDialog) {
-                    return;
-                }
-
-                if (dropdown && !dropdown.contains(target) &&
-                    button && !button.contains(target)) {
-                    setSelectedCard(null);
-                }
-            }
-        };
-
-        if (selectedCard === card.id) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [selectedCard, card.id, setSelectedCard]);
-
     useImperativeHandle(ref, () => ({
         resetAlert: () => {
             setShowAlert(false);
@@ -106,25 +72,60 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
     }));
 
     const handleMenuClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
         e.preventDefault();
+        e.stopPropagation();
         setSelectedCard(selectedCard === card.id ? null : card.id);
     };
 
     const copyCardNumber = async (cardNumber: string) => {
-        await navigator.clipboard.writeText(cardNumber);
+        try {
+            await navigator.clipboard.writeText(cardNumber);
 
-        if (alertTimeoutRef.current) {
-            clearTimeout(alertTimeoutRef.current);
+            if (alertTimeoutRef.current) {
+                clearTimeout(alertTimeoutRef.current);
+            }
+
+            setShowAlert(true);
+            setSelectedCard(null);
+
+            alertTimeoutRef.current = setTimeout(() => {
+                setShowAlert(false);
+            }, 3000);
+        } catch (err) {
+            console.error('Failed to copy: ', err);
         }
-
-        setShowAlert(true);
-        setSelectedCard(null);
-
-        alertTimeoutRef.current = setTimeout(() => {
-            setShowAlert(false);
-        }, 3000);
     };
+
+    // Improved click outside handler
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (selectedCard === card.id) {
+                const dropdown = dropdownRefs.current[card.id];
+                const button = buttonRefs.current[card.id];
+                const target = event.target as HTMLElement;
+
+                // Check if click is inside dialog or modal
+                const isInsideDialog = target.closest('[role="dialog"]') ||
+                    target.closest('[data-radix-popper-content-wrapper]') ||
+                    target.closest('.relative.z-50');
+
+                if (isInsideDialog) {
+                    return;
+                }
+
+                // Check if click is outside dropdown and button
+                if (dropdown && !dropdown.contains(target) &&
+                    button && !button.contains(target)) {
+                    setSelectedCard(null);
+                }
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [selectedCard, card.id, setSelectedCard]);
 
     useEffect(() => {
         return () => {
@@ -148,7 +149,7 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                 </div>
             )}
 
-            <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-visible transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${selectedCard === card.id ? 'z-50' : 'z-0'}`}>
+            <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-visible transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${selectedCard === card.id ? 'z-50' : 'z-10'}`}>
                 <div
                     className="absolute inset-0 p-6 flex flex-col justify-between text-white rounded-2xl overflow-hidden"
                     style={{ background: card.color }}
@@ -160,8 +161,9 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                         </div>
                         <button
                             ref={el => buttonRefs.current[card.id] = el}
-                            className="p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors z-10 relative"
+                            className="p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors z-30 relative"
                             onClick={handleMenuClick}
+                            onMouseDown={(e) => e.preventDefault()}
                         >
                             <MoreVertical className="w-5 h-5" />
                         </button>
@@ -184,16 +186,25 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                 {selectedCard === card.id && (
                     <div
                         ref={el => dropdownRefs.current[card.id] = el}
-                        className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-40 min-w-[200px]"
-                        onClick={(e) => e.stopPropagation()}
+                        className="absolute top-12 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-[200px]"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}
+                        onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}
                     >
                         <button
                             className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700"
                             onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 onViewDetails(card.id);
-                                setSelectedCard(null); // Tutup dropdown setelah action
+                                setSelectedCard(null);
                             }}
+                            onMouseDown={(e) => e.preventDefault()}
                         >
                             <Eye className="w-4 h-4" />
                             <span>View Details</span>
@@ -207,9 +218,11 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                         <button
                             className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700"
                             onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 copyCardNumber(card.card_number);
                             }}
+                            onMouseDown={(e) => e.preventDefault()}
                         >
                             <Copy className="w-4 h-4" />
                             Copy Number
@@ -221,13 +234,20 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                             <AlertDialogTrigger asChild>
                                 <button
                                     className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-3 text-sm text-red-600"
-                                    onClick={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }}
+                                    onMouseDown={(e) => e.preventDefault()}
                                 >
                                     <Trash2 className="w-4 h-4" />
                                     Delete Card
                                 </button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogContent
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            >
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Card</AlertDialogTitle>
                                     <AlertDialogDescription>
@@ -235,9 +255,17 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel onClick={() => setSelectedCard(null)}>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedCard(null);
+                                        }}
+                                    >
+                                        Cancel
+                                    </AlertDialogCancel>
                                     <AlertDialogAction
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                            e.stopPropagation();
                                             onDeleteCard(card.id);
                                             setSelectedCard(null);
                                         }}
