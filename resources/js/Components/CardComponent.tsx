@@ -92,7 +92,8 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                 setShowAlert(false);
             }, 3000);
         } catch (err) {
-            console.error('Failed to copy: ', err);
+            // console.error('Failed to copy: ', err);
+            alert('Failed to copy card number. Please try manually.');
         }
     };
 
