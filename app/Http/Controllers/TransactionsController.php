@@ -158,14 +158,14 @@ class TransactionsController extends Controller
 
                 $card = Cards::find($data['from_cards_id']);
                 if ($card) {
-                        if ($card->balance < $data['amount']) {
-                            return back()->withErrors([
-                                'amount' => 'The balance is insufficient to perform this transaction.',
-                            ]);
-                        }
+                    if ($card->balance < $data['amount']) {
+                        return back()->withErrors([
+                            'amount' => 'The balance is insufficient to perform this transaction.',
+                        ]);
+                    }
 
-                        $card->balance -= $data['amount'];
-                        $card->save();
+                    $card->balance -= $data['amount'];
+                    $card->save();
                 }
                 DB::commit();
 
@@ -184,6 +184,7 @@ class TransactionsController extends Controller
     {
         try {
             DB::beginTransaction();
+
             $request->validate([
                 'from_cards_id' => 'required|exists:cards,id',
                 'to_cards_id' => 'required|exists:cards,id|different:from_cards_id',
@@ -198,15 +199,45 @@ class TransactionsController extends Controller
             $fromCard = Cards::findOrFail($request->from_cards_id);
             $toCard = Cards::findOrFail($request->to_cards_id);
 
+            // \Log::info('Before conversion', [
+            //     'from_card_balance' => $fromCard->balance,
+            //     'to_card_balance' => $toCard->balance,
+            //     'amount' => $request->amount,
+            //     'converted_amount' => $request->converted_amount,
+            // ]);
+
+            // Validasi balance
+            if ($fromCard->balance < $request->amount) {
+                DB::rollBack();
+                // \Log::error('Insufficient balance', [
+                //     'from_balance' => $fromCard->balance,
+                //     'amount' => $request->amount
+                // ]);
+                return back()->withErrors(['amount' => 'Insufficient balance']);
+            }
+
             // Kurangi dari kartu asal
             $fromCard->balance -= $request->amount;
             $fromCard->save();
+
+            // \Log::info('From card updated', ['new_balance' => $fromCard->balance]);
 
             // Tambah ke kartu tujuan (hasil konversi)
             $toCard->balance += $request->converted_amount;
             $toCard->save();
 
-            Transactions::create([
+            // \Log::info('To card updated', ['new_balance' => $toCard->balance]);
+
+            // Refresh untuk memastikan data tersimpan
+            $fromCard->refresh();
+            $toCard->refresh();
+
+            // \Log::info('After refresh', [
+            //     'from_card_balance' => $fromCard->balance,
+            //     'to_card_balance' => $toCard->balance,
+            // ]);
+
+            $transaction = Transactions::create([
                 'user_id' => Auth::id(),
                 'type' => TransactionsType::CONVERT->value,
                 'from_cards_id' => $fromCard->id,
@@ -216,14 +247,24 @@ class TransactionsController extends Controller
                 'rate' => $request->rate,
                 'notes' => $request->notes,
                 'asset' => Asset::TRANSFER->value,
-                'currency' => $toCard->currency,
+                'currency' => $toCard->currency->value,
                 'transaction_date' => now(),
             ]);
 
+            // \Log::info('Transaction created', ['transaction_id' => $transaction->id]);
+
+            DB::commit();
+
+            // \Log::info('Transaction committed successfully');
+
             return back()->with('success', 'Conversion successful!');
         } catch (\Exception $e) {
-            //  dd($e->getMessage(), $e->getTrace());
-            return back()->with('error', 'Something went wrong. Please try again.');
+            DB::rollBack();
+            // \Log::error('Conversion failed', [
+            //     'error' => $e->getMessage(),
+            //     'trace' => $e->getTraceAsString()
+            // ]);
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
