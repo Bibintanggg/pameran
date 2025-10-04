@@ -29,37 +29,39 @@ class CardsController extends Controller
 
             $cards = Cards::where('user_id', $userId)
                 ->select('id', 'name', 'balance', 'currency', 'card_number')
-                ->get()
-                ->each(function ($card) use ($userId) {
-                    // INCOME: INCOME biasa + CONVERT yang masuk ke card ini
-                    $incomeFromIncome = Transactions::where('user_id', $userId)
-                        ->where('type', TransactionsType::INCOME->value)
-                        ->where('to_cards_id', $card->id)
-                        ->sum('amount');
+                ->get();
 
-                    $incomeFromConvert = Transactions::where('user_id', $userId)
-                        ->where('type', TransactionsType::CONVERT->value)
-                        ->where('to_cards_id', $card->id)
-                        ->sum('converted_amount');
+            $userTransactions = Transactions::where('user_id', $userId)->get();
 
-                    $totalIncome = $incomeFromIncome + $incomeFromConvert;
+            $cards->each(function ($card) use ($userTransactions) {
+                $incomeFromIncome = $userTransactions
+                    ->where('type', TransactionsType::INCOME->value)
+                    ->where('to_cards_id', $card->id)
+                    ->sum('amount');
 
-                    // EXPENSE: EXPENSE biasa + CONVERT yang keluar dari card ini
-                    $expenseFromExpense = Transactions::where('user_id', $userId)
-                        ->where('type', TransactionsType::EXPENSE->value)
-                        ->where('from_cards_id', $card->id)
-                        ->sum('amount');
+                $incomeFromConvert = $userTransactions
+                    ->where('type', TransactionsType::CONVERT->value)
+                    ->where('to_cards_id', $card->id)
+                    ->sum('converted_amount');
 
-                    $expenseFromConvert = Transactions::where('user_id', $userId)
-                        ->where('type', TransactionsType::CONVERT->value)
-                        ->where('from_cards_id', $card->id)
-                        ->sum('amount');
+                $totalIncome = $incomeFromIncome + $incomeFromConvert;
 
-                    $totalExpense = $expenseFromExpense + $expenseFromConvert;
+                $expenseFromExpense = $userTransactions
+                    ->where('type', TransactionsType::EXPENSE->value)
+                    ->where('from_cards_id', $card->id)
+                    ->sum('amount');
 
-                    $card->balance = $totalIncome - $totalExpense;
-                });
+                $expenseFromConvert = $userTransactions
+                    ->where('type', TransactionsType::CONVERT->value)
+                    ->where('from_cards_id', $card->id)
+                    ->sum('amount');
 
+                $totalExpense = $expenseFromExpense + $expenseFromConvert;
+
+                $card->balance = $totalIncome - $totalExpense;
+            });
+
+            // ✅ SISANYA TETAP SAMA seperti code original Anda
             $transactionsQuery = Transactions::where('user_id', $userId)
                 ->with('toCard', 'fromCard');
 
@@ -408,6 +410,7 @@ class CardsController extends Controller
             ]
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
