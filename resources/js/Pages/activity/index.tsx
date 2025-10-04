@@ -298,7 +298,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter: newFilter,
             chartMode,
-            // activeCardId,
+            activeCardId: activeCardId,
             page: 1
         }, {
             preserveState: true,
@@ -315,7 +315,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode: newMode,
-            // activeCardId,
+            activeCardId: activeCardId,
             page: 1
         }, {
             preserveState: true,
@@ -330,7 +330,7 @@ export default function AllActivity() {
         router.get(route('all-activity'), {
             filter,
             chartMode,
-            // activeCardId,
+            activeCardId: activeCardId,
             page: transactions.current_page,
         }, {
             preserveState: false,
@@ -347,7 +347,7 @@ export default function AllActivity() {
             page: page,
             filter,
             chartMode,
-            // activeCardId,
+            activeCardId: activeCardId
             // start_date: startDate,
             // end_date: endDate,
         }, {

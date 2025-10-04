@@ -27,7 +27,7 @@ class ActivityController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
             $activeCardId = $request->query('activeCardId', 0);
-            $perPage = $request->query('per_page', 5);
+            $perPage = $request->query('per_page', 20);
 
             $cards = Cards::where('user_id', $userId)->get();
 
@@ -97,14 +97,10 @@ class ActivityController extends Controller
 
             // Format transactions untuk response
             $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) use ($activeCardId) {
-                // FIX: Tentukan currency berdasarkan card aktif dan type transaction
                 if ($data->type === TransactionsType::CONVERT->value) {
-                    // Untuk CONVERT, tentukan currency berdasarkan card mana yang aktif
                     if ($activeCardId == $data->to_cards_id) {
-                        // Jika card aktif adalah penerima, pakai currency dari toCard
                         $currency = $data->toCard?->currency;
                     } else {
-                        // Jika card aktif adalah pengirim, pakai currency dari fromCard
                         $currency = $data->fromCard?->currency;
                     }
                 } elseif ($data->type === TransactionsType::EXPENSE->value) {
@@ -470,7 +466,7 @@ class ActivityController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
             $activeCardId = $request->query('activeCardId', 0);
-            $perPage = $request->query('per_page', 5);
+            $perPage = $request->query('per_page', 20);
 
             $cards = Cards::where('user_id', $userId)->get();
 
@@ -497,7 +493,6 @@ class ActivityController extends Controller
 
             // MAP TRANSACTIONS UNTUK DISPLAY - SAMA SEPERTI allActivity
             $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) {
-                // Prioritaskan currency dari from_card (card yang mengeluarkan expense)
                 $currency = $data->fromCard?->currency;
                 if ($currency instanceof Currency) {
                     $currency = $currency->value;
@@ -528,7 +523,7 @@ class ActivityController extends Controller
                     'asset'            => $data->asset,
                     'asset_label'      => Asset::from($data->asset)->label(),
                     'category'         => $data->category,
-                    'category_label'   => $data->category ? Category::from($data->category)->label() : 'Other',
+                    'category_label'   => $data->category ? Category::from($data->category)->label() : 'Convert',
                     'transaction_date' => $data->transaction_date->format('d F Y'),
                     'created_at'       => $data->created_at,
                 ];
@@ -652,7 +647,7 @@ class ActivityController extends Controller
                     return $transactions->sum('amount');
                 })
                 ->mapWithKeys(function ($total, $category) {
-                    $categoryLabel = $category ? Category::from($category)->label() : 'Other';
+                    $categoryLabel = $category ? Category::from($category)->label() : 'Convert';
                     return [$categoryLabel => (float) $total];
                 });
 
@@ -746,8 +741,8 @@ class ActivityController extends Controller
             $chartMode = $request->query('chartMode', 'monthly');
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
-            $activeCardId = $request->query('activeCardId', 0); // Default ke 0
-            $perPage = $request->query('per_page', 5); //  TAMBAHKAN PAGINATION
+            $activeCardId = $request->query('activeCardId', 0);
+            $perPage = $request->query('per_page', 20);
 
             $cards = Cards::where('user_id', $userId)->get();
 
@@ -868,7 +863,7 @@ class ActivityController extends Controller
                     });
                 })
                 ->mapWithKeys(function ($total, $category) {
-                    $categoryLabel = $category ? Category::from($category)->label() : 'Other';
+                    $categoryLabel = $category ? Category::from($category)->label() : 'Convert';
                     return [$categoryLabel => (float) $total];
                 });
 
@@ -891,7 +886,7 @@ class ActivityController extends Controller
                         });
                     })
                     ->mapWithKeys(function ($total, $category) {
-                        $categoryLabel = $category ? Category::from($category)->label() : 'Other';
+                        $categoryLabel = $category ? Category::from($category)->label() : 'Convert';
                         return [$categoryLabel => (float) $total];
                     });
 

@@ -508,7 +508,7 @@ export default function Income() {
                                 <div>
                                     <h3 className="text-lg font-semibold">Recent Income</h3>
                                     <p className="text-sm text-gray-500">
-                                        Showing {transactions.from}-{transactions.to} of {transactions.total} income transactions
+                                        Showing {transactions.total} transactions
                                     </p>
                                 </div>
                                 <button
@@ -526,7 +526,7 @@ export default function Income() {
                                             data: filteredTransactions
                                         }}
                                         onPageChange={handlePageChange}
-                                        // isLoading={isLoading}
+                                    // isLoading={isLoading}
                                     />
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
@@ -699,7 +699,7 @@ export default function Income() {
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-900">Income Transactions</h3>
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Showing {transactions.from}-{transactions.to} of {transactions.total} income transactions
+                                                    Showing {transactions.total} transactions
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -764,7 +764,7 @@ export default function Income() {
                                                         data: filteredTransactions
                                                     }}
                                                     onPageChange={handlePageChange}
-                                                    // isLoading={isLoading}
+                                                // isLoading={isLoading}
                                                 />
                                             ) : (
                                                 <div className="text-center py-12 text-gray-500">

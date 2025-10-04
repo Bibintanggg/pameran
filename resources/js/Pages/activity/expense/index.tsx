@@ -557,7 +557,7 @@ export default function Expense() {
                                 <div>
                                     <h3 className="text-lg font-semibold">Recent Expenses</h3>
                                     <p className="text-sm text-gray-500">
-                                        Showing {transactions.from}-{transactions.to} of {transactions.total} expense transactions
+                                        Showing {transactions.total} transactions
                                     </p>
                                 </div>
                                 <button
@@ -763,7 +763,7 @@ export default function Expense() {
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-900">Expense Transactions</h3>
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Showing {transactions.from}-{transactions.to} of {transactions.total} expense transactions
+                                                    Showing {transactions.total} transactions
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
