@@ -62,7 +62,7 @@ export default function Register() {
                                 path="/register"
                                 routing="path"
                                 signInUrl="/login"
-                                afterSignUpUrl="/home"
+                                fallbackRedirectUrl="/home"
                             />
                         </div>
                     )}

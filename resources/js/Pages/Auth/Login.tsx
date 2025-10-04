@@ -63,7 +63,7 @@ export default function Login() {
                                 path="/login"
                                 routing="path"
                                 signUpUrl="/register"
-                                afterSignInUrl="/home"
+                                fallbackRedirectUrl="/home"
                                 // appearance={{
                                 //     elements: {
                                 //         rootBox: "w-full",
