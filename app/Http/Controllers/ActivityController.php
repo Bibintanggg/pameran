@@ -442,7 +442,7 @@ class ActivityController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
             $activeCardId = $request->query('activeCardId', 0);
-            $perPage = $request->query('per_page', 5); //  TAMBAHKAN PAGINATION
+            $perPage = $request->query('per_page', 5);
 
             $cards = Cards::where('user_id', $userId)->get();
 
@@ -509,14 +509,10 @@ class ActivityController extends Controller
             //  REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
             $paginatedTransactions->setCollection($formattedTransactions);
 
-            //  QUERY TERPISAH UNTUK ANALYTICS & CHART (tanpa pagination, semua data)
+            // Analytics global — tanpa filter card_id (biar semua card tetap terhitung)
             $analyticsQuery = Transactions::where('user_id', $userId)
                 ->where('type', TransactionsType::EXPENSE->value)
                 ->with(['toCard', 'fromCard']);
-
-            if ($activeCardId && $activeCardId != 0) {
-                $analyticsQuery->where('from_cards_id', $activeCardId);
-            }
 
             if ($startDate && $endDate) {
                 $analyticsQuery->whereBetween('transaction_date', [
