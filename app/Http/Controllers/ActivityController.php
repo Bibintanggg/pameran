@@ -532,10 +532,15 @@ class ActivityController extends Controller
             // REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
             $paginatedTransactions->setCollection($formattedTransactions);
 
-            // ANALYTICS QUERY - TANPA FILTER CARD (untuk charts & comparison)
+            // ANALYTICS QUERY - DENGAN FILTER CARD UNTUK EXPENSE BY CATEGORY
             $analyticsQuery = Transactions::where('user_id', $userId)
                 ->where('type', TransactionsType::EXPENSE->value)
                 ->with(['toCard', 'fromCard']);
+
+            // TERAPKAN FILTER CARD JUGA PADA ANALYTICS
+            if ($activeCardId && $activeCardId != 0) {
+                $analyticsQuery->where('from_cards_id', $activeCardId);
+            }
 
             if ($startDate && $endDate) {
                 $analyticsQuery->whereBetween('transaction_date', [
@@ -547,8 +552,21 @@ class ActivityController extends Controller
             $allExpenseTransactions = $analyticsQuery->get();
 
             $totalExpenseForDisplay = $paginatedTransactions->getCollection()->sum('amount');
-
             $totalExpenseForAnalytics = $allExpenseTransactions->sum('amount');
+
+            $expenseByCategory = $allExpenseTransactions
+                ->groupBy('category')
+                ->map(function ($transactions) {
+                    return $transactions->sum('amount');
+                })
+                ->mapWithKeys(function ($total, $category) {
+                    $categoryLabel = $category ? Category::from($category)->label() : 'Convert';
+                    return [$categoryLabel => (float) $total];
+                });
+
+            $topCategories = $expenseByCategory->sortByDesc(function ($value) {
+                return $value;
+            })->take(5);
 
             $expensePerCard = collect();
             foreach ($allExpenseTransactions as $transaction) {
@@ -636,22 +654,7 @@ class ActivityController extends Controller
                 $expenseGrowthRate = 0;
             }
 
-            // Expense by category berdasarkan semua data analytics
-            $expenseByCategory = $allExpenseTransactions
-                ->groupBy('category')
-                ->map(function ($transactions) {
-                    return $transactions->sum('amount');
-                })
-                ->mapWithKeys(function ($total, $category) {
-                    $categoryLabel = $category ? Category::from($category)->label() : 'Convert';
-                    return [$categoryLabel => (float) $total];
-                });
-
-            $topCategories = $expenseByCategory->sortByDesc(function ($value) {
-                return $value;
-            })->take(5);
-
-            // Data chart berdasarkan semua data analytics
+            // Data chart berdasarkan CARD YANG AKTIF
             $currentYear = now()->year;
 
             // Monthly data untuk chart
@@ -704,7 +707,7 @@ class ActivityController extends Controller
                 ],
                 'expenseByCategory' => $expenseByCategory,
                 'topCategories' => $topCategories,
-                'totalExpense' => $totalExpenseForDisplay, // ✅ FIX: PAKAI DATA YANG SUDAH DIFILTER
+                'totalExpense' => $totalExpenseForDisplay,
                 'avgMonthlyExpense' => $avgMonthlyExpense,
                 'monthlyAveragePerCard' => $monthlyAveragePerCard,
                 'avgMonthlyExpenseGrowthRate' => $avgMonthlyExpenseGrowthRate,

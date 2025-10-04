@@ -439,7 +439,9 @@ export default function Expense() {
                         {/* Expense Categories */}
                         {Object.keys(expenseByCategory).length > 0 && (
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-                                <h3 className="text-lg font-semibold mb-4">Expense by Category</h3>
+                                <h3 className="text-lg font-semibold mb-4">
+                                    Expense by Category {activeCardId !== 0 && `- ${activeCard?.name}`}
+                                </h3>
                                 <div className="space-y-3">
                                     {categoryChartData.map((category, index) => {
                                         const percentage = (category.value / calculatedTotalExpense) * 100;
@@ -575,7 +577,7 @@ export default function Expense() {
                                             data: filteredTransactions
                                         }}
                                         onPageChange={handlePageChange}
-                                        // isLoading={isLoading}
+                                    // isLoading={isLoading}
                                     />
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
@@ -828,7 +830,7 @@ export default function Expense() {
                                                         data: filteredTransactions
                                                     }}
                                                     onPageChange={handlePageChange}
-                                                    // isLoading={isLoading}
+                                                // isLoading={isLoading}
                                                 />
                                             ) : (
                                                 <div className="text-center py-12 text-gray-500">
