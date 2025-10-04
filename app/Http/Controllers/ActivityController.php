@@ -470,15 +470,15 @@ class ActivityController extends Controller
 
             $cards = Cards::where('user_id', $userId)->get();
 
-            // QUERY DENGAN PAGINATION - SAMA SEPERTI allActivity
+            // QUERY UNTUK PAGINATION - FILTER BERDASARKAN CARD
             $expenseTransactionsQuery = Transactions::where('user_id', $userId)
                 ->where('type', TransactionsType::EXPENSE->value)
                 ->with(['toCard', 'fromCard']);
 
             // Filter berdasarkan card jika dipilih
-            // if ($activeCardId && $activeCardId != 0) {
-            //     $expenseTransactionsQuery->where('from_cards_id', $activeCardId);
-            // }
+            if ($activeCardId && $activeCardId != 0) {
+                $expenseTransactionsQuery->where('from_cards_id', $activeCardId);
+            }
 
             // Filter tanggal jika ada
             if ($startDate && $endDate) {
@@ -491,7 +491,7 @@ class ActivityController extends Controller
             // PAGINATE QUERY YANG SUDAH DIFILTER
             $paginatedTransactions = $expenseTransactionsQuery->latest()->paginate($perPage);
 
-            // MAP TRANSACTIONS UNTUK DISPLAY - SAMA SEPERTI allActivity
+            // Format transactions untuk response
             $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) {
                 $currency = $data->fromCard?->currency;
                 if ($currency instanceof Currency) {
@@ -529,10 +529,10 @@ class ActivityController extends Controller
                 ];
             });
 
-            //  REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
+            // REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
             $paginatedTransactions->setCollection($formattedTransactions);
 
-            // Analytics global — tanpa filter card_id (biar semua card tetap terhitung)
+            // ANALYTICS QUERY - TANPA FILTER CARD (untuk charts & comparison)
             $analyticsQuery = Transactions::where('user_id', $userId)
                 ->where('type', TransactionsType::EXPENSE->value)
                 ->with(['toCard', 'fromCard']);
@@ -546,24 +546,21 @@ class ActivityController extends Controller
 
             $allExpenseTransactions = $analyticsQuery->get();
 
-            // Hitung total expense dari semua data analytics
-            $totalExpense = $allExpenseTransactions->sum('amount');
+            $totalExpenseForDisplay = $paginatedTransactions->getCollection()->sum('amount');
 
-            // Expense per card dari semua data analytics
+            $totalExpenseForAnalytics = $allExpenseTransactions->sum('amount');
+
             $expensePerCard = collect();
             foreach ($allExpenseTransactions as $transaction) {
                 $cardId = $transaction->from_cards_id;
                 $amount = $transaction->amount;
-
                 $expensePerCard[$cardId] = ($expensePerCard[$cardId] ?? 0) + $amount;
             }
 
-            // Untuk "All Cards", hitung total dari semua cards
             if ($activeCardId == 0) {
-                $expensePerCard[0] = $totalExpense;
+                $expensePerCard[0] = $totalExpenseForAnalytics;
             }
 
-            // Calculate monthly average per card
             $monthlyAveragePerCard = [];
             $currentYear = now()->year;
             $currentMonth = now()->month;
@@ -584,7 +581,6 @@ class ActivityController extends Controller
                 $monthlyAveragePerCard[$card->id] = $avgMonthlyExpense;
             }
 
-            // Calculate overall monthly average untuk All Cards
             $currentYearExpense = $allExpenseTransactions
                 ->filter(function ($transaction) use ($currentYear) {
                     return $transaction->transaction_date->year === $currentYear;
@@ -698,38 +694,37 @@ class ActivityController extends Controller
                     'label' => (string) $year,
                 ];
             })->values();
+
+            return Inertia::render('activity/expense/index', [
+                'transactions' => $paginatedTransactions,
+                'cards' => $cards,
+                'chartData' => [
+                    'monthly' => $monthlyChartData,
+                    'yearly' => $yearlyChartData,
+                ],
+                'expenseByCategory' => $expenseByCategory,
+                'topCategories' => $topCategories,
+                'totalExpense' => $totalExpenseForDisplay, // ✅ FIX: PAKAI DATA YANG SUDAH DIFILTER
+                'avgMonthlyExpense' => $avgMonthlyExpense,
+                'monthlyAveragePerCard' => $monthlyAveragePerCard,
+                'avgMonthlyExpenseGrowthRate' => $avgMonthlyExpenseGrowthRate,
+                'expenseGrowthRate' => $expenseGrowthRate,
+                'expensePerCard' => $expensePerCard,
+                'filter' => $filter,
+                'chartMode' => $chartMode,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'activeCardId' => (int) $activeCardId,
+                'auth' => [
+                    'user' => [
+                        'name' => Auth::user()->name,
+                        'avatar' => Auth::user()->avatar,
+                    ]
+                ]
+            ]);
         } catch (\Exception $e) {
-            // dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
-
-        return Inertia::render('activity/expense/index', [
-            'transactions' => $paginatedTransactions, //  GUNAKAN PAGINATOR INSTANCE
-            'cards' => $cards,
-            'chartData' => [
-                'monthly' => $monthlyChartData,
-                'yearly' => $yearlyChartData,
-            ],
-            'expenseByCategory' => $expenseByCategory,
-            'topCategories' => $topCategories,
-            'totalExpense' => $totalExpense,
-            'avgMonthlyExpense' => $avgMonthlyExpense,
-            'monthlyAveragePerCard' => $monthlyAveragePerCard,
-            'avgMonthlyExpenseGrowthRate' => $avgMonthlyExpenseGrowthRate,
-            'expenseGrowthRate' => $expenseGrowthRate,
-            'expensePerCard' => $expensePerCard,
-            'filter' => $filter,
-            'chartMode' => $chartMode,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'activeCardId' => (int) $activeCardId,
-            'auth' => [
-                'user' => [
-                    'name' => Auth::user()->name,
-                    'avatar' => Auth::user()->avatar,
-                ]
-            ]
-        ]);
     }
 
     public function incomeActivity(Request $request)

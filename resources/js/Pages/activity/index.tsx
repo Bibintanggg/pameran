@@ -348,8 +348,8 @@ export default function AllActivity() {
             filter,
             chartMode,
             activeCardId: activeCardId
-            // start_date: startDate,
             // end_date: endDate,
+            // start_date: startDate,
         }, {
             preserveState: true,
             replace: true,
