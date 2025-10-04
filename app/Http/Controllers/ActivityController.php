@@ -53,12 +53,8 @@ class ActivityController extends Controller
             }
 
             // Filter active card untuk kedua query
+            // Tapi JANGAN untuk analytics (biar income/expense semua card tetap ada)
             if ($activeCardId && $activeCardId != 0) {
-                $allTransactionsQuery->where(function ($query) use ($activeCardId) {
-                    $query->where('to_cards_id', $activeCardId)
-                        ->orWhere('from_cards_id', $activeCardId);
-                });
-
                 $paginatedTransactionsQuery->where(function ($query) use ($activeCardId) {
                     $query->where('to_cards_id', $activeCardId)
                         ->orWhere('from_cards_id', $activeCardId);

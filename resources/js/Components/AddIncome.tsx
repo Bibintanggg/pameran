@@ -71,6 +71,42 @@ export default function AddIncome({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!data.transaction_date) {
+            toast({
+                title: "Error",
+                description: "Date is required",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!data.amount || data.amount <= 0) {
+            toast({
+                title: "Error",
+                description: "Amount must be greater than 0",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!data.asset) {
+            toast({
+                title: "Error",
+                description: "Asset is required",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!data.category) {
+            toast({
+                title: "Error",
+                description: "Category is required",
+                variant: "destructive",
+            });
+            return;
+        }
+
         post(route('transactions.storeincome'), {
             onSuccess: () => {
                 setIsOpen(false);
@@ -136,7 +172,9 @@ export default function AddIncome({
                                     <Button
                                         variant="outline"
                                         data-empty={!date}
-                                        className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
+                                        className={`data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal ${
+                                            errors.transaction_date ? 'border-red-500' : ''
+                                        }`}
                                     >
                                         <CalendarIcon />
                                         <span>{date ? date.toDateString() : "Pick a date"}</span>
@@ -154,6 +192,9 @@ export default function AddIncome({
                                 </PopoverContent>
                             </Popover>
                         </div>
+                        {errors.transaction_date && (
+                            <p className="text-red-500 text-sm -mt-2">{errors.transaction_date}</p>
+                        )}
 
                         <div className="flex items-center gap-4">
                             <p className="w-24">Amount *</p>
@@ -162,10 +203,15 @@ export default function AddIncome({
                                 placeholder="example. 100000"
                                 value={data.amount || ''}
                                 onChange={(e) => setData("amount", Number(e.target.value))}
-                                className="flex-1 border border-black/10 rounded-lg p-2 placeholder:text-sm"
+                                className={`flex-1 border rounded-lg p-2 placeholder:text-sm ${
+                                    errors.amount ? 'border-red-500' : 'border-black/10'
+                                }`}
                                 min="1"
                             />
                         </div>
+                        {errors.amount && (
+                            <p className="text-red-500 text-sm -mt-2">{errors.amount}</p>
+                        )}
 
                         <div className="flex items-center gap-4">
                             <p className="w-24">Notes</p>
@@ -182,7 +228,12 @@ export default function AddIncome({
                             <p className="w-24">Asset *</p>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
+                                    <Button 
+                                        variant="outline" 
+                                        className={`flex-1 text-black/50 flex justify-start ${
+                                            errors.asset ? 'border-red-500' : ''
+                                        }`}
+                                    >
                                         {getAssetLabel(data.asset)}
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -194,12 +245,20 @@ export default function AddIncome({
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
+                        {errors.asset && (
+                            <p className="text-red-500 text-sm -mt-2">{errors.asset}</p>
+                        )}
 
                         <div className="flex items-center gap-4">
                             <p className="w-24">Category *</p>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="flex-1 text-black/50 flex justify-start">
+                                    <Button 
+                                        variant="outline" 
+                                        className={`flex-1 text-black/50 flex justify-start ${
+                                            errors.category ? 'border-red-500' : ''
+                                        }`}
+                                    >
                                         {getCategoryLabel(data.category)}
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -212,27 +271,15 @@ export default function AddIncome({
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
+                        {errors.category && (
+                            <p className="text-red-500 text-sm -mt-2">{errors.category}</p>
+                        )}
 
-                        {/* <div className="flex flex-col items-start">
-                            {errors.category && (
-                                <span className="text-red-500 text-sm">{errors.category}</span>
-                            )}
-                            {errors.transaction_date && (
-                                <span className="text-red-500 text-sm">{errors.transaction_date}</span>
-                            )}
-                            {errors.amount && (
-                                <span className="text-red-500 text-sm">{errors.amount}</span>
-                            )}
-                            {errors.asset && (
-                                <span className="text-red-500 text-sm">{errors.asset}</span>
-                            )}
-                        </div> */}
-
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between pt-4">
                             <button
                                 type="button"
                                 onClick={() => setIsOpen(false)}
-                                className="w-20 bg-red-600 text-white py-2 rounded-lg"
+                                className="w-20 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors"
                             >
                                 Cancel
                             </button>
@@ -240,7 +287,7 @@ export default function AddIncome({
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-40 bg-slate-900 text-white py-2 rounded-lg disabled:opacity-50"
+                                className="w-40 bg-slate-900 text-white py-2 rounded-lg disabled:opacity-50 hover:bg-slate-800 transition-colors"
                             >
                                 {processing ? 'Saving...' : 'Save changes'}
                             </button>

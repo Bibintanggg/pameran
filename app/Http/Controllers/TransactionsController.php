@@ -157,12 +157,10 @@ class TransactionsController extends Controller
                 ]);
 
                 $card = Cards::find($data['from_cards_id']);
-                if ($card) {
                     if ($card->balance < $data['amount']) {
                         return back()->withErrors([
                             'amount' => 'The balance is insufficient to perform this transaction.',
                         ]);
-                    }
 
                     $card->balance -= $data['amount'];
                     $card->save();

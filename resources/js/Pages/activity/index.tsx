@@ -102,33 +102,35 @@ export default function AllActivity() {
     const activeCard = cards.find((card) => card.id === activeCardId); // DARI CONTEXT CARD AKTIF
 
     // Filter transaksi berdasarkan kartu aktif
-    const filteredTransactions = useMemo(() => {
-        // console.log('Filtering transactions for card:', activeCardId);
-        if (!transactions.data) return [];
+    // const filteredTransactions = useMemo(() => {
+    //     // console.log('Filtering transactions for card:', activeCardId);
+    //     if (!transactions.data) return [];
 
-        return transactions.data.filter((t) => {
-            // Gunakan cardId dari parameter, bukan bergantung sepenuhnya pada context
-            const currentCardId = activeCardId;
+    //     return transactions.data.filter((t) => {
+    //         // Gunakan cardId dari parameter, bukan bergantung sepenuhnya pada context
+    //         const currentCardId = activeCardId;
 
-            let matchesCard = false;
-            if (currentCardId === 0) {
-                matchesCard = true;
-            } else {
-                if (t.type === 'income' || t.type === 'convert') {
-                    matchesCard = t.to_cards_id === currentCardId;
-                } else if (t.type === 'expense') {
-                    matchesCard = t.from_cards_id === currentCardId;
-                }
-            }
+    //         let matchesCard = false;
+    //         if (currentCardId === 0) {
+    //             matchesCard = true;
+    //         } else {
+    //             if (t.type === 'income' || t.type === 'convert') {
+    //                 matchesCard = t.to_cards_id === currentCardId;
+    //             } else if (t.type === 'expense') {
+    //                 matchesCard = t.from_cards_id === currentCardId;
+    //             }
+    //         }
 
-            if (!matchesCard) return false;
+    //         if (!matchesCard) return false;
 
-            if (filter === "all") return true;
-            if (filter === "income") return t.type === "income" || t.type === "convert";
-            if (filter === "expense") return t.type === "expense";
-            return true;
-        });
-    }, [transactions.data, activeCardId, filter]);
+    //         if (filter === "all") return true;
+    //         if (filter === "income") return t.type === "income" || t.type === "convert";
+    //         if (filter === "expense") return t.type === "expense";
+    //         return true;
+    //     });
+    // }, [transactions.data, activeCardId, filter]);
+
+    const displayTransactions = transactions.data || [];
 
     // useEffect(() => {
     //     if (serverActiveCardId !== undefined && serverActiveCardId !== activeCardId) {
@@ -588,7 +590,7 @@ export default function AllActivity() {
                                 <div>
                                     <h3 className="text-lg font-semibold">Transactions</h3>
                                     <p className="text-sm text-gray-500">
-                                        Showing {filteredTransactions.length} transactions
+                                        Showing {transactions.total} transactions
                                     </p>
                                 </div>
                                 <button
@@ -598,12 +600,9 @@ export default function AllActivity() {
                                 </button>
                             </div>
                             <div className="max-h-60 overflow-y-auto">
-                                {filteredTransactions.length > 0 ? (
+                                {transactions.data.length > 0 ? (
                                     <TransactionsList
-                                        transactions={{
-                                            ...transactions,
-                                            data: filteredTransactions
-                                        }}
+                                        transactions={transactions}
                                         onPageChange={handlePageChange}
                                     />
                                 ) : (
@@ -794,7 +793,7 @@ export default function AllActivity() {
                                                     All Transactions
                                                 </h3>
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Showing {filteredTransactions.length} transactions
+                                                    Showing {transactions.total} transactions
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -850,12 +849,9 @@ export default function AllActivity() {
                                             </div>
                                         </div>
                                         <div className="max-h-96 overflow-y-auto">
-                                            {filteredTransactions.length > 0 ? (
+                                            {transactions.data.length > 0 ? (
                                                 <TransactionsList
-                                                    transactions={{
-                                                        ...transactions,
-                                                        data: filteredTransactions
-                                                    }}
+                                                    transactions={transactions}
                                                     onPageChange={handlePageChange}
                                                 />
                                             ) : (

@@ -22,8 +22,8 @@ return new class extends Migration
             $table->string('asset');
             $table->decimal('rate', 18, 6)->nullable();
             $table->string('notes')->nullable();
-            $table->date('transaction_date');
-            $table->string('category')->nullable();
+            $table->date('transaction_date')->index();
+            $table->string('category');
             $table->timestamps();
         });
     }
