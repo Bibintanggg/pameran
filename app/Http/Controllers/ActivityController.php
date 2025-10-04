@@ -480,9 +480,9 @@ class ActivityController extends Controller
                 ->with(['toCard', 'fromCard']);
 
             // Filter berdasarkan card jika dipilih
-            if ($activeCardId && $activeCardId != 0) {
-                $expenseTransactionsQuery->where('from_cards_id', $activeCardId);
-            }
+            // if ($activeCardId && $activeCardId != 0) {
+            //     $expenseTransactionsQuery->where('from_cards_id', $activeCardId);
+            // }
 
             // Filter tanggal jika ada
             if ($startDate && $endDate) {
@@ -821,9 +821,9 @@ class ActivityController extends Controller
                 ])
                 ->with('toCard');
 
-            if ($activeCardId && $activeCardId !== 0) {
-                $analyticsQuery->where('to_cards_id', $activeCardId);
-            }
+            // if ($activeCardId && $activeCardId !== 0) {
+            //     $analyticsQuery->where('to_cards_id', $activeCardId);
+            // }
 
             if ($startDate && $endDate) {
                 $analyticsQuery->whereBetween('transaction_date', [
