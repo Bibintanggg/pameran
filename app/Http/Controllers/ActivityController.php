@@ -52,12 +52,19 @@ class ActivityController extends Controller
                 ]);
             }
 
-            // Filter active card untuk kedua query
             // Tapi JANGAN untuk analytics (biar income/expense semua card tetap ada)
             if ($activeCardId && $activeCardId != 0) {
                 $paginatedTransactionsQuery->where(function ($query) use ($activeCardId) {
-                    $query->where('to_cards_id', $activeCardId)
-                        ->orWhere('from_cards_id', $activeCardId);
+                    $query->where(function ($q) use ($activeCardId) {
+                        $q->where('type', TransactionsType::INCOME->value)
+                            ->where('to_cards_id', $activeCardId);
+                    })->orWhere(function ($q) use ($activeCardId) {
+                        $q->where('type', TransactionsType::CONVERT->value)
+                            ->where('to_cards_id', $activeCardId);
+                    })->orWhere(function ($q) use ($activeCardId) {
+                        $q->where('type', TransactionsType::EXPENSE->value)
+                            ->where('from_cards_id', $activeCardId);
+                    });
                 });
             }
 
@@ -89,8 +96,18 @@ class ActivityController extends Controller
             $paginatedTransactions = $paginatedTransactionsQuery->latest()->paginate($perPage);
 
             // Format transactions untuk response
-            $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) {
-                if ($data->type === TransactionsType::EXPENSE->value) {
+            $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) use ($activeCardId) {
+                // FIX: Tentukan currency berdasarkan card aktif dan type transaction
+                if ($data->type === TransactionsType::CONVERT->value) {
+                    // Untuk CONVERT, tentukan currency berdasarkan card mana yang aktif
+                    if ($activeCardId == $data->to_cards_id) {
+                        // Jika card aktif adalah penerima, pakai currency dari toCard
+                        $currency = $data->toCard?->currency;
+                    } else {
+                        // Jika card aktif adalah pengirim, pakai currency dari fromCard
+                        $currency = $data->fromCard?->currency;
+                    }
+                } elseif ($data->type === TransactionsType::EXPENSE->value) {
                     $currency = $data->fromCard?->currency;
                 } else {
                     $currency = $data->toCard?->currency;
@@ -103,9 +120,20 @@ class ActivityController extends Controller
                 $currency ??= Currency::INDONESIAN_RUPIAH->value;
                 $currencySymbol = Currency::from($currency)->symbol();
 
-                $displayAmount = $data->type === TransactionsType::CONVERT->value
-                    ? $data->converted_amount
-                    : $data->amount;
+                // FIX: Tentukan display amount berdasarkan card aktif
+                if ($data->type === TransactionsType::CONVERT->value) {
+                    // Untuk CONVERT, tentukan amount berdasarkan card mana yang aktif
+                    if ($activeCardId == $data->to_cards_id) {
+                        // Jika card aktif adalah penerima, tampilkan converted_amount
+                        $displayAmount = $data->converted_amount;
+                    } else {
+                        // Jika card aktif adalah pengirim, tampilkan amount asli
+                        $displayAmount = $data->amount;
+                    }
+                } else {
+                    // Untuk type lain, pakai amount biasa
+                    $displayAmount = $data->amount;
+                }
 
                 return [
                     'id'               => $data->id,

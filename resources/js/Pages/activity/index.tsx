@@ -585,7 +585,7 @@ export default function AllActivity() {
                         </div>
 
                         {/* Mobile Transactions */}
-                        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-10">
                             <div className="flex items-center justify-between mb-4">
                                 <div>
                                     <h3 className="text-lg font-semibold">Transactions</h3>
