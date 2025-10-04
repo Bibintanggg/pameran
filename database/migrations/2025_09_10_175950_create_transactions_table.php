@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('rate', 18, 6)->nullable();
             $table->string('notes')->nullable();
             $table->date('transaction_date')->index();
-            $table->string('category');
+            $table->string('category')->nullable();
             $table->timestamps();
         });
     }
