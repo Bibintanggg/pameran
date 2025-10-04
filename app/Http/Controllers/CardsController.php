@@ -29,7 +29,20 @@ class CardsController extends Controller
 
             $cards = Cards::where('user_id', $userId)
                 ->select('id', 'name', 'balance', 'currency', 'card_number')
-                ->get();
+                ->get()
+                ->each(function ($card) use ($userId) {
+                    $income = Transactions::where('user_id', $userId)
+                        ->where('to_cards_id', $card->id)
+                        ->whereIn('type', [TransactionsType::INCOME->value, TransactionsType::CONVERT->value])
+                        ->sum('amount');
+
+                    $expense = Transactions::where('user_id', $userId)
+                        ->where('from_cards_id', $card->id)
+                        ->whereIn('type', [TransactionsType::EXPENSE->value, TransactionsType::CONVERT->value])
+                        ->sum('amount');
+
+                    $card->balance = $income - $expense;
+                });
 
             $transactionsQuery = Transactions::where('user_id', $userId)
                 ->with('toCard', 'fromCard');
