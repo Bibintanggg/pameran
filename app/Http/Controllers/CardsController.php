@@ -61,7 +61,6 @@ class CardsController extends Controller
                 $card->balance = $totalIncome - $totalExpense;
             });
 
-            // ✅ SISANYA TETAP SAMA seperti code original Anda
             $transactionsQuery = Transactions::where('user_id', $userId)
                 ->with('toCard', 'fromCard');
 

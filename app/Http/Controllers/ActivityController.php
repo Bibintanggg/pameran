@@ -568,23 +568,38 @@ class ActivityController extends Controller
                 return $value;
             })->take(5);
 
-            $expensePerCard = collect();
-            foreach ($allExpenseTransactions as $transaction) {
-                $cardId = $transaction->from_cards_id;
-                $amount = $transaction->amount;
-                $expensePerCard[$cardId] = ($expensePerCard[$cardId] ?? 0) + $amount;
+            // ✅ EXPENSE PER CARD - UNTUK SIDEBAR (TIDAK DIFILTER BERDASARKAN ACTIVE CARD)
+            $allCardsExpenseQuery = Transactions::where('user_id', $userId)
+                ->where('type', TransactionsType::EXPENSE->value);
+
+            // Filter tanggal tetap diterapkan jika ada
+            if ($startDate && $endDate) {
+                $allCardsExpenseQuery->whereBetween('transaction_date', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay(),
+                ]);
             }
 
-            if ($activeCardId == 0) {
-                $expensePerCard[0] = $totalExpenseForAnalytics;
+            $allCardsExpenseTransactions = $allCardsExpenseQuery->get();
+
+            // Hitung expense untuk SETIAP card dari semua transaksi
+            $expensePerCard = collect();
+            foreach ($cards as $card) {
+                $cardExpense = $allCardsExpenseTransactions
+                    ->where('from_cards_id', $card->id)
+                    ->sum('amount');
+                $expensePerCard[$card->id] = (float) $cardExpense;
             }
+
+            // Total untuk "All Cards"
+            $expensePerCard[0] = (float) $allCardsExpenseTransactions->sum('amount');
 
             $monthlyAveragePerCard = [];
             $currentYear = now()->year;
             $currentMonth = now()->month;
 
             foreach ($cards as $card) {
-                $cardTransactions = $allExpenseTransactions->where('from_cards_id', $card->id);
+                $cardTransactions = $allCardsExpenseTransactions->where('from_cards_id', $card->id);
 
                 $currentYearExpense = $cardTransactions
                     ->filter(function ($transaction) use ($currentYear) {
@@ -729,7 +744,6 @@ class ActivityController extends Controller
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
-
     public function incomeActivity(Request $request)
     {
         try {

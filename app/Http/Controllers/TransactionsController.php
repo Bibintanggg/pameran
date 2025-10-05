@@ -113,6 +113,7 @@ class TransactionsController extends Controller
     {
         try {
             DB::beginTransaction();
+
             $data = $request->validate([
                 'transaction_date' => 'required|date',
                 'amount' => 'required|numeric|min:1',
@@ -123,7 +124,6 @@ class TransactionsController extends Controller
                 'from_cards_id' => 'required|exists:cards,id',
             ]);
 
-            // dd($data);
             if ($data['type'] === TransactionsType::EXPENSE->value) {
                 if (!in_array($data['category'], [
                     Category::FOOD_DRINKS->value,
@@ -134,16 +134,17 @@ class TransactionsController extends Controller
                     Category::SAVINGS_INVESTMENTS->value,
                     Category::TRAVEL->value,
                 ])) {
-                    return back()->withErrors(['category' => 'Invalid income category']);
+                    return back()->withErrors(['category' => 'Invalid expense category']);
                 }
 
                 $card = Cards::findOrFail($data['from_cards_id']);
 
                 if ($card->balance < $data['amount']) {
+                    DB::rollBack();
                     return back()->withErrors([
                         'amount' => 'Insufficient balance to perform this transaction.',
                     ]);
-                };
+                }
 
                 Transactions::create([
                     'user_id' => Auth::id(),
@@ -156,15 +157,9 @@ class TransactionsController extends Controller
                     'transaction_date' => $data['transaction_date'],
                 ]);
 
-                $card = Cards::find($data['from_cards_id']);
-                    if ($card->balance < $data['amount']) {
-                        return back()->withErrors([
-                            'amount' => 'The balance is insufficient to perform this transaction.',
-                        ]);
+                $card->balance -= $data['amount'];
+                $card->save();
 
-                    $card->balance -= $data['amount'];
-                    $card->save();
-                }
                 DB::commit();
 
                 return back()->with('success', 'Transaksi berhasil ditambahkan');
@@ -173,7 +168,6 @@ class TransactionsController extends Controller
             return back()->withErrors(['type' => 'Invalid transaction type']);
         } catch (\Exception $e) {
             DB::rollBack();
-            //  dd($e->getMessage(), $e->getTrace());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }
