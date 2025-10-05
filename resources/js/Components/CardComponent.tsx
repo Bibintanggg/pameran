@@ -60,6 +60,7 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
     setSelectedCard
 }, ref) => {
     const [showAlert, setShowAlert] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const alertTimeoutRef = useRef<NodeJS.Timeout>();
 
     useImperativeHandle(ref, () => ({
@@ -97,7 +98,19 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
         }
     };
 
-    // Improved click outside handler
+    const handleDeleteClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowDeleteDialog(true);
+        setSelectedCard(null);
+    };
+
+    const handleConfirmDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onDeleteCard(card.id);
+        setShowDeleteDialog(false);
+    };
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (selectedCard === card.id) {
@@ -105,7 +118,6 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                 const button = buttonRefs.current[card.id];
                 const target = event.target as HTMLElement;
 
-                // Check if click is inside dialog or modal
                 const isInsideDialog = target.closest('[role="dialog"]') ||
                     target.closest('[data-radix-popper-content-wrapper]') ||
                     target.closest('.relative.z-50');
@@ -114,7 +126,6 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                     return;
                 }
 
-                // Check if click is outside dropdown and button
                 if (dropdown && !dropdown.contains(target) &&
                     button && !button.contains(target)) {
                     setSelectedCard(null);
@@ -149,6 +160,28 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
                     </Alert>
                 </div>
             )}
+
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Card</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{card.name}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDelete}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <div className={`relative ${isDesktop ? 'h-48' : 'h-40'} rounded-2xl shadow-lg overflow-visible transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${selectedCard === card.id ? 'z-50' : 'z-10'}`}>
                 <div
@@ -231,52 +264,14 @@ const CardComponent = forwardRef<CardComponentRef, CardComponentProps>(({
 
                         <hr className="my-2" />
 
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <button
-                                    className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-3 text-sm text-red-600"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                    }}
-                                    onMouseDown={(e) => e.preventDefault()}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Card
-                                </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                            >
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Card</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Are you sure you want to delete "{card.name}"? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedCard(null);
-                                        }}
-                                    >
-                                        Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteCard(card.id);
-                                            setSelectedCard(null);
-                                        }}
-                                        className="bg-red-600 hover:bg-red-700"
-                                    >
-                                        Delete
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <button
+                            className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-3 text-sm text-red-600"
+                            onClick={handleDeleteClick}
+                            onMouseDown={(e) => e.preventDefault()}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Delete Card
+                        </button>
                     </div>
                 )}
             </div>
