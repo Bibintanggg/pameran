@@ -50,8 +50,17 @@ class ShowCardsController extends Controller
                 ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
 
             $expensePerCard = Transactions::where('user_id', $userId)
-                ->where('type', TransactionsType::EXPENSE->value)
-                ->selectRaw('from_cards_id, SUM(amount) as total')
+                ->whereIn('type', [
+                    TransactionsType::EXPENSE->value,
+                    TransactionsType::CONVERT->value
+                ])
+                ->selectRaw('from_cards_id, SUM(CASE 
+        WHEN type = ? THEN amount 
+        WHEN type = ? THEN amount 
+        ELSE 0 END) as total', [
+                    TransactionsType::EXPENSE->value,
+                    TransactionsType::CONVERT->value
+                ])
                 ->groupBy('from_cards_id')
                 ->pluck('total', 'from_cards_id')
                 ->mapWithKeys(fn($total, $cardId) => [(int) $cardId => (float) $total]);
