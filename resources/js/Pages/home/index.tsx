@@ -107,7 +107,7 @@ export default function Home() {
     const filteredTransactions = useMemo(() => {
         return transactions.filter((t: any) => {
             if (t.type === 'income' || t.type === 'convert') {
-                return t.to_cards_id === activeCardId;
+                return t.to_cards_id === activeCardId || t.from_cards_id === activeCardId;
             } else if (t.type === 'expense') {
                 return t.from_cards_id === activeCardId;
             }
@@ -379,6 +379,7 @@ export default function Home() {
                                             to: Math.min(filteredTransactions.length, 5)
                                         }}
                                         onPageChange={() => {}}
+                                        activeCardId={activeCardId}
                                     />
                                 ) : (
                                     <div className="p-8 text-center">
@@ -586,6 +587,7 @@ export default function Home() {
                                                         to: Math.min(filteredTransactions.length, 8)
                                                     }}
                                                     onPageChange={() => {}}
+                                                    activeCardId={activeCardId}
                                                 />
                                             ) : (
                                                 <div className="text-center py-12">

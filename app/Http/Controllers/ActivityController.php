@@ -60,7 +60,8 @@ class ActivityController extends Controller
                             ->where('to_cards_id', $activeCardId);
                     })->orWhere(function ($q) use ($activeCardId) {
                         $q->where('type', TransactionsType::CONVERT->value)
-                            ->where('to_cards_id', $activeCardId);
+                            ->where('to_cards_id', $activeCardId)
+                            ->orWhere('from_cards_id', $activeCardId);
                     })->orWhere(function ($q) use ($activeCardId) {
                         $q->where('type', TransactionsType::EXPENSE->value)
                             ->where('from_cards_id', $activeCardId);
@@ -100,13 +101,20 @@ class ActivityController extends Controller
                 if ($data->type === TransactionsType::CONVERT->value) {
                     if ($activeCardId == $data->to_cards_id) {
                         $currency = $data->toCard?->currency;
-                    } else {
+                        $displayAmount = $data->converted_amount;
+                    } elseif ($activeCardId == $data->from_cards_id) {
                         $currency = $data->fromCard?->currency;
+                        $displayAmount = $data->amount;
+                    } else {
+                        $currency = $data->toCard?->currency ?? $data->fromCard?->currency;
+                        $displayAmount = $data->converted_amount;
                     }
                 } elseif ($data->type === TransactionsType::EXPENSE->value) {
                     $currency = $data->fromCard?->currency;
+                    $displayAmount = $data->amount;
                 } else {
                     $currency = $data->toCard?->currency;
+                    $displayAmount = $data->converted_amount;
                 }
 
                 if ($currency instanceof Currency) {
@@ -116,18 +124,15 @@ class ActivityController extends Controller
                 $currency ??= Currency::INDONESIAN_RUPIAH->value;
                 $currencySymbol = Currency::from($currency)->symbol();
 
-                // FIX: Tentukan display amount berdasarkan card aktif
                 if ($data->type === TransactionsType::CONVERT->value) {
-                    // Untuk CONVERT, tentukan amount berdasarkan card mana yang aktif
                     if ($activeCardId == $data->to_cards_id) {
-                        // Jika card aktif adalah penerima, tampilkan converted_amount
                         $displayAmount = $data->converted_amount;
-                    } else {
-                        // Jika card aktif adalah pengirim, tampilkan amount asli
+                    } elseif ($activeCardId == $data->from_cards_id) {
                         $displayAmount = $data->amount;
+                    } else {
+                        $displayAmount = $data->converted_amount;
                     }
                 } else {
-                    // Untuk type lain, pakai amount biasa
                     $displayAmount = $data->amount;
                 }
 

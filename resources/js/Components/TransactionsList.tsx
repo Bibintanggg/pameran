@@ -2,6 +2,7 @@ import { usePage } from "@inertiajs/react";
 import { useState } from "react";
 import { Transaction } from "@/types/transaction";
 import { formatCurrency, currencyMap } from "@/utils/formatCurrency";
+import { ChevronsRightLeftIcon } from "lucide-react"
 import { PaginationComponent } from "./PaginationComponent";
 import { ArrowRight, ArrowDownLeft, ArrowUpRight, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -16,6 +17,7 @@ interface TransactionListProps {
         to: number;
     };
     onPageChange: (page: number) => void;
+    activeCardId?: number | null
 }
 
 export default function TransactionsList({ transactions, onPageChange }: TransactionListProps) {
@@ -43,7 +45,7 @@ export default function TransactionsList({ transactions, onPageChange }: Transac
             case 'expense':
                 return <ArrowUpRight className="w-5 h-5 text-red-600" />;
             case 'convert':
-                return <ArrowRight className="w-5 h-5 text-blue-600" />;
+                return <ChevronsRightLeftIcon className="w-5 h-5 text-blue-600" />;
             default:
                 return <Wallet className="w-5 h-5 text-gray-600" />;
         }
@@ -52,7 +54,7 @@ export default function TransactionsList({ transactions, onPageChange }: Transac
     const getTransactionColor = (type: string) => {
         switch (type) {
             case 'income':
-                return 'bg-green-50 border-green-200 hover:bg-green-100';
+                return 'bg-green-100 border-green-200 hover:bg-green-100';
             case 'expense':
                 return 'bg-red-50 border-red-200 hover:bg-red-100';
             case 'convert':
