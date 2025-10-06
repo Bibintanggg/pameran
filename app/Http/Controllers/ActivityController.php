@@ -840,7 +840,7 @@ class ActivityController extends Controller
                     TransactionsType::INCOME->value,
                     TransactionsType::CONVERT->value
                 ])
-                ->with('toCard');
+                ->with(['toCard', 'fromCard']);
 
             if ($activeCardId && $activeCardId !== 0) {
                 $transactionsQuery->where('to_cards_id', $activeCardId);
@@ -873,6 +873,7 @@ class ActivityController extends Controller
                 return [
                     'id'               => $data->id,
                     'to_cards_id'      => $data->to_cards_id,
+                    'from_cards_id'    => $data->from_cards_id,
                     'user_name'        => Auth::user()->name,
                     'type'             => $data->type,
                     'type_label'       => TransactionsType::from($data->type)->label(),
@@ -898,7 +899,7 @@ class ActivityController extends Controller
                     TransactionsType::INCOME->value,
                     TransactionsType::CONVERT->value
                 ])
-                ->with('toCard');
+                ->with(['toCard', 'fromCard']);
 
             // if ($activeCardId && $activeCardId !== 0) {
             //     $analyticsQuery->where('to_cards_id', $activeCardId);
