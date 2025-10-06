@@ -115,12 +115,12 @@ export default function Expense() {
         if (!transactions.data) return [];
 
         return transactions.data.filter((t) => {
-            // Filter berdasarkan card
             const matchesCard = activeCardId === 0 ||
-                (t.type === 'expense' ? t.from_cards_id === activeCardId : false);
+                (t.type === 'expense' ? t.from_cards_id === activeCardId : 
+                t.type === 'convert' ? t.from_cards_id === activeCardId : false);
 
             // Hanya transaksi expense
-            const isExpenseTransaction = t.type === "expense";
+            const isExpenseTransaction = t.type === "expense" || t.type === "convert";
 
             return matchesCard && isExpenseTransaction;
         });
@@ -577,6 +577,7 @@ export default function Expense() {
                                             data: filteredTransactions
                                         }}
                                         onPageChange={handlePageChange}
+                                        activeCardId={activeCardId}
                                     // isLoading={isLoading}
                                     />
                                 ) : (
@@ -830,6 +831,7 @@ export default function Expense() {
                                                         data: filteredTransactions
                                                     }}
                                                     onPageChange={handlePageChange}
+                                                    activeCardId={activeCardId}
                                                 // isLoading={isLoading}
                                                 />
                                             ) : (
