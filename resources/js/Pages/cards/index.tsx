@@ -21,7 +21,9 @@ import {
     TrashIcon,
     AlertCircleIcon,
     CheckCircle2Icon,
-    PopcornIcon
+    PopcornIcon,
+    User,
+    LogOut
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency";
@@ -51,6 +53,8 @@ import {
 } from "@/Components/ui/dialog"
 import EditCards from "@/Components/EditCards";
 import CardComponent, { CardComponentRef } from "@/Components/CardComponent";
+import { useClerk } from "@clerk/clerk-react";
+import axios from "axios";
 
 type Card = {
     id: number;
@@ -91,6 +95,7 @@ type Props = {
 
 export default function Cards() {
     const { cards, statistics, auth } = usePage<Props>().props;
+    const { signOut } = useClerk()
 
     const [eyesOpen, setEyesOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState<number | null>(null);
@@ -99,6 +104,7 @@ export default function Cards() {
     const dropdownRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
     const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
     const cardComponentRefs = useRef<{ [key: number]: CardComponentRef | null }>({});
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -165,6 +171,12 @@ export default function Cards() {
             default: return "Indonesian Rupiah";
         }
     };
+
+    const handleLogout = async () => {
+        await axios.post('/auth/clerk/logout')
+        await signOut()
+        window.location.href = "/"
+    }
 
     // View Details Dialog Component
     const ViewDetailsDialog = () => {
@@ -272,7 +284,7 @@ export default function Cards() {
 
                     <div className="flex-1 overflow-y-auto p-6 pb-32">
                         <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                                 <Avatar className="h-10 w-10">
                                     {auth.user.avatar ? (
                                         <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
@@ -310,6 +322,31 @@ export default function Cards() {
                                 </button>
                             </div>
                         </div>
+
+                        {isDropdownOpen && (
+                            <div className="fixed top-20 left-6 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-48">
+                                <button
+                                    onClick={() => {
+                                        setIsDropdownOpen(false)
+                                        router.visit(route("profile.edit"))
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-t-lg"
+                                >
+                                    <User className="h-4 w-4" />
+                                    Profile
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsDropdownOpen(false)
+                                        handleLogout()
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 rounded-b-lg"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    Logout
+                                </button>
+                            </div>
+                        )}
 
                         <hr className="w-full h-0.5 bg-gray-200 mb-6" />
 

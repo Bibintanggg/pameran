@@ -16,7 +16,9 @@ import {
     Activity as ActivityIcon,
     ChevronRight,
     CreditCard,
-    RefreshCw
+    RefreshCw,
+    User,
+    LogOut
 } from "lucide-react";
 import React, { useState, useMemo, useEffect } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -27,6 +29,8 @@ import ActivityNavbar from "./layout/nav";
 import { useActiveCard } from "@/context/ActiveCardContext"; // Import context
 import { ErrorBoundary } from "@/Components/ErrorBoundary";
 import SyncLoader from "react-spinners/SyncLoader";
+import axios from "axios";
+import { useClerk } from "@clerk/clerk-react";
 
 type Props = {
     transactions: {
@@ -92,11 +96,13 @@ export default function AllActivity() {
 
 
     const { activeCardId, setActiveCardId } = useActiveCard();
+    const { signOut } = useClerk()
     // const { activeCardId: initialActiveCardId } = usePage().props as any;
 
     const [filter, setFilter] = useState<"all" | "income" | "expense">(initialFilter as "all" | "income" | "expense");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
 
     const activeCard = cards.find((card) => card.id === activeCardId); // DARI CONTEXT CARD AKTIF
@@ -364,6 +370,12 @@ export default function AllActivity() {
     const netBalanceTrend = netBalance >= 0 ? "up" : "down";
     const netBalanceChange = (calculatedIncomeRate - calculatedExpenseRate).toFixed(2);
 
+    const handleLogout = async () => {
+        await axios.post('/auth/clerk/logout')
+        await signOut()
+        window.location.href = "/"
+    }
+
     // if (isLoading) {
     //     return (
     //         <div className="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100/50 to-gray-200/50 backdrop-blur-sm">
@@ -393,9 +405,9 @@ export default function AllActivity() {
 
                     <div className="flex-1 overflow-y-auto p-6">
                         {/* Mobile Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-10 w-10">
+                        <div className="flex items-center justify-between mb-6 relative">
+                            <div className="flex items-center gap-4" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                                <Avatar className="h-10 w-10 cursor-pointer">
                                     {auth.user.avatar ? (
                                         <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
                                     ) : (
@@ -657,8 +669,36 @@ export default function AllActivity() {
                             </div>
                         </div>
                     </div>
+
+
                 </div>
+
             </div>
+
+            {isDropdownOpen && (
+                <div className="fixed top-20 left-6 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-48">
+                    <button
+                        onClick={() => {
+                            setIsDropdownOpen(false)
+                            router.visit(route("profile.edit"))
+                        }}
+                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-t-lg"
+                    >
+                        <User className="h-4 w-4" />
+                        Profile
+                    </button>
+                    <button
+                        onClick={() => {
+                            setIsDropdownOpen(false)
+                            handleLogout()
+                        }}
+                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 rounded-b-lg"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                    </button>
+                </div>
+            )}
 
             {/* Desktop Layout */}
             <div className="hidden lg:flex min-h-screen">

@@ -18,7 +18,9 @@ import {
     CreditCard,
     RefreshCw,
     Wallet,
-    PlusCircle
+    PlusCircle,
+    User,
+    LogOut
 } from "lucide-react";
 import React, { useState, useMemo, useEffect } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -29,6 +31,8 @@ import ActivityNavbar from "../layout/nav";
 import { useActiveCard } from "@/context/ActiveCardContext";
 import SyncLoader from "react-spinners/SyncLoader";
 import { ErrorBoundary } from "@/Components/ErrorBoundary";
+import { useClerk } from "@clerk/clerk-react";
+import axios from "axios";
 
 type Props = {
     transactions: {
@@ -91,10 +95,12 @@ export default function Income() {
     } = usePage().props as unknown as Props;
 
     const { activeCardId, setActiveCardId } = useActiveCard();
+    const { signOut } = useClerk()
 
     const [filter, setFilter] = useState<"all" | "monthly" | "yearly">(initialFilter as "all" | "monthly" | "yearly");
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
     const activeCard = cards.find((card) => card.id === activeCardId);
 
@@ -274,6 +280,12 @@ export default function Income() {
         });
     };
 
+    const handleLogout = async () => {
+        await axios.post('/auth/clerk/logout')
+        await signOut()
+        window.location.href = "/"
+    }
+
     const [date, setDate] = React.useState<{ from: Date | undefined; to?: Date | undefined }>();
 
     // if (isLoading) {
@@ -305,8 +317,8 @@ export default function Income() {
 
                     <div className="flex-1 overflow-y-auto p-6">
                         {/* Mobile Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-between mb-6 relative">
+                            <div className="flex items-center gap-4" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                                 <Avatar className="h-10 w-10">
                                     {auth.user.avatar ? (
                                         <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
@@ -336,6 +348,31 @@ export default function Income() {
                                 </button>
                             </div>
                         </div>
+
+                        {isDropdownOpen && (
+                            <div className="fixed top-20 left-6 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-48">
+                                <button
+                                    onClick={() => {
+                                        setIsDropdownOpen(false)
+                                        router.visit(route("profile.edit"))
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-t-lg"
+                                >
+                                    <User className="h-4 w-4" />
+                                    Profile
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsDropdownOpen(false)
+                                        handleLogout()
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 rounded-b-lg"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    Logout
+                                </button>
+                            </div>
+                        )}
 
                         <hr className="w-full h-0.5 bg-gray-200 mb-6" />
 
