@@ -105,6 +105,20 @@ export default function Cards() {
     const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
     const cardComponentRefs = useRef<{ [key: number]: CardComponentRef | null }>({});
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+    const dropdownRefProfile = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRefProfile.current && !dropdownRefProfile.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false)
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [])
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -283,7 +297,7 @@ export default function Cards() {
                     <BottomNavbar activeCardId={null} />
 
                     <div className="flex-1 overflow-y-auto p-6 pb-32">
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-6 relative" ref={dropdownRefProfile}>
                             <div className="flex items-center gap-4" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                                 <Avatar className="h-10 w-10">
                                     {auth.user.avatar ? (
@@ -324,7 +338,7 @@ export default function Cards() {
                         </div>
 
                         {isDropdownOpen && (
-                            <div className="fixed top-20 left-6 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-48">
+                            <div className="fixed top-20 left-6 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] w-48">
                                 <button
                                     onClick={() => {
                                         setIsDropdownOpen(false)

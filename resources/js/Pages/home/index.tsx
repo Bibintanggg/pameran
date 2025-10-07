@@ -29,7 +29,7 @@ import {
     TrendingDown,
     LogOut
 } from "lucide-react"
-import { useState, useMemo, ReactNode, useRef } from "react"
+import { useState, useMemo, ReactNode, useRef, useEffect } from "react"
 import { Transaction } from "@/types/transaction"
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency"
 import TransactionsList from "@/Components/TransactionsList"
@@ -132,6 +132,19 @@ export default function Home() {
         return `/storage/${auth.user.avatar}`;
     };
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false)
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [])
+
     const getUserInitials = () => {
         const names = auth.user.name.split(' ');
         if (names.length >= 2) {
@@ -215,7 +228,7 @@ export default function Home() {
                 <div className="relative w-full max-w-sm mx-auto min-h-screen bg-white shadow-xl overflow-hidden">
 
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-6 pt-12 pb-6">
-                        <div className="relative flex items-center justify-between mb-6">
+                        <div className="relative flex items-center justify-between mb-6" ref={dropdownRef}>
                             <div className="flex items-center space-x-3">
                                 <div
                                     className="flex items-center space-x-3 cursor-pointer"

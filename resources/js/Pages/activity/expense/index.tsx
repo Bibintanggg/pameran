@@ -24,7 +24,7 @@ import {
     LogOut,
     User
 } from "lucide-react";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { Transaction } from "@/types/transaction";
 import { Card } from "@/types/card";
@@ -105,6 +105,7 @@ export default function Expense() {
     const [chartMode, setChartMode] = useState<"monthly" | "yearly">(initialChartMode as "monthly" | "yearly");
     const [isLoading, setIsLoading] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
 
     const activeCard = activeCardId != null
         ? cards.find(card => card.id === activeCardId)
@@ -115,6 +116,19 @@ export default function Expense() {
             setActiveCardId(initialActiveCardId);
         }
     }, [initialActiveCardId, activeCardId, setActiveCardId]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false)
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [])
 
     // Filter transaksi untuk expense saja berdasarkan kartu aktif
     const filteredTransactions = useMemo(() => {
@@ -339,7 +353,7 @@ export default function Expense() {
 
                     <div className="flex-1 overflow-y-auto p-6 relative">
                         {/* Mobile Header */}
-                        <div className="flex items-center justify-between mb-6 relative">
+                        <div className="flex items-center justify-between mb-6 relative" ref={dropdownRef}>
                             <div className="flex items-center gap-4" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                                 <Avatar className="h-10 w-10">
                                     {auth.user.avatar ? (
