@@ -19,12 +19,15 @@ import {
     Shield,
     Bell,
     Lock,
-    Trash2
+    Trash2,
+    LogOut
 } from 'lucide-react';
 import { useActiveCard } from "@/context/ActiveCardContext";
 import UpdatePasswordForm from './UpdatePasswordForm';
 import DeleteUserForm from './DeleteUserForm';
 import { useToast } from "@/hooks/use-toast"
+import axios from 'axios';
+import { useClerk } from '@clerk/clerk-react';
 
 type ProfileForm = {
     name: string;
@@ -43,6 +46,7 @@ export default function UpdateProfileInformation({
     className?: string;
 }) {
     const { props } = usePage();
+    const { signOut } = useClerk();
     const { auth, cards = [], incomePerCard = {}, expensePerCard = {} } = props as any;
     const user = auth?.user;
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -118,6 +122,12 @@ export default function UpdateProfileInformation({
         return `/storage/${auth.user.avatar}`;
     };
 
+    const handleLogout = async () => {
+        await axios.post('/auth/clerk/logout');
+        await signOut();
+        window.location.href = '/';
+    };
+
     const getUserInitials = () => {
         const names = user.name.split(' ');
         if (names.length >= 2) {
@@ -141,11 +151,11 @@ export default function UpdateProfileInformation({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Head title="Settings"/>
+            <Head title="Settings" />
             {/* Mobile Layout */}
-            <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100">
+            <div className="lg:hidden flex min-h-screen items-center justify-center bg-gray-100 pb-16">
                 <div className="relative w-full max-w-md h-screen bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-                    <BottomNavbar activeCardId={activeCardId}/>
+                    <BottomNavbar activeCardId={activeCardId} />
 
                     {/* Mobile Header */}
                     <div className="bg-gradient-to-r from-[#9290FE] to-[#7A78D1] p-6 text-white">
@@ -332,6 +342,16 @@ export default function UpdateProfileInformation({
                             {/* Mobile Security Content */}
                             {activeSecurityTab === 'password' && <UpdatePasswordForm className="space-y-4" />}
                             {activeSecurityTab === 'delete' && <DeleteUserForm className="space-y-4" />}
+                        </div>
+
+                        <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                <span>Log Out</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -603,6 +623,7 @@ export default function UpdateProfileInformation({
                                                 {activeSecurityTab === 'delete' && <DeleteUserForm />}
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>

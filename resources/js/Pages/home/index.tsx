@@ -225,7 +225,7 @@ export default function Home() {
             <Head title="Overview" />
             {/* Mobile */}
             <div className="lg:hidden min-h-screen bg-gray-50">
-                <div className="relative w-full max-w-sm mx-auto min-h-screen bg-white shadow-xl overflow-hidden">
+                <div className="relative w-full max-w-md mx-auto min-h-screen bg-white shadow-xl overflow-hidden">
 
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-6 pt-12 pb-6">
                         <div className="relative flex items-center justify-between mb-6" ref={dropdownRef}>
