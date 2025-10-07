@@ -271,7 +271,7 @@ export default function AllActivity() {
         if (isLoading || cardId === activeCardId) return;
 
         setIsLoading(true);
-        setActiveCardId(cardId);
+        // setActiveCardId(cardId);
 
         router.get(route('all-activity'), {
             filter,
@@ -281,11 +281,11 @@ export default function AllActivity() {
         }, {
             preserveState: true,
             replace: true,
-            onFinish: () => setIsLoading(false),
-            onError: () => {
-                setIsLoading(false);
-                // setActiveCardId(activeCardId);
-            }
+            onFinish: () => {
+                setIsLoading(false)
+                setActiveCardId(cardId);
+            },
+            onError: () => setIsLoading(false)
         });
     };
 
@@ -604,6 +604,7 @@ export default function AllActivity() {
                                     <TransactionsList
                                         transactions={transactions}
                                         onPageChange={handlePageChange}
+                                        activeCardId={activeCardId}
                                     />
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
@@ -853,6 +854,7 @@ export default function AllActivity() {
                                                 <TransactionsList
                                                     transactions={transactions}
                                                     onPageChange={handlePageChange}
+                                                    activeCardId={activeCardId}
                                                 />
                                             ) : (
                                                 <div className="text-center py-12 text-gray-500">

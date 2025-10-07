@@ -20,14 +20,14 @@ interface TransactionListProps {
     activeCardId?: number | null
 }
 
-export default function TransactionsList({ transactions, onPageChange }: TransactionListProps) {
+export default function TransactionsList({ transactions, onPageChange, activeCardId }: TransactionListProps) {
     const { auth, cards } = usePage().props as any;
     const [expandedIds, setExpandedIds] = useState<number[]>([]);
 
     const toggleExpand = (id: number) => {
-        setExpandedIds(prev => 
-            prev.includes(id) 
-                ? prev.filter(i => i !== id) 
+        setExpandedIds(prev =>
+            prev.includes(id)
+                ? prev.filter(i => i !== id)
                 : [...prev, id]
         );
     };
@@ -77,6 +77,17 @@ export default function TransactionsList({ transactions, onPageChange }: Transac
         }
     };
 
+    const getAmountPrefix = (transaction: Transaction): string => {
+        if (transaction.type === 'convert') {
+            if (activeCardId === transaction.to_cards_id) {
+                return '+ ';
+            } else if (activeCardId === transaction.from_cards_id) {
+                return '- ';
+            }
+        }
+        return transaction.type === 'expense' ? '- ' : '+ ';
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-3">
@@ -86,14 +97,15 @@ export default function TransactionsList({ transactions, onPageChange }: Transac
 
                 {transactions.data.map((transaction) => {
                     const isExpanded = expandedIds.includes(transaction.id);
-                    
+                    const amountPrefix = getAmountPrefix(transaction)
+
                     return (
                         <div
                             key={transaction.id}
                             className={`flex flex-col rounded-lg border transition-all ${getTransactionColor(transaction.type)}`}
                         >
                             {/* Mobile Layout */}
-                            <div 
+                            <div
                                 className="flex items-start gap-2 p-3 md:hidden cursor-pointer"
                                 onClick={() => toggleExpand(transaction.id)}
                             >
@@ -264,7 +276,7 @@ export default function TransactionsList({ transactions, onPageChange }: Transac
                                 {/* Amount & Type - Desktop */}
                                 <div className="flex flex-col items-end justify-center ml-4">
                                     <span className={`font-bold text-lg ${getAmountColor(transaction.type)}`}>
-                                        {transaction.type === 'expense' ? '- ' : '+ '}
+                                        {amountPrefix}
                                         {formatCurrency(transaction.amount, currencyMap[transaction.currency])}
                                     </span>
                                     <span className="text-xs text-gray-500 mt-1">
