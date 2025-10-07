@@ -598,6 +598,49 @@ export default function AllActivity() {
                                 >
                                     View all
                                 </button>
+                                <button onClick={() => window.location.href = route("activity.export")}
+                                    className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                    Export
+                                </button>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <button className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                            {date?.from && date?.to ? (
+                                                <>
+                                                    {format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}
+                                                </>
+                                            ) : (
+                                                <>Filter</>
+                                            )}
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            selected={date}
+                                            onSelect={(selected) => {
+                                                setDate(selected);
+
+                                                if (selected?.from && selected?.to) {
+                                                    setIsLoading(true);
+
+                                                    router.get(route('all-activity'), {
+                                                        filter,
+                                                        chartMode,
+                                                        page: 1,
+                                                        activeCardId,
+                                                        start_date: selected.from.toISOString().split('T')[0],
+                                                        end_date: selected.to.toISOString().split('T')[0],
+                                                    }, {
+                                                        preserveState: true,
+                                                        onFinish: () => setIsLoading(false)
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             <div className="max-h-60 overflow-y-auto">
                                 {transactions.data.length > 0 ? (

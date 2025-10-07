@@ -116,8 +116,8 @@ export default function Expense() {
 
         return transactions.data.filter((t) => {
             const matchesCard = activeCardId === 0 ||
-                (t.type === 'expense' ? t.from_cards_id === activeCardId : 
-                t.type === 'convert' ? t.from_cards_id === activeCardId : false);
+                (t.type === 'expense' ? t.from_cards_id === activeCardId :
+                    t.type === 'convert' ? t.from_cards_id === activeCardId : false);
 
             // Hanya transaksi expense
             const isExpenseTransaction = t.type === "expense" || t.type === "convert";
@@ -568,6 +568,51 @@ export default function Expense() {
                                 >
                                     View all
                                 </button>
+                                <button
+                                    onClick={() => window.location.href = route("activity-expense.export")}
+                                    className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Export
+                                </button>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <button className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                            {date?.from && date?.to ? (
+                                                <>
+                                                    {format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}
+                                                </>
+                                            ) : (
+                                                <>Filter</>
+                                            )}
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            selected={date}
+                                            onSelect={(selected) => {
+                                                setDate(selected);
+
+                                                if (selected?.from && selected?.to) {
+                                                    setIsLoading(true);
+
+                                                    router.get(route('expense.index'), {
+                                                        filter,
+                                                        chartMode,
+                                                        activeCardId,
+                                                        page: 1,
+                                                        start_date: selected.from.toISOString().split('T')[0],
+                                                        end_date: selected.to.toISOString().split('T')[0],
+                                                    }, {
+                                                        preserveState: true,
+                                                        onFinish: () => setIsLoading(false)
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             <div className="max-h-60 overflow-y-auto">
                                 {filteredTransactions.length > 0 ? (
@@ -777,7 +822,7 @@ export default function Expense() {
                                                     View all
                                                 </button>
                                                 <button
-                                                    onClick={() => window.location.href = route("expense.export")}
+                                                    onClick={() => window.location.href = route("activity-expense.export")}
                                                     className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                 >
                                                     Export

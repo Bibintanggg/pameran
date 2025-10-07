@@ -41,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/activity/expense', [ActivityController::class, 'expenseActivity'])->name('expense.index');
     Route::get('/activity/export', [ActivityController::class, 'exportAllActivity'])->name('activity.export');
     Route::get('/activity/income/export', [ActivityController::class, 'exportIncomeActivity'])->name('activity-income.export');
+    Route::get('/activity/expense/export', [ActivityController::class, 'exportExpenseActivity'])->name('activity-expense.export');
 
     Route::prefix('profile')->group(function () {
         Route::get('/',  [ProfileController::class, 'edit'])->name('profile.edit');
