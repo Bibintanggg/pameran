@@ -122,7 +122,7 @@ export default function TransactionsList({ transactions, onPageChange, activeCar
                                             {auth.user.name.split(" ")[0]}
                                         </p>
                                         <span className={`font-bold text-base whitespace-nowrap ${getAmountColor(transaction.type)}`}>
-                                            {transaction.type === 'expense' ? '- ' : '+ '}
+                                            {amountPrefix}
                                             {formatCurrency(transaction.amount, currencyMap[transaction.currency])}
                                         </span>
                                     </div>
@@ -175,7 +175,7 @@ export default function TransactionsList({ transactions, onPageChange, activeCar
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs text-gray-500">Full Amount:</span>
                                         <span className={`font-bold text-lg ${getAmountColor(transaction.type)}`}>
-                                            {transaction.type === 'expense' ? '- ' : '+ '}
+                                            {amountPrefix}
                                             {formatCurrency(transaction.amount, currencyMap[transaction.currency])}
                                         </span>
                                     </div>

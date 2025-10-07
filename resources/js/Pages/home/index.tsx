@@ -26,15 +26,18 @@ import {
     ArrowDownLeft,
     Calendar,
     Filter,
-    TrendingDown
+    TrendingDown,
+    LogOut
 } from "lucide-react"
-import { useState, useMemo, ReactNode } from "react"
+import { useState, useMemo, ReactNode, useRef } from "react"
 import { Transaction } from "@/types/transaction"
 import { currencyMap, formatCurrency } from "@/utils/formatCurrency"
 import TransactionsList from "@/Components/TransactionsList"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import Sidebar from "@/Components/Sidebar"
 import { useActiveCard } from "@/context/ActiveCardContext" // Import context
+import axios from "axios"
+import { useClerk } from "@clerk/clerk-react"
 
 type MonthlyData = { month: string; income: number; expense: number };
 type YearlyData = { year: number; income: number; expense: number };
@@ -84,6 +87,7 @@ export default function Home() {
     };
 
     const { incomePerCard, expensePerCard, ratesPerCard } = usePage().props as any;
+    const { signOut } = useClerk()
 
     const { chartData: chartDataFromProps = { monthly: {}, yearly: {} } } = (usePage().props as unknown) as {
         chartData: {
@@ -93,6 +97,8 @@ export default function Home() {
     };
 
     const [EyesOpen, setEyesOpen] = useState(false)
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
 
     // context instead of local state
     const { activeCardId, setActiveCardId } = useActiveCard();
@@ -133,6 +139,12 @@ export default function Home() {
         }
         return names[0][0];
     };
+
+    const handleLogout = async () => {
+        await axios.post('/auth/clerk/logout')
+        await signOut()
+        window.location.href = "/"
+    }
 
     //chart desktop
     const [chartMode, setChartMode] = useState<'monthly' | 'yearly'>('monthly');
@@ -197,34 +209,65 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Head title="Overview"/>
+            <Head title="Overview" />
             {/* Mobile */}
             <div className="lg:hidden min-h-screen bg-gray-50">
                 <div className="relative w-full max-w-sm mx-auto min-h-screen bg-white shadow-xl overflow-hidden">
 
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-6 pt-12 pb-6">
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="relative flex items-center justify-between mb-6">
                             <div className="flex items-center space-x-3">
-                                <Avatar className="h-11 w-11 ring-2 ring-white shadow-md">
-                                    <AvatarImage
-                                        src={getAvatarUrl()}
-                                        alt={auth.user.name}
-                                    />
-                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
-                                        {getUserInitials()}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <h1 className="font-semibold text-lg text-gray-900">Hi, {auth.user.name.split(' ')[0]}!</h1>
-                                    <p className="text-sm text-gray-600">Welcome back</p>
+                                <div
+                                    className="flex items-center space-x-3 cursor-pointer"
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                >
+                                    <Avatar className="h-11 w-11 ring-2 ring-white shadow-md">
+                                        <AvatarImage
+                                            src={getAvatarUrl()}
+                                            alt={auth.user.name}
+                                        />
+                                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
+                                            {getUserInitials()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <h1 className="font-semibold text-lg text-gray-900">Hi, {auth.user.name.split(' ')[0]}!</h1>
+                                        <p className="text-sm text-gray-600">Welcome back</p>
+                                    </div>
                                 </div>
                             </div>
+
                             <button
                                 onClick={() => router.visit(route("profile.edit"))}
                                 className="p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
                             >
                                 <SettingsIcon className="h-5 w-5 text-gray-700" />
                             </button>
+
+                            {isDropdownOpen && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                    <button
+                                        onClick={() => {
+                                            setIsDropdownOpen(false)
+                                            router.visit(route("profile.edit"))
+                                        }}
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <User className="h-4 w-4" />
+                                        Profile
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsDropdownOpen(false)
+                                            handleLogout()
+                                        }}
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -307,12 +350,12 @@ export default function Home() {
                                                 </div>
                                             </div>
                                             <p className="text-white/80 text-xs font-medium mb-1">Income</p>
-                                                <p className="text-white font-bold text-lg">
-                                                    {formatCurrency(
-                                                        activeCardId !== null ? incomePerCard[activeCardId] ?? 0 : 0,
-                                                        currencyMap[activeCard?.currency ?? "indonesian_rupiah"]
-                                                    )}
-                                                </p>
+                                            <p className="text-white font-bold text-lg">
+                                                {formatCurrency(
+                                                    activeCardId !== null ? incomePerCard[activeCardId] ?? 0 : 0,
+                                                    currencyMap[activeCard?.currency ?? "indonesian_rupiah"]
+                                                )}
+                                            </p>
                                             <div className="flex items-center justify-center mt-2">
                                                 <TrendingUp className="h-3 w-3 text-green-300 mr-1" />
                                                 <span className="text-green-300 text-xs">{activeRates.income_rate}%</span>
@@ -378,7 +421,7 @@ export default function Home() {
                                             from: filteredTransactions.length > 0 ? 1 : 0,
                                             to: Math.min(filteredTransactions.length, 5)
                                         }}
-                                        onPageChange={() => {}}
+                                        onPageChange={() => { }}
                                     />
                                 ) : (
                                     <div className="p-8 text-center">
@@ -395,7 +438,7 @@ export default function Home() {
                         <div className="h-4"></div>
                     </div>
 
-                    <BottomNavbar activeCardId={activeCardId}/>
+                    <BottomNavbar activeCardId={activeCardId} />
                 </div>
             </div>
 
@@ -585,7 +628,7 @@ export default function Home() {
                                                         from: filteredTransactions.length > 0 ? 1 : 0,
                                                         to: Math.min(filteredTransactions.length, 8)
                                                     }}
-                                                    onPageChange={() => {}}
+                                                    onPageChange={() => { }}
                                                 />
                                             ) : (
                                                 <div className="text-center py-12">
@@ -641,13 +684,13 @@ export default function Home() {
 
                                     {activeCardId !== null && (
                                         <QuickActionCard gradient>
-                                        <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <AddIncome label="Add Income" activeCardId={activeCardId} />
-                                            <AddExpense label="Add Expense" activeCardId={activeCardId} />
-                                            <AddConvert label="Convert" />
-                                        </div>
-                                    </QuickActionCard>
+                                            <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                <AddIncome label="Add Income" activeCardId={activeCardId} />
+                                                <AddExpense label="Add Expense" activeCardId={activeCardId} />
+                                                <AddConvert label="Convert" />
+                                            </div>
+                                        </QuickActionCard>
                                     )}
                                 </div>
                             </div>
