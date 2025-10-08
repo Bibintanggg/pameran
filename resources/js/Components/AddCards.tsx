@@ -72,6 +72,7 @@ export default function AddCards({
             case 'indonesian_rupiah': return 'Rupiah'
             case 'baht_thailand': return 'THB - Baht Thailand'
             case 'as_dollar': return 'USD - Dollar AS'
+            case 'riel_kamboja' : return 'KHR - Kamboja Riel'
             default: return 'Rupiah'
         }
     }
@@ -118,6 +119,9 @@ export default function AddCards({
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => setData("currency", 'as_dollar')}>
                                                     USD - Dollar AS
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setData("currency", 'riel_kamboja')}>
+                                                    KHR - Kamboja Riel
                                                 </DropdownMenuItem>
                                             </DropdownMenuGroup>
                                         </DropdownMenuContent>

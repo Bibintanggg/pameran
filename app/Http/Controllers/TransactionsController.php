@@ -10,10 +10,12 @@ use App\Models\Cards;
 use App\Models\Transactions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TransactionsController extends Controller
 {
@@ -275,7 +277,6 @@ class TransactionsController extends Controller
             return response()->json(['error' => 'Insufficient balance'], 400);
         }
 
-        // Langsung pakai karena sudah instance Currency
         $fromCurrency = $fromCard->currency->toISO();
         $toCurrency = $toCard->currency->toISO();
 
@@ -290,42 +291,56 @@ class TransactionsController extends Controller
         }
 
         try {
-            $response = Http::timeout(10)->get('https://api.freecurrencyapi.com/v1/latest', [
-                'apikey' => env('CURRENCY_API_KEY'),
-                'currencies' => $toCurrency,
-                'base_currency' => $fromCurrency,
-            ]);
+            // Buat cache key unik untuk kombinasi mata uang
+            $cacheKey = "exchange_rate_{$fromCurrency}_{$toCurrency}";
 
-            if ($response->failed()) {
-                // \Log::error('Currency API failed', [
-                //     'status' => $response->status(),
-                //     'body' => $response->body(),
-                // ]);
+            // Cek apakah sudah ada di cache (valid 12 jam)
+            if (Cache::has($cacheKey)) {
+                $rate = Cache::get($cacheKey);
+            } else {
+                // Ambil data dari CurrencyFreaks (base: USD)
+                $response = Http::timeout(10)->get('https://api.currencyfreaks.com/latest', [
+                    'apikey' => env('CURRENCY_API_KEY'),
+                ]);
 
-                return response()->json(['error' => 'Failed to fetch exchange rate from API'], 500);
+                if ($response->failed()) {
+                    \Log::error('Currency API failed', [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                    return response()->json(['error' => 'Failed to fetch exchange rate from API'], 500);
+                }
+
+                $data = $response->json();
+                $rates = $data['rates'];
+
+                // Pastikan currency tersedia di data
+                if (!isset($rates[$fromCurrency]) || !isset($rates[$toCurrency])) {
+                    \Log::error('Missing currency rate', ['data' => $data]);
+                    return response()->json(['error' => 'Currency not supported'], 400);
+                }
+
+                // Hitung rate cross-currency via USD
+                $rate = (float)$rates[$toCurrency] / (float)$rates[$fromCurrency];
+
+                // Simpan ke cache selama 12 jam
+                Cache::put($cacheKey, $rate, now()->addHours(12));
             }
 
-            $data = $response->json();
-            $rate = $data['data'][$toCurrency] ?? null;
-
-            if (! $rate) {
-                // \Log::error('Invalid rate response', ['data' => $data]);
-
-                return response()->json(['error' => 'Invalid exchange rate'], 400);
-            }
+            $convertedAmount = $request->amount * $rate;
 
             return response()->json([
                 'rate' => $rate,
-                'converted_amount' => $request->amount * $rate,
+                'converted_amount' => $convertedAmount,
                 'from_currency' => $fromCurrency,
                 'to_currency' => $toCurrency,
             ]);
         } catch (\Exception $e) {
-            // \Log::error('Currency conversion error: '.$e->getMessage());
-
+            \Log::error('Currency conversion error: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch exchange rate'], 500);
         }
     }
+
 
     /**
      * Display the specified resource.

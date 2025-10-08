@@ -35,7 +35,8 @@ export default function AddConvert({ label }: { label: string }) {
         const symbols: Record<string, string> = {
             'indonesian_rupiah': 'Rp',
             'baht_thailand': '฿',
-            'as_dollar': '$'
+            'as_dollar': '$',
+            'riel_kamboja' : '៛'
         }
         return symbols[currency] || 'Rp'
     }

@@ -182,6 +182,7 @@ export default function Cards() {
             case 'indonesian_rupiah': return "Indonesian Rupiah";
             case 'baht_thailand': return "Baht Thailand";
             case 'as_dollar': return 'AS Dollar';
+            case 'riel_kamboja' : return 'Riel Kamboja'
             default: return "Indonesian Rupiah";
         }
     };
