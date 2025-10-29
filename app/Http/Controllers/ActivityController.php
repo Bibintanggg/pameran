@@ -31,15 +31,12 @@ class ActivityController extends Controller
 
             $cards = Cards::where('user_id', $userId)->get();
 
-            // QUERY UNTUK SEMUA DATA (ANALYTICS)
             $allTransactionsQuery = Transactions::where('user_id', $userId)
                 ->with('toCard', 'fromCard');
 
-            // QUERY UNTUK PAGINATION
             $paginatedTransactionsQuery = Transactions::where('user_id', $userId)
                 ->with('toCard', 'fromCard');
 
-            // Filter date untuk kedua query
             if ($startDate && $endDate) {
                 $allTransactionsQuery->whereBetween('transaction_date', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -52,7 +49,6 @@ class ActivityController extends Controller
                 ]);
             }
 
-            // Tapi JANGAN untuk analytics (biar income/expense semua card tetap ada)
             if ($activeCardId && $activeCardId != 0) {
                 $paginatedTransactionsQuery->where(function ($query) use ($activeCardId) {
                     $query->where(function ($q) use ($activeCardId) {
@@ -69,7 +65,6 @@ class ActivityController extends Controller
                 });
             }
 
-            // Filter type untuk PAGINATION QUERY
             if ($filter === 'income') {
                 $paginatedTransactionsQuery->whereIn('type', [
                     TransactionsType::INCOME->value,
@@ -79,7 +74,6 @@ class ActivityController extends Controller
                 $paginatedTransactionsQuery->where('type', TransactionsType::EXPENSE->value);
             }
 
-            // Filter type untuk ALL DATA QUERY (analytics)
             if ($filter !== 'all') {
                 $allTransactionsQuery->where(function ($query) use ($filter) {
                     if ($filter === 'income') {
@@ -93,10 +87,8 @@ class ActivityController extends Controller
                 });
             }
 
-            // PAGINATION - Execute query dengan pagination
             $paginatedTransactions = $paginatedTransactionsQuery->latest()->paginate($perPage);
 
-            // Format transactions untuk response
             $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) use ($activeCardId) {
                 if ($data->type === TransactionsType::CONVERT->value) {
                     if ($activeCardId == $data->to_cards_id) {
@@ -156,13 +148,10 @@ class ActivityController extends Controller
                 ];
             });
 
-            // Replace collection dengan data yang sudah diformat
             $paginatedTransactions->setCollection($formattedTransactions);
 
-            // ANALYTICS - Ambil semua data untuk analytics
             $allTransactionsForAnalytics = $allTransactionsQuery->get();
 
-            // Hitung total income dan expense untuk analytics
             $totalIncome = $allTransactionsForAnalytics
                 ->whereIn('type', [TransactionsType::INCOME->value, TransactionsType::CONVERT->value])
                 ->sum(function ($transaction) {
@@ -179,7 +168,6 @@ class ActivityController extends Controller
                         : $transaction->amount;
                 });
 
-            // Hitung income/expense per card
             $incomePerCard = collect();
             $expensePerCard = collect();
 
@@ -201,13 +189,11 @@ class ActivityController extends Controller
                 }
             }
 
-            // Untuk "All Cards", hitung total dari semua cards
             if ($activeCardId == 0) {
                 $incomePerCard[0] = $totalIncome;
                 $expensePerCard[0] = $totalExpense;
             }
 
-            // Hitung rates per card
             $ratesPerCard = collect();
             foreach ($incomePerCard->keys()->merge($expensePerCard->keys())->unique() as $cardId) {
                 $income = $incomePerCard->get($cardId, 0);
@@ -220,7 +206,6 @@ class ActivityController extends Controller
                 ];
             }
 
-            // CHART DATA - Monthly data
             $currentYear = now()->year;
 
             $monthlyIncomeData = $allTransactionsForAnalytics
@@ -255,10 +240,8 @@ class ActivityController extends Controller
                     });
                 });
 
-            // Format monthly chart data - PER CARD
             $monthlyChartData = collect();
 
-            // Data untuk "All Cards" (gabungan semua card)
             if ($activeCardId == 0 || !$activeCardId) {
                 $allMonthlyData = collect(range(1, 12))->map(function ($month) use ($monthlyIncomeData, $monthlyExpenseData) {
                     $totalIncome = 0;
@@ -282,7 +265,6 @@ class ActivityController extends Controller
                 $monthlyChartData[0] = $allMonthlyData;
             }
 
-            // Data untuk masing-masing card
             foreach ($cards as $card) {
                 $cardId = $card->id;
                 $monthlyChartData[$cardId] = collect(range(1, 12))->map(function ($month) use ($monthlyIncomeData, $monthlyExpenseData, $cardId) {
@@ -295,7 +277,6 @@ class ActivityController extends Controller
                 });
             }
 
-            // YEARLY DATA
             $yearlyIncomeData = $allTransactionsForAnalytics
                 ->filter(function ($transaction) {
                     return in_array($transaction->type, [TransactionsType::INCOME->value, TransactionsType::CONVERT->value]);
@@ -326,7 +307,6 @@ class ActivityController extends Controller
                     });
                 });
 
-            // Format yearly chart data - PER CARD
             $yearlyChartData = collect();
             $allYears = $allTransactionsForAnalytics->pluck('transaction_date')
                 ->map(fn($date) => $date->year)
@@ -334,7 +314,6 @@ class ActivityController extends Controller
                 ->sort()
                 ->values();
 
-            // Data untuk "All Cards" (gabungan semua card)
             if ($activeCardId == 0 || !$activeCardId) {
                 $allYearlyData = $allYears->map(function ($year) use ($yearlyIncomeData, $yearlyExpenseData) {
                     $totalIncome = 0;
@@ -358,7 +337,6 @@ class ActivityController extends Controller
                 $yearlyChartData[0] = $allYearlyData;
             }
 
-            // Data untuk masing-masing card
             foreach ($cards as $card) {
                 $cardId = $card->id;
                 $yearlyChartData[$cardId] = $allYears->map(function ($year) use ($yearlyIncomeData, $yearlyExpenseData, $cardId) {
@@ -371,7 +349,6 @@ class ActivityController extends Controller
                 });
             }
 
-            // Calculate rates untuk analytics
             $totalTransactions = $totalIncome + $totalExpense;
             $incomeRate = $totalTransactions > 0 ? round(($totalIncome / $totalTransactions) * 100, 2) : 0;
             $expenseRate = $totalTransactions > 0 ? round(($totalExpense / $totalTransactions) * 100, 2) : 0;
@@ -475,7 +452,6 @@ class ActivityController extends Controller
 
             $cards = Cards::where('user_id', $userId)->get();
 
-            // QUERY UNTUK PAGINATION - INCLUDE CONVERT TRANSACTIONS (FROM_CARD ONLY)
             $expenseTransactionsQuery = Transactions::where('user_id', $userId)
                 ->where(function ($query) {
                     $query->where('type', TransactionsType::EXPENSE->value)
@@ -485,7 +461,6 @@ class ActivityController extends Controller
                 })
                 ->with(['toCard', 'fromCard']);
 
-            // Filter berdasarkan card jika dipilih
             if ($activeCardId && $activeCardId != 0) {
                 $expenseTransactionsQuery->where(function ($query) use ($activeCardId) {
                     $query->where(function ($q) use ($activeCardId) {
@@ -498,7 +473,6 @@ class ActivityController extends Controller
                 });
             }
 
-            // Filter tanggal jika ada
             if ($startDate && $endDate) {
                 $expenseTransactionsQuery->whereBetween('transaction_date', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -506,11 +480,9 @@ class ActivityController extends Controller
                 ]);
             }
 
-            // PAGINATE QUERY YANG SUDAH DIFILTER
             $paginatedTransactions = $expenseTransactionsQuery->latest()->paginate($perPage);
 
             $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) use ($activeCardId) {
-                // Untuk CONVERT, tentukan currency dan amount berdasarkan from_card
                 if ($data->type === TransactionsType::CONVERT->value) {
                     $currency = $data->fromCard?->currency;
                     $displayAmount = $data->amount; // Amount yang dikirim (original amount)
@@ -536,7 +508,6 @@ class ActivityController extends Controller
                 $currency ??= Currency::INDONESIAN_RUPIAH->value;
                 $currencySymbol = Currency::from($currency)->symbol();
 
-                // Tentukan type_label yang sesuai
                 $typeLabel = $data->type === TransactionsType::CONVERT->value
                     ? 'Convert'
                     : TransactionsType::from($data->type)->label();
@@ -561,10 +532,8 @@ class ActivityController extends Controller
                 ];
             });
 
-            // REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
             $paginatedTransactions->setCollection($formattedTransactions);
 
-            // ANALYTICS QUERY - INCLUDE CONVERT TRANSACTIONS (FROM_CARD ONLY)
             $analyticsQuery = Transactions::where('user_id', $userId)
                 ->where(function ($query) {
                     $query->where('type', TransactionsType::EXPENSE->value)
@@ -574,7 +543,6 @@ class ActivityController extends Controller
                 })
                 ->with(['toCard', 'fromCard']);
 
-            // TERAPKAN FILTER CARD JUGA PADA ANALYTICS
             if ($activeCardId && $activeCardId != 0) {
                 $analyticsQuery->where(function ($query) use ($activeCardId) {
                     $query->where(function ($q) use ($activeCardId) {
@@ -599,7 +567,6 @@ class ActivityController extends Controller
             $totalExpenseForDisplay = $paginatedTransactions->getCollection()->sum('amount');
             $totalExpenseForAnalytics = $allExpenseTransactions->sum('amount');
 
-            // Group by category - untuk CONVERT gunakan category khusus
             $expenseByCategory = $allExpenseTransactions
                 ->groupBy(function ($transaction) {
                     if ($transaction->type === TransactionsType::CONVERT->value) {
@@ -623,7 +590,6 @@ class ActivityController extends Controller
                 return $value;
             })->take(5);
 
-            // ✅ EXPENSE PER CARD - UNTUK SIDEBAR (INCLUDE CONVERT)
             $allCardsExpenseQuery = Transactions::where('user_id', $userId)
                 ->where(function ($query) {
                     $query->where('type', TransactionsType::EXPENSE->value)
@@ -632,7 +598,6 @@ class ActivityController extends Controller
                         });
                 });
 
-            // Filter tanggal tetap diterapkan jika ada
             if ($startDate && $endDate) {
                 $allCardsExpenseQuery->whereBetween('transaction_date', [
                     Carbon::parse($startDate)->startOfDay(),
@@ -642,22 +607,17 @@ class ActivityController extends Controller
 
             $allCardsExpenseTransactions = $allCardsExpenseQuery->get();
 
-            // Hitung expense untuk SETIAP card dari semua transaksi (EXPENSE + CONVERT from_card)
             $expensePerCard = collect();
             foreach ($cards as $card) {
                 $cardExpense = $allCardsExpenseTransactions
                     ->where('from_cards_id', $card->id)
                     ->sum(function ($transaction) {
-                        // Untuk CONVERT, gunakan amount (bukan converted_amount)
                         return $transaction->amount;
                     });
                 $expensePerCard[$card->id] = (float) $cardExpense;
             }
 
-            // Total untuk "All Cards"
             $expensePerCard[0] = (float) $allCardsExpenseTransactions->sum('amount');
-
-            // ... (rest of the code untuk monthly average, chart data, etc. tetap sama)
 
             $monthlyAveragePerCard = [];
             $currentYear = now()->year;
@@ -681,7 +641,6 @@ class ActivityController extends Controller
                 $monthlyAveragePerCard[$card->id] = $avgMonthlyExpense;
             }
 
-            // Calculate monthly average growth rate untuk All Cards
             $currentYearExpense = $allExpenseTransactions
                 ->filter(function ($transaction) use ($currentYear) {
                     return $transaction->transaction_date->year === $currentYear;
@@ -714,7 +673,6 @@ class ActivityController extends Controller
                 $avgMonthlyExpenseGrowthRate = 0;
             }
 
-            // Untuk expense growth rate (total expense)
             $transactionsForAverage = $activeCardId && $activeCardId != 0
                 ? $allExpenseTransactions->where('from_cards_id', $activeCardId)
                 : $allExpenseTransactions;
@@ -743,7 +701,6 @@ class ActivityController extends Controller
                 $expenseGrowthRate = 0;
             }
 
-            // Data chart berdasarkan CARD YANG AKTIF
             $monthlyExpenseData = $allExpenseTransactions
                 ->filter(function ($transaction) use ($currentYear) {
                     return $transaction->transaction_date->year === $currentYear;
@@ -765,7 +722,6 @@ class ActivityController extends Controller
                 ];
             });
 
-            // Yearly data untuk chart
             $yearlyExpenseData = $allExpenseTransactions
                 ->groupBy(function ($transaction) {
                     return $transaction->transaction_date->year;
@@ -834,7 +790,6 @@ class ActivityController extends Controller
                 $activeCardId = 0; // Reset ke "All Cards" jika card tidak ditemukan
             }
 
-            // QUERY DENGAN PAGINATION
             $transactionsQuery = Transactions::where('user_id', $userId)
                 ->whereIn('type', [
                     TransactionsType::INCOME->value,
@@ -853,10 +808,8 @@ class ActivityController extends Controller
                 ]);
             }
 
-            // PAGINATE QUERY YANG SUDAH DIFILTER
             $paginatedTransactions = $transactionsQuery->latest()->paginate($perPage);
 
-            // MAP TRANSACTIONS UNTUK DISPLAY
             $formattedTransactions = $paginatedTransactions->getCollection()->map(function ($data) {
                 $currency = $data->toCard?->currency;
                 if ($currency instanceof Currency) {
@@ -890,10 +843,8 @@ class ActivityController extends Controller
                 ];
             });
 
-            // REPLACE COLLECTION DENGAN DATA YANG SUDAH DIFORMAT
             $paginatedTransactions->setCollection($formattedTransactions);
 
-            // QUERY TERPISAH UNTUK ANALYTICS & CHART (tanpa pagination, semua data)
             $analyticsQuery = Transactions::where('user_id', $userId)
                 ->whereIn('type', [
                     TransactionsType::INCOME->value,
@@ -901,7 +852,6 @@ class ActivityController extends Controller
                 ])
                 ->with(['toCard', 'fromCard']);
 
-            // FILTER BERDASARKAN CARD UNTUK ANALYTICS JUGA
             if ($activeCardId && $activeCardId !== 0) {
                 $analyticsQuery->where('to_cards_id', $activeCardId);
             }
@@ -915,14 +865,12 @@ class ActivityController extends Controller
 
             $allTransactionsForAnalytics = $analyticsQuery->get();
 
-            // Hitung total income dari semua data analytics
             $totalIncome = $allTransactionsForAnalytics->sum(function ($transaction) {
                 return $transaction->type === TransactionsType::CONVERT->value
                     ? $transaction->converted_amount
                     : $transaction->amount;
             });
 
-            // PERBAIKAN: Hitung income per card dari SEMUA TRANSACTIONS (tanpa filter card aktif)
             $incomePerCard = collect();
             $allTransactionsForAllCards = Transactions::where('user_id', $userId)
                 ->whereIn('type', [
@@ -941,14 +889,12 @@ class ActivityController extends Controller
                 $incomePerCard[$cardId] = ($incomePerCard[$cardId] ?? 0) + $amount;
             }
 
-            // Untuk "All Cards", hitung total dari semua cards
             $incomePerCard[0] = $allTransactionsForAllCards->sum(function ($transaction) {
                 return $transaction->type === TransactionsType::CONVERT->value
                     ? $transaction->converted_amount
                     : $transaction->amount;
             });
 
-            // Income by category berdasarkan semua data analytics
             $incomeByCategory = $allTransactionsForAnalytics
                 ->groupBy('category')
                 ->map(function ($transactions) {
@@ -963,13 +909,10 @@ class ActivityController extends Controller
                     return [$categoryLabel => (float) $total];
                 });
 
-            // Income by category per card berdasarkan semua data analytics
             $incomeByCategoryPerCard = [];
 
-            // Data untuk "All Cards"
             $incomeByCategoryPerCard[0] = $incomeByCategory->toArray();
 
-            // Data untuk masing-masing card
             foreach ($cards as $card) {
                 $cardCategories = $allTransactionsForAnalytics
                     ->where('to_cards_id', $card->id)
@@ -989,10 +932,8 @@ class ActivityController extends Controller
                 $incomeByCategoryPerCard[$card->id] = $cardCategories->toArray();
             }
 
-            // PERBAIKAN: Chart data berdasarkan card aktif
             $currentYear = now()->year;
 
-            // Monthly data untuk chart - FILTER BERDASARKAN CARD
             $monthlyIncomeData = $allTransactionsForAnalytics
                 ->filter(function ($transaction) use ($currentYear) {
                     return $transaction->transaction_date->year === $currentYear;
@@ -1017,7 +958,6 @@ class ActivityController extends Controller
                 ];
             });
 
-            // Yearly data untuk chart - FILTER BERDASARKAN CARD
             $yearlyIncomeData = $allTransactionsForAnalytics
                 ->groupBy(function ($transaction) {
                     return $transaction->transaction_date->year;
@@ -1039,7 +979,6 @@ class ActivityController extends Controller
                 ];
             })->values();
 
-            // Calculate average monthly income
             $avgMonthlyIncome = 0;
             if ($startDate && $endDate) {
                 $start = Carbon::parse($startDate);
@@ -1050,7 +989,6 @@ class ActivityController extends Controller
                 $avgMonthlyIncome = $totalIncome / 12;
             }
 
-            // Calculate growth rate - PERBAIKAN: Hitung berdasarkan card aktif
             $previousYearIncomeQuery = Transactions::where('user_id', $userId)
                 ->whereIn('type', [
                     TransactionsType::INCOME->value,
@@ -1058,7 +996,6 @@ class ActivityController extends Controller
                 ])
                 ->whereYear('transaction_date', $currentYear - 1);
 
-            // Filter berdasarkan card aktif untuk growth rate juga
             if ($activeCardId && $activeCardId !== 0) {
                 $previousYearIncomeQuery->where('to_cards_id', $activeCardId);
             }

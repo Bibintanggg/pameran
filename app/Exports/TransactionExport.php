@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-// use App\Models\Transactions;
 use Maatwebsite\Excel\Concerns\FromCollection;
 
 class TransactionExport implements FromCollection

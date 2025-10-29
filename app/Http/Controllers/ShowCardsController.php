@@ -38,9 +38,9 @@ class ShowCardsController extends Controller
                     TransactionsType::INCOME->value,
                     TransactionsType::CONVERT->value
                 ])
-                ->selectRaw('to_cards_id, SUM(CASE 
-                WHEN type = ? THEN amount 
-                WHEN type = ? THEN converted_amount 
+                ->selectRaw('to_cards_id, SUM(CASE
+                WHEN type = ? THEN amount
+                WHEN type = ? THEN converted_amount
                 ELSE 0 END) as total', [
                     TransactionsType::INCOME->value,
                     TransactionsType::CONVERT->value
@@ -54,9 +54,9 @@ class ShowCardsController extends Controller
                     TransactionsType::EXPENSE->value,
                     TransactionsType::CONVERT->value
                 ])
-                ->selectRaw('from_cards_id, SUM(CASE 
-        WHEN type = ? THEN amount 
-        WHEN type = ? THEN amount 
+                ->selectRaw('from_cards_id, SUM(CASE
+        WHEN type = ? THEN amount
+        WHEN type = ? THEN amount
         ELSE 0 END) as total', [
                     TransactionsType::EXPENSE->value,
                     TransactionsType::CONVERT->value
@@ -127,7 +127,7 @@ class ShowCardsController extends Controller
                 'netIncome' => $netIncome,
                 'incomeGrowth' => round($incomeGrowth, 1),
                 'expenseGrowth' => round($expenseGrowth, 1),
-                'balanceGrowth' => 12.5, // Static for now, could be calculated
+                'balanceGrowth' => 12.5,
             ],
             'auth' => [
                 'user' => [

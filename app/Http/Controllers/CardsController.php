@@ -201,7 +201,6 @@ class CardsController extends Controller
             $expenseRateHigh = $incomeRateLow;
             $expenseRateLow  = $incomeRateHigh;
 
-            // Updated monthly data query to handle both income (to_cards_id) and expense (from_cards_id)
             $monthlyIncomeData = Transactions::where('user_id', $userId)
                 ->whereYear('transaction_date', $currentYear)
                 ->whereIn('type', [
@@ -354,7 +353,6 @@ class CardsController extends Controller
                 }
             }
 
-            // Process yearly expense data
             foreach ($yearlyExpenseData as $data) {
                 if (!$yearlyData->has($data->card_id)) {
                     $yearlyData->put($data->card_id, collect());
